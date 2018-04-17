@@ -1,0 +1,204 @@
+'' CR1000 program for Fairbanks ARM test site, Laser Precipitation Monitor
+'' 20180416.6 Ken.Irving@alaska.edu
+
+ConstTable
+
+    const LATITUDE = 64.859
+    const LONGITUDE = -147.85
+
+    '' LPM nameplate data:
+    const LPM_name  = "Laser Precipitation Monitor"
+    const LPM_model = "5.4110.11.100"
+    const LPM_manuf = "Adolf Thies GmbH & Co. KG"
+    const LPM_SN    = "11170018"
+    const LPM_web   = "www.thiesclima.com"
+
+    '' LPM operational settings:
+    const LPM_ID = "00"
+    const LPM_BAUD = "9"  ' 5:(9600,8N1), 6:(19200,8N1), 7:(38400,8N1), 9:(115200,8N1)
+    const LPM__PORT = Com1
+
+endConstTable
+
+''''''    1234567890123456
+
+public lpm_diagnostics(13)
+    alias lpm_diagnostics(1) = t_interior   ' 1 - "interior temp [degC]"
+    alias lpm_diagnostics(2) = t_laserdrvr  ' 2 - "temp of laser driver 0-80 degC"
+    alias lpm_diagnostics(3) = i_laser      ' 3 - "mean value laser current [1/100 mA]"
+    alias lpm_diagnostics(4) = v_control    ' 4 - "control voltage [mV] ref value: 4010+/-5"
+    alias lpm_diagnostics(5) = v_optical    ' 5 - "optical control [mV] / control variable"
+    alias lpm_diagnostics(6) = v_sensor     ' 6 - "voltage sensor supply [1/10V]"
+    alias lpm_diagnostics(7) = i_laser_pane ' 7 - "current page heating laser head [mA]"
+    alias lpm_diagnostics(8) = i_recvr_pane ' 8 - "current page heating receiver head [mA]"
+    alias lpm_diagnostics(9) = t_ambient    ' 9 - "ambient temp [degC]"
+    alias lpm_diagnostics(10) = v_heating   ' 10 - "voltage heating supply [1/10V]"
+    alias lpm_diagnostics(11) = i_housing   ' 11 - "current heating housing [mA]"
+    alias lpm_diagnostics(12) = i_heads     ' 12 - "current heating heads [mA]"
+    alias lpm_diagnostics(13) = i_carriers  ' 13 - "current heating carriers [mA]"
+
+public lpm_status(15) as boolean
+    alias lpm_status(1) = status_laser      ' 0 - "1:laser ON, 0:laser OFF"
+    alias lpm_status(2) = E_signal_range    ' 1 - "static signal out of allowed range"
+    alias lpm_status(3) = E_laser_hi_a_t    ' 2 - "laser temp (analog) too high"
+    alias lpm_status(4) = E_laser_hi_d_t    ' 3 - "laser temp (digital) too high"
+    alias lpm_status(5) = E_laser_hi_a_i    ' 4 - "laser current (analog) too high"
+    alias lpm_status(6) = E_laser_hi_d_i    ' 5 - "laser current (digital) too high"
+    alias lpm_status(7) = E_outofrange      ' 6 - "sensor supply out of allowed range"
+    alias lpm_status(8) = W_laser_pane_i    ' 7 - "current pane heating laser head"
+    alias lpm_status(9) = W_recvr_pane_i    ' 8 - "current pane heating receiver head"
+    alias lpm_status(10) = W_temp_sensr     ' 9 - "temperature sensor "
+    alias lpm_status(11) = W_supply_range   ' 10 - "heating supply out of allowed range"
+    alias lpm_status(12) = W_i_housing      ' 11 - "current hteating housing"
+    alias lpm_status(13) = W_i_heads        ' 12 - "current hteating heads"
+    alias lpm_status(14) = W_i_carriers     ' 13 - "current hteating carriers"
+    alias lpm_status(15) = W_laser_pwr      ' 14 - "control output laser power high"
+
+public lpm_counts(15) as long               ' counts for the above errors/warnings:
+    alias lpm_counts(1) = n_status_laser    ' 0
+    alias lpm_counts(2) = n_E_signal_range  ' 1
+    alias lpm_counts(3) = n_E_laser_hi_a_t  ' 2
+    alias lpm_counts(4) = n_E_laser_hi_d_t  ' 3
+    alias lpm_counts(5) = n_E_laser_hi_a_i  ' 4
+    alias lpm_counts(6) = n_E_laser_hi_d_i  ' 5
+    alias lpm_counts(7) = n_E_outofrange    ' 6
+    alias lpm_counts(8) = n_W_laser_pane_i  ' 7
+    alias lpm_counts(9) = n_W_recvr_pane_i  ' 8
+    alias lpm_counts(10) = n_W_temp_sensr   ' 9
+    alias lpm_counts(11) = n_W_supply_range ' 10
+    alias lpm_counts(12) = n_W_i_housing    ' 11
+    alias lpm_counts(13) = n_W_i_heads      ' 12
+    alias lpm_counts(14) = n_W_i_carriers   ' 13
+    alias lpm_counts(15) = n_W_laser_pwr    ' 14
+
+''''''                    1234567890123456
+
+public lpm_runtime as long  : units lpm_runtime = hrs
+
+public panelTemp    : units panelTemp = deg C
+public battery      : units battery = volts 
+public progSig as Long
+  
+public s as string * 11
+public lpm_telegram as String * 2233
+
+DataTable(LPM_data,1,-1)
+  DataInterval(0,60,Sec,10)
+  Sample(1,LPM_telegram,String)
+  Sample(1,checksum,fp2)
+  Sample(1,progSig,uint2)
+EndTable
+    
+DataTable(LPM_diag,1,-1)
+  DataInterval(0,60,Sec,10)
+  Sample(13,lpm_diagnostics,fp2)
+  Sample(15,lpm_status,fp2)
+  Sample(15,lpm_counts,uint2)
+  Sample(1,lpm_runtime,uint2)
+  Sample(1,progSig,uint2)
+EndTable
+    
+sub lpm_send_cmd(cmd as string, optional value=99999 as long)
+    dim s as string
+    dim svalue as string
+    dim slen
+    s = ""
+    if value = 99999 then
+        sprintf(s, "%c%02u%s%c", chr(13), LPM_ID, cmd, chr(13))
+    else
+        sprintf(s, "%c%02u%s%05u%c", chr(13), LPM_ID, cmd, value, chr(13))
+    endif
+    '' ASSERT: s should have format: "RxxCCR" or "RxxCCnnnnnR"
+    ''     where R=<CR>, xx=ID, CC=command, n=zero-padded arg
+    '' proto: serialOut(PORT,OUTSTRING,WAITSTRING,NUMTRIES,TIMEOUT)
+    ''    WAITSTRING: if "", look for echo of each character from instrument
+            
+    serialOut (LPM__PORT,s,"",0,0)
+       
+endsub ' lpm_send_cmd
+
+''''''   1234567890123456
+sub set_lpm_clock
+    dim time(9)
+    dim hour, min, sec, day, month, year
+    realtime(time)
+    year = time(1)  : month = time(2)   : day = time(3)
+    hour = time(4)  : minut = time(5)   : sec = time(6)
+    lpm_send_cmd("zy", year mod 100)
+    lpm_send_cmd("zn", month)
+    lpm_send_cmd("zd", day)
+    lpm_send_cmd("zh", hour)
+    lpm_send_cmd("zm", minut)
+    lpm_send_cmd("zs", sec)
+endsub ' set_lpm_clock
+    
+function lpm_telegram5_ok(s as string * 2233
+    '' TODO: pass a pointer to the string instead of the whole string...
+    dim i = 0
+    dim ord
+    dim sum = 0
+    do
+        i += 1
+        ord = ascii(s(1,1,i))
+        if i = 2228 OR i = 2229 then
+            '' convert checksum hex nibble "1" to 1, "A" to 10, etc.
+            if ord >= 48 AND ord <= 57 then
+                ord = ord - 48
+            else if ord >= 65 AND ord <= 70 then
+                ord = ord - 55
+            endif
+            if i = 2228 then ord = ord * 16
+        endif
+        sum = sum + ord
+    loop until i = 2233
+    if sum mod 256 = 0 AND ascii(s(1,1,1)) = 2 AND ascii(s(1,1,2233)) = 3 then return True
+    return False
+endFunction
+
+BeginProg
+  
+  progSig = status.ProgSignature
+
+  SerialOpen (Com1,115200,0,300,10000)
+
+  Scan (10,sec,0,0)
+        PanelTemp (panelTemp,_60Hz)
+        Battery (battery)
+        
+'instruments that get measured once per min
+ If TimeIntoInterval(50,60,Sec) 
+    
+     'read the LPM output string    
+     SerialIn(LPM_string,Com1,300,-1,2333)
+  
+     
+      ' 5) parse the data we want out of the string
+      SplitStr (LPM_array(),LPM_telegram,CHR(59),521,4)
+      LPM_code5m = LPM_array(5)
+      LPM_intensityTot = LPM_array(12)
+      LPM_intensityLiquid = LPM_array(13)
+      LPM_intensitySolid = LPM_array(14)
+      LPM_precipAmount = LPM_array(15)
+      LPM_airTemp = LPM_array(519)
+      LPM_numAllParticles = LPM_array(49)
+      SerialFlush(Com1)
+      
+ 'put intstrument in correct state if it's behaving strangely
+     If LPM_airTemp = NAN
+        'put LPM in configuration mode 
+        s = CHR(13) & "00KY00001" & CHR(13)
+        SerialOut (Com1,s,"",0,0)
+        'put LPM in polling mode 
+        s = CHR(13) & "00TM00005" & CHR(13)
+        SerialOut (Com1,s,"",0,0)
+        Delay (0,3,Sec)
+        SerialFlush (Com1)
+      EndIf
+
+    
+    EndIf 'if for the instruments measured once per minute
+    
+        CallTable LPM_data
+        CallTable LPM_diag
+    NextScan
+EndProg
