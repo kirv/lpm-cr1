@@ -8,13 +8,13 @@ ConstTable
     const LPM_MODEL = "5.4110.11.100"
 
     '' LPM operational settings:
-    const LPM_ID = "00"
-    const LPM_BAUD = "9"  ' 5:(9600,8N1), 6:(19200,8N1), 7:(38400,8N1), 9:(115200,8N1)
+    const LPM_ID = 0
     const LPM__PORT = Com1
+
+''''''    1234567890123456
 
 endConstTable
 
-''''''    1234567890123456
 ''''''   1234567890123456
 ''        1234567890123456
 
@@ -62,7 +62,7 @@ EndTable
 sub get_diagnostics
     dim cmd_DD_output as string * 
     dim diag(13) as float
-    send_cmd("DD")
+    send_cmd(LPM_ID, "DD")
     serialin(cmd_DD_output,LPT__PORT,300,chr(13),2233)
     T_interior = diag(1)
     T_laserdrvr = diag(2)       ' "temp of laser driver 0-80 degC"
@@ -118,7 +118,7 @@ DataTable(LPM_errors,1,-1)
 EndTable
 sub get_LPM_errors
     dim cmd_DX_output as string * 
-    send_cmd("DX")
+    send_cmd(LPM_ID, "DX")
     serialin(cmd_DX_output,LPT__PORT,300,chr(13),2233)
     SplitStr (cmd_DX_output(),LPM_telegram,CHR(59),521,4)
     T_interior = diag(1)
@@ -146,15 +146,15 @@ DataTable(LPM_data,1,telegram_5_is_ok)
   Sample(1,progSig,uint2)
 EndTable
     
-sub send_cmd(cmd as string, optional value=99999 as long)
+sub send_cmd(id as long, cmd as string, optional value=99999 as long)
     dim s as string
     dim svalue as string
     dim slen
     s = ""
     if value = 99999 then
-        sprintf(s, "%c%02u%s%c", chr(13), LPM_ID, cmd, chr(13))
+        sprintf(s, "%c%02u%s%c", chr(13), id, cmd, chr(13))
     else
-        sprintf(s, "%c%02u%s%05u%c", chr(13), LPM_ID, cmd, value, chr(13))
+        sprintf(s, "%c%02u%s%05u%c", chr(13), id, cmd, value, chr(13))
     endif
     '' s should now have format "RxxCCR" or "RxxCCnnnnnR"
     ''     where R=<CR>, xx=ID, CC=command, n=zero-padded arg
@@ -167,12 +167,12 @@ endsub ' send_cmd
 sub set_clock
     dim time(9)
     realtime(time) '' 1:year, 2:month, 3:day, 4:hour, 5:minute, 6:second
-    send_cmd("zy", time(1) mod 100)
-    send_cmd("zn", time(2))
-    send_cmd("zd", time(3))
-    send_cmd("zh", time(4))
-    send_cmd("zm", time(5))
-    send_cmd("zs", time(6))
+    send_cmd(LPM_ID, "zy", time(1) mod 100)
+    send_cmd(LPM_ID, "zn", time(2))
+    send_cmd(LPM_ID, "zd", time(3))
+    send_cmd(LPM_ID, "zh", time(4))
+    send_cmd(LPM_ID, "zm", time(5))
+    send_cmd(LPM_ID, "zs", time(6))
 endsub ' set_clock
     
 ''       1234567890123456
@@ -202,9 +202,10 @@ BeginProg
   
     progSig = status.ProgSignature
 
-    SerialOpen (LPT__PORT,115200,0,300,10000)
-
-    call set_LPM_baud_rate
+    '' the LPM powers up at 9600; match that, set LPM to 115200, and match that
+    serialOpen (LPT__PORT,9600,0,300,10000)
+    send_cmd(LPM_ID,"BR",9)
+    serialOpen (LPT__PORT,115200,0,300,10000)
 
     call set_LPM_clock    
     
