@@ -1,17 +1,11 @@
-'' CR1000 program for Fairbanks ARM test site, Laser Precipitation Monitor
-'' 20180416.6 Ken.Irving@alaska.edu
+'' LPM.cr1 -- CR1000 program for Laser Precipitation Monitor at Fairbanks ARM test site
+'' 20180419.5 Ken.Irving@alaska.edu
 
 ConstTable
 
-    const LATITUDE = 64.859
-    const LONGITUDE = -147.85
-
     '' LPM nameplate data:
-    const LPM_name  = "Laser Precipitation Monitor"
-    const LPM_model = "5.4110.11.100"
-    const LPM_manuf = "Adolf Thies GmbH & Co. KG"
-    const LPM_SN    = "11170018"
-    const LPM_web   = "www.thiesclima.com"
+    const LPM_NAME  = "Laser Precipitation Monitor"
+    const LPM_MODEL = "5.4110.11.100"
 
     '' LPM operational settings:
     const LPM_ID = "00"
@@ -21,84 +15,138 @@ ConstTable
 endConstTable
 
 ''''''    1234567890123456
+''''''   1234567890123456
+''        1234567890123456
 
-public lpm_diagnostics(13)
-    alias lpm_diagnostics(1) = t_interior   ' 1 - "interior temp [degC]"
-    alias lpm_diagnostics(2) = t_laserdrvr  ' 2 - "temp of laser driver 0-80 degC"
-    alias lpm_diagnostics(3) = i_laser      ' 3 - "mean value laser current [1/100 mA]"
-    alias lpm_diagnostics(4) = v_control    ' 4 - "control voltage [mV] ref value: 4010+/-5"
-    alias lpm_diagnostics(5) = v_optical    ' 5 - "optical control [mV] / control variable"
-    alias lpm_diagnostics(6) = v_sensor     ' 6 - "voltage sensor supply [1/10V]"
-    alias lpm_diagnostics(7) = i_laser_pane ' 7 - "current page heating laser head [mA]"
-    alias lpm_diagnostics(8) = i_recvr_pane ' 8 - "current page heating receiver head [mA]"
-    alias lpm_diagnostics(9) = t_ambient    ' 9 - "ambient temp [degC]"
-    alias lpm_diagnostics(10) = v_heating   ' 10 - "voltage heating supply [1/10V]"
-    alias lpm_diagnostics(11) = i_housing   ' 11 - "current heating housing [mA]"
-    alias lpm_diagnostics(12) = i_heads     ' 12 - "current heating heads [mA]"
-    alias lpm_diagnostics(13) = i_carriers  ' 13 - "current heating carriers [mA]"
-
-public lpm_status(15) as boolean
-    alias lpm_status(1) = status_laser      ' 0 - "1:laser ON, 0:laser OFF"
-    alias lpm_status(2) = E_signal_range    ' 1 - "static signal out of allowed range"
-    alias lpm_status(3) = E_laser_hi_a_t    ' 2 - "laser temp (analog) too high"
-    alias lpm_status(4) = E_laser_hi_d_t    ' 3 - "laser temp (digital) too high"
-    alias lpm_status(5) = E_laser_hi_a_i    ' 4 - "laser current (analog) too high"
-    alias lpm_status(6) = E_laser_hi_d_i    ' 5 - "laser current (digital) too high"
-    alias lpm_status(7) = E_outofrange      ' 6 - "sensor supply out of allowed range"
-    alias lpm_status(8) = W_laser_pane_i    ' 7 - "current pane heating laser head"
-    alias lpm_status(9) = W_recvr_pane_i    ' 8 - "current pane heating receiver head"
-    alias lpm_status(10) = W_temp_sensr     ' 9 - "temperature sensor "
-    alias lpm_status(11) = W_supply_range   ' 10 - "heating supply out of allowed range"
-    alias lpm_status(12) = W_i_housing      ' 11 - "current hteating housing"
-    alias lpm_status(13) = W_i_heads        ' 12 - "current hteating heads"
-    alias lpm_status(14) = W_i_carriers     ' 13 - "current hteating carriers"
-    alias lpm_status(15) = W_laser_pwr      ' 14 - "control output laser power high"
-
-public lpm_counts(15) as long               ' counts for the above errors/warnings:
-    alias lpm_counts(1) = n_status_laser    ' 0
-    alias lpm_counts(2) = n_E_signal_range  ' 1
-    alias lpm_counts(3) = n_E_laser_hi_a_t  ' 2
-    alias lpm_counts(4) = n_E_laser_hi_d_t  ' 3
-    alias lpm_counts(5) = n_E_laser_hi_a_i  ' 4
-    alias lpm_counts(6) = n_E_laser_hi_d_i  ' 5
-    alias lpm_counts(7) = n_E_outofrange    ' 6
-    alias lpm_counts(8) = n_W_laser_pane_i  ' 7
-    alias lpm_counts(9) = n_W_recvr_pane_i  ' 8
-    alias lpm_counts(10) = n_W_temp_sensr   ' 9
-    alias lpm_counts(11) = n_W_supply_range ' 10
-    alias lpm_counts(12) = n_W_i_housing    ' 11
-    alias lpm_counts(13) = n_W_i_heads      ' 12
-    alias lpm_counts(14) = n_W_i_carriers   ' 13
-    alias lpm_counts(15) = n_W_laser_pwr    ' 14
-
-''''''                    1234567890123456
-
-public lpm_runtime as long  : units lpm_runtime = hrs
-
-public panelTemp    : units panelTemp = deg C
 public battery      : units battery = volts 
+public panelTemp    : units panelTemp = deg C
 public progSig as Long
-  
-public s as string * 11
-public lpm_telegram as String * 2233
 
-DataTable(LPM_data,1,-1)
+public runtime as long  : units runtime = hrs
+  
+
+'' command DD: Get Diagnostic Data
+public T_interior   : units T_interior   = degC ' 1 - "interior temp [degC]"
+public T_laserdrvr  : units T_laserdrvr  = degC ' 2 - "temp of laser driver 0-80 degC"
+public I_laser      : units I_laser      = mA   ' 3 - "mean value laser current [1/100 mA]"
+public V_control    : units V_control    = mV   ' 4 - "control voltage [mV] ref value:  ' 4010+/-5"
+public V_optical    : units V_optical    = mV   ' 5 - "optical control [mV] / control variable"
+public V_sensor     : units V_sensor     = V    ' 6 - "voltage sensor supply [1/10V]"
+public I_laser_pane : units I_laser_pane = mA   ' 7 - "current page heating laser head [mA]"
+public I_recvr_pane : units I_recvr_pane = mA   ' 8 - "current page heating receiver head [mA]"
+public T_ambient    : units T_ambient    = degC ' 9 - "ambient temp [degC]"
+public V_heating    : units V_heating    = V    ' 10 - "voltage heating supply [1/10V]"
+public I_housing    : units I_housing    = mA   ' 11 - "current heating housing [mA]"
+public I_heads      : units I_heads      = mA   ' 12 - "current heating heads [mA]"
+public I_carriers   : units I_carriers   = mA   ' 13 - "current heating carriers [mA]"
+
+DataTable(LPM_diagnostics,1,-1)
   DataInterval(0,60,Sec,10)
-  Sample(1,LPM_telegram,String)
-  Sample(1,checksum,fp2)
+  Sample(13,diagnostics,fp2)
+  sample(1, T_interior,fp2)
+  sample(1, T_laserdrvr,fp2)
+  sample(1, I_laser,fp2)
+  sample(1, V_control,fp2)
+  sample(1, V_optical,fp2)
+  sample(1, V_sensor,fp2)
+  sample(1, I_laser_pane,fp2)
+  sample(1, I_recvr_pane,fp2)
+  sample(1, T_ambient,fp2)
+  sample(1, V_heating,fp2)
+  sample(1, I_housing,fp2)
+  sample(1, I_heads,fp2)
+  sample(1, I_carriers,fp2)
+  Sample(1,progSig,uint2)
+EndTable
+
+sub get_diagnostics
+    dim cmd_DD_output as string * 
+    dim diag(13) as float
+    send_cmd("DD")
+    serialin(cmd_DD_output,LPT__PORT,300,chr(13),2233)
+    T_interior = diag(1)
+    T_laserdrvr = diag(2)       ' "temp of laser driver 0-80 degC"
+    I_laser     = diag(3)/100   ' "mean value laser current [1/100 mA]"
+    V_control   = diag(4)       ' "control voltage [mV] ref value: 4010+/-5"
+    V_optical   = diag(5)       ' "optical control [mV] / control variable"
+    V_sensor    = diag(6)/10    ' "voltage sensor supply [1/10V]"
+    I_laser_pane= diag(7)       ' "current page heating laser head [mA]"
+    I_recvr_pane= diag(8)       ' "current page heating receiver head [mA]"
+    T_ambient   = diag(9)       ' "ambient temp [degC]"
+    V_heating   = diag(10)/10   ' "voltage heating supply [1/10V]"
+    I_housing   = diag(11)      ' "current heating housing [mA]"
+    I_heads     = diag(12)      ' "current heating heads [mA]"
+    I_carriers  = diag(13)      ' "current heating carriers [mA]"
+endsub ' get_diagnostics
+
+'''''' 1234567890123456
+
+'' commands DX and FM: Get Self Diagnostic, and Get Error Count
+dim errors(15) as boolean
+public LPM_error_map as string * 14
+dim LPM_log_errors as boolean
+public counts(14) as long
+alias counts(1) = E_signal_range    ' 1 - "static signal out of allowed range"
+alias counts(2) = E_laser_hi_a_t    ' 2 - "laser temp (analog) too high"
+alias counts(3) = E_laser_hi_d_t    ' 3 - "laser temp (digital) too high"
+alias counts(4) = E_laser_hi_a_i    ' 4 - "laser current (analog) too high"
+alias counts(5) = E_laser_hi_d_i    ' 5 - "laser current (digital) too high"
+alias counts(6) = E_outofrange      ' 6 - "sensor supply out of allowed range"
+alias counts(7) = W_laser_pane_i    ' 7 - "current pane heating laser head"
+alias counts(8) = W_recvr_pane_i    ' 8 - "current pane heating receiver head"
+alias counts(9) = W_temp_sensr      ' 9 - "temperature sensor "
+alias counts(10) = W_supply_range   ' 10 - "heating supply out of allowed range"
+alias counts(11) = W_i_housing      ' 11 - "current hteating housing"
+alias counts(12) = W_i_heads        ' 12 - "current hteating heads"
+alias counts(13) = W_i_carriers     ' 13 - "current hteating carriers"
+alias counts(14) = W_laser_pwr      ' 14 - "control output laser power high"
+
+DataTable(LPM_error_counts,1,LPM_log_errors)
+  DataInterval(0,1,Min,10)
+  Sample(1,LPM_error_map,uint2)
+  Sample(15,counts,uint2)
   Sample(1,progSig,uint2)
 EndTable
     
-DataTable(LPM_diag,1,-1)
+
+DataTable(LPM_errors,1,-1)
   DataInterval(0,60,Sec,10)
-  Sample(13,lpm_diagnostics,fp2)
-  Sample(15,lpm_status,fp2)
-  Sample(15,lpm_counts,uint2)
-  Sample(1,lpm_runtime,uint2)
+  Sample(15,errors,fp2)
+  Sample(15,counts,uint2)
+  Sample(1,runtime,uint2)
+  Sample(1,progSig,uint2)
+EndTable
+sub get_LPM_errors
+    dim cmd_DX_output as string * 
+    send_cmd("DX")
+    serialin(cmd_DX_output,LPT__PORT,300,chr(13),2233)
+    SplitStr (cmd_DX_output(),LPM_telegram,CHR(59),521,4)
+    T_interior = diag(1)
+    T_laserdrvr = diag(2)       ' "temp of laser driver 0-80 degC"
+    I_laser     = diag(3)/100   ' "mean value laser current [1/100 mA]"
+    V_control   = diag(4)       ' "control voltage [mV] ref value: 4010+/-5"
+    V_optical   = diag(5)       ' "optical control [mV] / control variable"
+    V_sensor    = diag(6)/10    ' "voltage sensor supply [1/10V]"
+    I_laser_pane= diag(7)       ' "current page heating laser head [mA]"
+    I_recvr_pane= diag(8)       ' "current page heating receiver head [mA]"
+    T_ambient   = diag(9)       ' "ambient temp [degC]"
+    V_heating   = diag(10)/10   ' "voltage heating supply [1/10V]"
+    I_housing   = diag(11)      ' "current heating housing [mA]"
+    I_heads     = diag(12)      ' "current heating heads [mA]"
+    I_carriers  = diag(13)      ' "current heating carriers [mA]"
+endsub ' get_LPM_errors
+
+    
+'' Data Telegram 5: Synop, Metar, Disdrometer, Auxiliary Measuring Channels
+dim data_telegram_5 as string * 2233
+public telegram_5_is_ok as boolean
+DataTable(LPM_data,1,telegram_5_is_ok)
+  DataInterval(0,60,Sec,10)
+  Sample(1,data_telegram_5,String)
   Sample(1,progSig,uint2)
 EndTable
     
-sub lpm_send_cmd(cmd as string, optional value=99999 as long)
+sub send_cmd(cmd as string, optional value=99999 as long)
     dim s as string
     dim svalue as string
     dim slen
@@ -108,97 +156,90 @@ sub lpm_send_cmd(cmd as string, optional value=99999 as long)
     else
         sprintf(s, "%c%02u%s%05u%c", chr(13), LPM_ID, cmd, value, chr(13))
     endif
-    '' ASSERT: s should have format: "RxxCCR" or "RxxCCnnnnnR"
+    '' s should now have format "RxxCCR" or "RxxCCnnnnnR"
     ''     where R=<CR>, xx=ID, CC=command, n=zero-padded arg
+
     '' proto: serialOut(PORT,OUTSTRING,WAITSTRING,NUMTRIES,TIMEOUT)
     ''    WAITSTRING: if "", look for echo of each character from instrument
-            
     serialOut (LPM__PORT,s,"",0,0)
-       
-endsub ' lpm_send_cmd
+endsub ' send_cmd
 
-''''''   1234567890123456
-sub set_lpm_clock
+sub set_clock
     dim time(9)
-    dim hour, min, sec, day, month, year
-    realtime(time)
-    year = time(1)  : month = time(2)   : day = time(3)
-    hour = time(4)  : minut = time(5)   : sec = time(6)
-    lpm_send_cmd("zy", year mod 100)
-    lpm_send_cmd("zn", month)
-    lpm_send_cmd("zd", day)
-    lpm_send_cmd("zh", hour)
-    lpm_send_cmd("zm", minut)
-    lpm_send_cmd("zs", sec)
-endsub ' set_lpm_clock
+    realtime(time) '' 1:year, 2:month, 3:day, 4:hour, 5:minute, 6:second
+    send_cmd("zy", time(1) mod 100)
+    send_cmd("zn", time(2))
+    send_cmd("zd", time(3))
+    send_cmd("zh", time(4))
+    send_cmd("zm", time(5))
+    send_cmd("zs", time(6))
+endsub ' set_clock
     
-function lpm_telegram5_ok(s as string * 2233
-    '' TODO: pass a pointer to the string instead of the whole string...
+''       1234567890123456
+function check_telegram_5 as boolean
     dim i = 0
-    dim ord
+    dim a
     dim sum = 0
+    if len(data_telegram_5) != 2233 then return False
+    if ascii(data_telegram_5(1,1,1)) != 2 then return False
+    if ascii(data_telegram_5(1,1,2233)) != 3 then return False
     do
-        i += 1
-        ord = ascii(s(1,1,i))
+        i = i + 1
+        a = ascii(data_telegram_5(1,1,i))
         if i = 2228 OR i = 2229 then
             '' convert checksum hex nibble "1" to 1, "A" to 10, etc.
-            if ord >= 48 AND ord <= 57 then
-                ord = ord - 48
-            else if ord >= 65 AND ord <= 70 then
-                ord = ord - 55
-            endif
-            if i = 2228 then ord = ord * 16
+            if a>=48 AND a<=57 then a=a-48 else if a>=65 AND a<=70 then a=a-55
+            if i = 2228 then a = a * 16
         endif
-        sum = sum + ord
+        sum = sum + a
     loop until i = 2233
-    if sum mod 256 = 0 AND ascii(s(1,1,1)) = 2 AND ascii(s(1,1,2233)) = 3 then return True
-    return False
-endFunction
+    '' adding the checksum to the sum of bytes should result in 0x00 in last byte
+    if sum && hex(FF00) != 0 then return False
+    return True
+endFunction ' check_telegram_5()
 
 BeginProg
   
-  progSig = status.ProgSignature
+    progSig = status.ProgSignature
 
-  SerialOpen (Com1,115200,0,300,10000)
+    SerialOpen (LPT__PORT,115200,0,300,10000)
 
-  Scan (10,sec,0,0)
+    call set_LPM_baud_rate
+
+    call set_LPM_clock    
+    
+
+    Scan (60,sec,0,0)
         PanelTemp (panelTemp,_60Hz)
         Battery (battery)
         
-'instruments that get measured once per min
- If TimeIntoInterval(50,60,Sec) 
-    
-     'read the LPM output string    
-     SerialIn(LPM_string,Com1,300,-1,2333)
+        'read the LPM output string    
+        SerialIn(LPM_string,LPT__PORT,300,chr(3),2333)
   
-     
-      ' 5) parse the data we want out of the string
-      SplitStr (LPM_array(),LPM_telegram,CHR(59),521,4)
-      LPM_code5m = LPM_array(5)
-      LPM_intensityTot = LPM_array(12)
-      LPM_intensityLiquid = LPM_array(13)
-      LPM_intensitySolid = LPM_array(14)
-      LPM_precipAmount = LPM_array(15)
-      LPM_airTemp = LPM_array(519)
-      LPM_numAllParticles = LPM_array(49)
-      SerialFlush(Com1)
-      
- 'put intstrument in correct state if it's behaving strangely
-     If LPM_airTemp = NAN
-        'put LPM in configuration mode 
-        s = CHR(13) & "00KY00001" & CHR(13)
-        SerialOut (Com1,s,"",0,0)
-        'put LPM in polling mode 
-        s = CHR(13) & "00TM00005" & CHR(13)
-        SerialOut (Com1,s,"",0,0)
-        Delay (0,3,Sec)
-        SerialFlush (Com1)
-      EndIf
+        ' 5) parse the data we want out of the string
+        SplitStr (LPM_array(),LPM_telegram,CHR(59),521,4)
+        LPM_code5m = LPM_array(5)
+        LPM_intensityTot = LPM_array(12)
+        LPM_intensityLiquid = LPM_array(13)
+        LPM_intensitySolid = LPM_array(14)
+        LPM_precipAmount = LPM_array(15)
+        LPM_airTemp = LPM_array(519)
+        LPM_numAllParticles = LPM_array(49)
+        SerialFlush(LPT__PORT)
+          
+        '' put intstrument in correct state if it's behaving strangely
+        If LPM_airTemp = NAN
+            'put LPM in configuration mode 
+            s = CHR(13) & "00KY00001" & CHR(13)
+            SerialOut (LPT__PORT,s,"",0,0)
+            'put LPM in polling mode 
+            s = CHR(13) & "00TM00005" & CHR(13)
+            SerialOut (LPT__PORT,s,"",0,0)
+            Delay (0,3,Sec)
+            SerialFlush (LPT__PORT)
+        EndIf
 
-    
-    EndIf 'if for the instruments measured once per minute
-    
-        CallTable LPM_data
-        CallTable LPM_diag
+        callTable LPM_data
+        callTable LPM_diag
     NextScan
 EndProg
