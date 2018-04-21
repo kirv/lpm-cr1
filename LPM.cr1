@@ -1,29 +1,62 @@
 '' LPM.cr1 -- CR1000 program for Laser Precipitation Monitor at Fairbanks ARM test site
-'' 20180419.5 Ken.Irving@alaska.edu
+'' 20180420.4 Ken.Irving@alaska.edu
 
 ConstTable
 
-    '' LPM nameplate data:
+    '' instrument make and model:
     const LPM_NAME  = "Laser Precipitation Monitor"
     const LPM_MODEL = "5.4110.11.100"
 
-    '' LPM operational settings:
+    '' instrument operational settings:
     const LPM_ID = 0
-    const LPM__PORT = Com1
+    const LPM__COMMPORT = Com1
+    const LPM_0_PRECIP_HRS = 24
 
 ''''''    1234567890123456
 
 endConstTable
 
-''''''   1234567890123456
 ''        1234567890123456
 
 public battery      : units battery = volts 
 public panelTemp    : units panelTemp = deg C
 public progSig as Long
 
-public runtime as long  : units runtime = hrs
-  
+datatable("Messages",1,1000)
+    sample(1,progSig,uint2)
+    sample(1,msg,string)
+endDatatable
+
+sub logmsg(optional s1 as string ="MARK", s2 as string="", s3 as string="",
+            s4 as string="", s5 as string="", s6 as string="")
+    dim msg as string * 80
+    msg=s1
+    if s2 != "" then msg = msg & "," & s2
+    if s3 != "" then msg = msg & "," & s3
+    if s4 != "" then msg = msg & "," & s4
+    if s5 != "" then msg = msg & "," & s5
+    if s6 != "" then msg = msg & "," & s6
+    calltable(Messages)
+endsub 'logmsg
+
+
+sub send_cmd(id as long, cmd as string, optional value=99999 as long)
+    dim s as string
+    dim slen
+    s = ""
+    if value = 99999 then
+        sprintf(s, "%c%02u%s%c", chr(13), id, cmd, chr(13))
+    else
+        sprintf(s, "%c%02u%s%05u%c", chr(13), id, cmd, value, chr(13))
+    endif
+    '' s should now have format "RxxCCR" or "RxxCCnnnnnR"
+    ''     where R=<CR>, xx=ID, CC=command, n=zero-padded arg
+
+    '' proto: serialOut(PORT,OUTSTRING,WAITSTRING,NUMTRIES,TIMEOUT)
+    ''    WAITSTRING: if "", look for echo of each character from instrument
+    serialOut (LPM__COMMPORT,s,"",0,0)
+endsub ' send_cmd
+
 
 '' command DD: Get Diagnostic Data
 public T_interior   : units T_interior   = degC ' 1 - "interior temp [degC]"
@@ -41,29 +74,29 @@ public I_heads      : units I_heads      = mA   ' 12 - "current heating heads [m
 public I_carriers   : units I_carriers   = mA   ' 13 - "current heating carriers [mA]"
 
 DataTable(LPM_diagnostics,1,-1)
-  DataInterval(0,60,Sec,10)
-  Sample(13,diagnostics,fp2)
-  sample(1, T_interior,fp2)
-  sample(1, T_laserdrvr,fp2)
-  sample(1, I_laser,fp2)
-  sample(1, V_control,fp2)
-  sample(1, V_optical,fp2)
-  sample(1, V_sensor,fp2)
-  sample(1, I_laser_pane,fp2)
-  sample(1, I_recvr_pane,fp2)
-  sample(1, T_ambient,fp2)
-  sample(1, V_heating,fp2)
-  sample(1, I_housing,fp2)
-  sample(1, I_heads,fp2)
-  sample(1, I_carriers,fp2)
-  Sample(1,progSig,uint2)
+  DataInterval(0,60,Min,10)
+  sample(1,progSig,uint2)
+  average(1, T_interior,fp2,0)
+  average(1, T_laserdrvr,fp2,0)
+  average(1, I_laser,fp2,0)
+  average(1, V_control,fp2,0)
+  average(1, V_optical,fp2,0)
+  average(1, V_sensor,fp2,0)
+  average(1, I_laser_pane,fp2,0)
+  average(1, I_recvr_pane,fp2,0)
+  average(1, T_ambient,fp2,0)
+  average(1, V_heating,fp2,0)
+  average(1, I_housing,fp2,0)
+  average(1, I_heads,fp2,0)
+  average(1, I_carriers,fp2,0)
 EndTable
 
-sub get_diagnostics
+''' 1234567890123456
+sub get_LPM_state
     dim cmd_DD_output as string * 
     dim diag(13) as float
     send_cmd(LPM_ID, "DD")
-    serialin(cmd_DD_output,LPT__PORT,300,chr(13),2233)
+    serialin(cmd_DD_output,LPM__PORT,300,chr(13),2233)
     T_interior = diag(1)
     T_laserdrvr = diag(2)       ' "temp of laser driver 0-80 degC"
     I_laser     = diag(3)/100   ' "mean value laser current [1/100 mA]"
@@ -77,105 +110,53 @@ sub get_diagnostics
     I_housing   = diag(11)      ' "current heating housing [mA]"
     I_heads     = diag(12)      ' "current heating heads [mA]"
     I_carriers  = diag(13)      ' "current heating carriers [mA]"
-endsub ' get_diagnostics
+endsub ' get_LPM_state
 
-'''''' 1234567890123456
 
 '' commands DX and FM: Get Self Diagnostic, and Get Error Count
-dim errors(15) as boolean
-public LPM_error_map as string * 14
-dim LPM_log_errors as boolean
-public counts(14) as long
-alias counts(1) = E_signal_range    ' 1 - "static signal out of allowed range"
-alias counts(2) = E_laser_hi_a_t    ' 2 - "laser temp (analog) too high"
-alias counts(3) = E_laser_hi_d_t    ' 3 - "laser temp (digital) too high"
-alias counts(4) = E_laser_hi_a_i    ' 4 - "laser current (analog) too high"
-alias counts(5) = E_laser_hi_d_i    ' 5 - "laser current (digital) too high"
-alias counts(6) = E_outofrange      ' 6 - "sensor supply out of allowed range"
-alias counts(7) = W_laser_pane_i    ' 7 - "current pane heating laser head"
-alias counts(8) = W_recvr_pane_i    ' 8 - "current pane heating receiver head"
-alias counts(9) = W_temp_sensr      ' 9 - "temperature sensor "
-alias counts(10) = W_supply_range   ' 10 - "heating supply out of allowed range"
-alias counts(11) = W_i_housing      ' 11 - "current hteating housing"
-alias counts(12) = W_i_heads        ' 12 - "current hteating heads"
-alias counts(13) = W_i_carriers     ' 13 - "current hteating carriers"
-alias counts(14) = W_laser_pwr      ' 14 - "control output laser power high"
+dim LPM_errors(15) as boolean
+dim LPM_error_counts(15) as long
 
-DataTable(LPM_error_counts,1,LPM_log_errors)
-  DataInterval(0,1,Min,10)
-  Sample(1,LPM_error_map,uint2)
-  Sample(15,counts,uint2)
-  Sample(1,progSig,uint2)
-EndTable
-    
+'' bit-mapped error/warning flags
+public LPM_errors as long
 
-DataTable(LPM_errors,1,-1)
-  DataInterval(0,60,Sec,10)
-  Sample(15,errors,fp2)
-  Sample(15,counts,uint2)
-  Sample(1,runtime,uint2)
-  Sample(1,progSig,uint2)
-EndTable
-sub get_LPM_errors
-    dim cmd_DX_output as string * 
+dim LPM_error_msg(15) as string
+  LPM_error_msg(1) = "ERROR: static signal out of allowed range"
+  LPM_error_msg(2) = "ERROR: laser temperature (analog) too high"
+  LPM_error_msg(3) = "ERROR: laser temperature (digital) too high"
+  LPM_error_msg(4) = "ERROR: laser current (analog) too high"
+  LPM_error_msg(5) = "ERROR: laser current (digital) too high"
+  LPM_error_msg(6) = "ERROR: sensor supply out of allowed range"
+  LPM_error_msg(7) = "WARNING: current: pane heating laser head"
+  LPM_error_msg(8) = "WARNING: current: pane heating receiver head"
+  LPM_error_msg(9) = "WARNING: temperature sensor"
+  LPM_error_msg(10) = "WARNING: heating supply out of allowed range"
+  LPM_error_msg(11) = "WARNING: current: heating housing"
+  LPM_error_msg(12) = "WARNING: current: heating heads"
+  LPM_error_msg(13) = "WARNING: current: heating carriers"
+  LPM_error_msg(14) = "WARNING: control output laser power high"
+  LPM_error_msg(15) = "not used"
+
+sub check_LPM_errors
+    dim cmd_DX_out as string * 30
+    dim LPM_errors(15) as boolean
+    dim current_bitmap as long
     send_cmd(LPM_ID, "DX")
-    serialin(cmd_DX_output,LPT__PORT,300,chr(13),2233)
-    SplitStr (cmd_DX_output(),LPM_telegram,CHR(59),521,4)
-    T_interior = diag(1)
-    T_laserdrvr = diag(2)       ' "temp of laser driver 0-80 degC"
-    I_laser     = diag(3)/100   ' "mean value laser current [1/100 mA]"
-    V_control   = diag(4)       ' "control voltage [mV] ref value: 4010+/-5"
-    V_optical   = diag(5)       ' "optical control [mV] / control variable"
-    V_sensor    = diag(6)/10    ' "voltage sensor supply [1/10V]"
-    I_laser_pane= diag(7)       ' "current page heating laser head [mA]"
-    I_recvr_pane= diag(8)       ' "current page heating receiver head [mA]"
-    T_ambient   = diag(9)       ' "ambient temp [degC]"
-    V_heating   = diag(10)/10   ' "voltage heating supply [1/10V]"
-    I_housing   = diag(11)      ' "current heating housing [mA]"
-    I_heads     = diag(12)      ' "current heating heads [mA]"
-    I_carriers  = diag(13)      ' "current heating carriers [mA]"
-endsub ' get_LPM_errors
+    serialin(cmd_DX_out,LPM__PORT,300,chr(13),30)
+    SplitStr (cmd_DX_out(),LPM_errors,CHR(59),521,4)
+endsub ' check_LPM_errors
 
     
 '' Data Telegram 5: Synop, Metar, Disdrometer, Auxiliary Measuring Channels
-dim data_telegram_5 as string * 2233
+dim LPM_telegram_5 as string * 2233
 public telegram_5_is_ok as boolean
+
 DataTable(LPM_data,1,telegram_5_is_ok)
   DataInterval(0,60,Sec,10)
-  Sample(1,data_telegram_5,String)
+  Sample(1,LPM_telegram_5,String)
   Sample(1,progSig,uint2)
 EndTable
     
-sub send_cmd(id as long, cmd as string, optional value=99999 as long)
-    dim s as string
-    dim svalue as string
-    dim slen
-    s = ""
-    if value = 99999 then
-        sprintf(s, "%c%02u%s%c", chr(13), id, cmd, chr(13))
-    else
-        sprintf(s, "%c%02u%s%05u%c", chr(13), id, cmd, value, chr(13))
-    endif
-    '' s should now have format "RxxCCR" or "RxxCCnnnnnR"
-    ''     where R=<CR>, xx=ID, CC=command, n=zero-padded arg
-
-    '' proto: serialOut(PORT,OUTSTRING,WAITSTRING,NUMTRIES,TIMEOUT)
-    ''    WAITSTRING: if "", look for echo of each character from instrument
-    serialOut (LPM__PORT,s,"",0,0)
-endsub ' send_cmd
-
-sub set_clock
-    dim time(9)
-    realtime(time) '' 1:year, 2:month, 3:day, 4:hour, 5:minute, 6:second
-    send_cmd(LPM_ID, "zy", time(1) mod 100)
-    send_cmd(LPM_ID, "zn", time(2))
-    send_cmd(LPM_ID, "zd", time(3))
-    send_cmd(LPM_ID, "zh", time(4))
-    send_cmd(LPM_ID, "zm", time(5))
-    send_cmd(LPM_ID, "zs", time(6))
-endsub ' set_clock
-    
-''       1234567890123456
 function check_telegram_5 as boolean
     dim i = 0
     dim a
@@ -198,24 +179,45 @@ function check_telegram_5 as boolean
     return True
 endFunction ' check_telegram_5()
 
-BeginProg
+dim time(9)
+
+
+beginProg
   
     progSig = status.ProgSignature
 
-    '' the LPM powers up at 9600; match that, set LPM to 115200, and match that
-    serialOpen (LPT__PORT,9600,0,300,10000)
-    send_cmd(LPM_ID,"BR",9)
-    serialOpen (LPT__PORT,115200,0,300,10000)
+    '' the LPM powers up at 9600, so match that, set LPM to 115200, and match that:
+    serialOpen (LPM__COMMPORT,9600,0,300,10000)
+    send_cmd(LPM_ID,"BR",9)                        '' 5:9600, 6:19200, 9:115200
+    serialOpen (LPM__COMMPORT,115200,0,300,10000)
+    log_message("LPM set to 115200 using " & LPM__COMMPORT)
 
-    call set_LPM_clock    
+    '' set instrument command mode to "configuration":
+    send_cmd(LPM_ID, "KY", 1)
+
+    '' disable automatic telegram output (will use TR:5 instead)
+    send_cmd(LPM_ID, "TM", 0)
+
+    '' set the LPM clock from the logger at startup:
+    realtime(time) '' 1:year, 2:month, 3:day, 4:hour, 5:minute, 6:second
+    send_cmd(LPM_ID, "ZY", time(1) mod 100)
+    send_cmd(LPM_ID, "ZN", time(2))
+    send_cmd(LPM_ID, "zd", time(3))
+    send_cmd(LPM_ID, "ZH", time(4))
+    send_cmd(LPM_ID, "ZM", time(5))
+    send_cmd(LPM_ID, "ZS", time(6))
+    log_msg("LPM","CLOCK SET:", get_cmd("ZT"), get_cmd("ZB") & " hrs running")
     
+    '' set instrument command mode back to "normal":
+    send_cmd(LPM_ID, "KY", 0)
 
     Scan (60,sec,0,0)
         PanelTemp (panelTemp,_60Hz)
         Battery (battery)
-        
-        'read the LPM output string    
-        SerialIn(LPM_string,LPT__PORT,300,chr(3),2333)
+
+        '' every minute, get telegram 5 from the LPM:
+        send_cmd(LPM_ID, "TY", 5)
+        serialIn(LPM_telegram_5,LPM__COMMPORT,300,chr(3),2333)
   
         ' 5) parse the data we want out of the string
         SplitStr (LPM_array(),LPM_telegram,CHR(59),521,4)
@@ -226,18 +228,18 @@ BeginProg
         LPM_precipAmount = LPM_array(15)
         LPM_airTemp = LPM_array(519)
         LPM_numAllParticles = LPM_array(49)
-        SerialFlush(LPT__PORT)
+        SerialFlush(LPM__COMMPORT)
           
         '' put intstrument in correct state if it's behaving strangely
         If LPM_airTemp = NAN
             'put LPM in configuration mode 
             s = CHR(13) & "00KY00001" & CHR(13)
-            SerialOut (LPT__PORT,s,"",0,0)
+            SerialOut (LPM__COMMPORT,s,"",0,0)
             'put LPM in polling mode 
             s = CHR(13) & "00TM00005" & CHR(13)
-            SerialOut (LPT__PORT,s,"",0,0)
+            SerialOut (LPM__COMMPORT,s,"",0,0)
             Delay (0,3,Sec)
-            SerialFlush (LPT__PORT)
+            SerialFlush (LPM__COMMPORT)
         EndIf
 
         callTable LPM_data
