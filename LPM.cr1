@@ -67,12 +67,10 @@ public I_housing    : units I_housing    = mA   ' 11 - "current heating housing 
 public I_heads      : units I_heads      = mA   ' 12 - "current heating heads [mA]"
 public I_carriers   : units I_carriers   = mA   ' 13 - "current heating carriers [mA]"
 
-'' command DX: Get Self Diagnostic -- 0 or 1 for 6 errors, 8 warnings
-'' command FM: Get Error Count -- counts for each error and warning flag
 public LPM_errors as long
 public LPM_warnings as long
 
-DataTable(LPM_diagnostics,1,-1)
+DataTable(LPM_state,1,-1)
   DataInterval(0,60,Sec,10)
   sample(1,progSig,uint2)
   sample(1,T_interior,fp2)
@@ -139,7 +137,6 @@ public FM_output as string * 80
 sub get_LPM_errors
     dim flag(15) as long ' 6 errors, 8 warnings, 1 not used
     dim count(15) as long
-    dim mask as long
     dim i as long
 
     '' command DX: Get Self Diagnostic -- 0 or 1 for 6 errors, 8 warnings, 1 not used
@@ -153,31 +150,27 @@ sub get_LPM_errors
     splitStr (FM_output,count,CHR(59),521,4)
 
     '' look at each error flag, emit a message on transition 0 to 1 or 1 to 0:
-    mask = &b000001
     for i = 1 to 6 do
-        if LPM_errors & mask = 0 AND flag(i) = 1 then
+        if LPM_errors & &b01 << (i-1) = 0 AND flag(i) = 1 then
             logmsg( "ERROR:", LPM_error_msg(i), "ACTIVE", count(i) + " times")
-            LPM_errors = LPM_errors OR mask 
+            LPM_errors = LPM_errors OR &b01 << (i-1) 
         endif
-        if LPM_errors & mask > 0 AND flag(i) = 0 then
+        if LPM_errors & &b01 << (i-1) > 0 AND flag(i) = 0 then
             logmsg( "ERROR:", LPM_error_msg(i), "NOT ACTIVE", "count: " + count(i))
-            LPM_errors = LPM_errors NOT mask 
+            LPM_errors = LPM_errors NOT &b01 << (i-1) 
         endif
-        mask <<= 1 ' &b001 becomes &b010, etc.
     next i
 
     '' look at each warning flag:
-    mask = &b00000001
     for i = 1 to 8 do
-        if LPM_warnings & mask = 0 AND flag(i+6) = 1 then
+        if LPM_warnings & &b01 << (i-1) = 0 AND flag(i+6) = 1 then
             logmsg( "WARNING:", LPM_warning_msg(i), "ACTIVE", count(i+6) + " times")
-            LPM_warnings = LPM_warnings OR mask 
+            LPM_warnings = LPM_warnings OR &b01 << (i-1) 
         endif
-        if LPM_warnings & mask > 0 AND flag(i+6) = 0 then
+        if LPM_warnings & &b01 << (i-1) > 0 AND flag(i+6) = 0 then
             logmsg( "WARNING:", LPM_warning_msg(i), "NOT ACTIVE", "count: " + count(i+6))
-            LPM_warnings = LPM_warnings NOT mask 
+            LPM_warnings = LPM_warnings NOT &b01 << (i-1) 
         endif
-        mask <<= 1
     next i
 endsub ' check_LPM_errors
 
@@ -277,6 +270,6 @@ beginProg
         EndIf
 
         callTable LPM_data
-        callTable LPM_diag
+        callTable LPM_state
     NextScan
 EndProg
