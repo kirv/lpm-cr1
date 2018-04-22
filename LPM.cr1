@@ -1,5 +1,5 @@
 '' LPM.cr1 -- CR1000 program for Laser Precipitation Monitor at Fairbanks ARM test site
-'' 20180421.6 Ken.Irving@alaska.edu
+'' 20180422.4 Ken.Irving@alaska.edu
 
 ConstTable
 
@@ -27,15 +27,11 @@ datatable("Messages",1,1000)
     sample(1,msg,string)
 endDatatable
 
-sub logmsg(optional s1 as string ="MARK", s2 as string="", s3 as string="",
-            s4 as string="", s5 as string="", s6 as string="")
-    dim msg as string * 80
-    msg=s1
-    if s2 != "" then msg = msg & "," & s2
-    if s3 != "" then msg = msg & "," & s3
-    if s4 != "" then msg = msg & "," & s4
-    if s5 != "" then msg = msg & "," & s5
-    if s6 != "" then msg = msg & "," & s6
+sub logmsg(optional s as string="MARK",
+    t as string="", u as string="", v as string="", w as string="")
+    dim msg as string * 80 = s
+    if t != "" then msg += "," & t : if u != "" then msg += "," & u
+    if v != "" then msg += "," & v : if w != "" then msg += "," & w
     calltable(Messages)
 endsub 'logmsg
 
@@ -143,22 +139,27 @@ sub get_LPM_errors
     dim counts(15) as long
     dim error_map as long
     dim warning_map as long
+
+    '' command DX: Get Self Diagnostic -- 0/1 for 6 errors, 8 warnings, 1 not used
     send_cmd(LPM_ID, "DX")
-    serialin(cs,LPM__PORT,300,chr(13),30)
+    serialin(s,LPM__PORT,300,chr(13),30)
     splitStr (s,flags,CHR(59),521,4)
 
-    '' ALSO: get and parse counts via FM command
+    '' command FM: Get Error Count -- counts for each error and warning flag
+    send_cmd(LPM_ID, "FM")
+    serialin(s,LPM__PORT,300,chr(13),30)
+    splitStr (s,counts,CHR(59),521,4)
 
     '' look at each error flag::
     for i = 1 to 6 do
         if flag i is true
             if error_map bit i was false
-                logmsg( LPM_error_msg(i), "ACTIVE", counts(i) & " times")
+                logmsg( LPM_error_msg(i), "ACTIVE", counts(i) + " times")
             endif
             set error_map bit i true
         else ' flag i is false
             if error_map bit i was true
-                logmsg( LPM_error_msg(i), "NOT ACTIVE", "count: " & counts(i))
+                logmsg( LPM_error_msg(i), "NOT ACTIVE", "count: " + counts(i))
             endif
             set error_map bit i false
         endif
@@ -168,12 +169,12 @@ sub get_LPM_errors
     for i = 1 to 8 do
         if flag i + 6 is true
             if warning_map bit i was false
-                logmsg( LPM_warning_msg(i), "ACTIVE", counts(i+6) & " times")
+                logmsg( LPM_warning_msg(i), "ACTIVE", counts(i+6) + " times")
             endif
             set warning_map bit i true
         else ' flag i + 6 is false
             if warning_map bit i was true
-                logmsg( LPM_warning_msg(i), "NOT ACTIVE", "count: " & counts(i+6))
+                logmsg( LPM_warning_msg(i), "NOT ACTIVE", "count: " + counts(i+6))
             endif
             set warning_map bit i false
         endif
@@ -203,14 +204,14 @@ function check_telegram_5 as boolean
     if ascii(data_telegram_5(1,1,1)) != 2 then return False
     if ascii(data_telegram_5(1,1,2233)) != 3 then return False
     do
-        i = i + 1
+        i += 1
         a = ascii(data_telegram_5(1,1,i))
         if i = 2228 OR i = 2229 then
             '' convert checksum hex nibble "1" to 1, "A" to 10, etc.
             if a>=48 AND a<=57 then a=a-48 else if a>=65 AND a<=70 then a=a-55
             if i = 2228 then a = a * 16
         endif
-        sum = sum + a
+        sum += a
     loop until i = 2233
     '' adding the checksum to the sum of bytes should result in 0x00 in last byte
     if sum && hex(FF00) != 0 then return False
@@ -227,7 +228,7 @@ beginProg
     serialOpen (LPM__COMMPORT,9600,0,300,10000)
     send_cmd(LPM_ID,"BR",9)                        '' 5:9600, 6:19200, 9:115200
     serialOpen (LPM__COMMPORT,115200,0,300,10000)
-    log_message("LPM set to 115200 using " & LPM__COMMPORT)
+    log_message("LPM set to 115200 using " + LPM__COMMPORT)
 
     '' set instrument command mode to "configuration":
     send_cmd(LPM_ID, "KY", 1)
