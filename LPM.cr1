@@ -11,6 +11,7 @@ ConstTable
     const LPM_ID = 0
     const LPM__COMMPORT = Com1
     const LPM_0_PRECIP_HRS = 24
+    const MAX_TR5_RETRIES = 10
 
 ''''''    1234567890123456
 
@@ -70,8 +71,8 @@ public I_carriers   : units I_carriers   = mA   ' 13 - "current heating carriers
 public LPM_errors as long
 public LPM_warnings as long
 
-DataTable(LPM_state,1,-1)
-  DataInterval(0,60,Sec,10)
+DataTable(LPM_state,1,4*128*24*60)
+  DataInterval(0,60,Sec,0)
   sample(1,progSig,uint2)
   sample(1,T_interior,fp2)
   sample(1,T_laserdrvr,fp2)
@@ -88,6 +89,7 @@ DataTable(LPM_state,1,-1)
   sample(1,I_carriers,fp2)
   sample(1,LPM_errors,uint2)
   sample(1,LPM_warnings,uint2)
+  sample(1,LPM_tr5_retries,uint2)
 EndTable
 
 sub get_LPM_state
@@ -178,11 +180,16 @@ endsub ' check_LPM_errors
 '' Data Telegram 5: Synop, Metar, Disdrometer, Auxiliary Measuring Channels
 dim LPM_telegram_5 as string * 2233
 public telegram_5_is_ok as boolean
+public tr5_retries as long
+dim LPM_tr5_data(525) as string
+alias LPM_tr5_data(5)   = LPM_code5m
+alias LPM_tr5_data(15)  = LPM_precipAmount
 
 DataTable(LPM_data,1,telegram_5_is_ok)
-  DataInterval(0,60,Sec,10)
-  Sample(1,LPM_telegram_5,String)
-  Sample(1,progSig,uint2)
+  dataInterval(0,60,Sec,10)
+  sample(1,LPM_telegram_5,String)
+  sample(1,progSig,uint2)
+  sample(1,tr5_retries,uint2)
 EndTable
     
 function check_telegram_5 as boolean
@@ -219,7 +226,7 @@ beginProg
     serialOpen (LPM__COMMPORT,115200,0,300,10000)
     log_message("LPM set to 115200 using " + LPM__COMMPORT)
 
-    '' set instrument command mode to "configuration":
+    '' set instrument to "configuration" command mode:
     send_cmd(LPM_ID, "KY", 1)
 
     '' disable automatic telegram output (will use TR:5 instead)
@@ -233,43 +240,41 @@ beginProg
     send_cmd(LPM_ID, "ZH", time(4))
     send_cmd(LPM_ID, "ZM", time(5))
     send_cmd(LPM_ID, "ZS", time(6))
-    log_msg("LPM","CLOCK SET:", get_cmd("ZT"), get_cmd("ZB") & " hrs running")
+    logmsg("LPM","CLOCK SET:", get_cmd("ZT"), get_cmd("ZB") & " hrs running")
     
-    '' set instrument command mode back to "normal":
+    '' set instrument back to "normal" command mode:
     send_cmd(LPM_ID, "KY", 0)
 
     Scan (60,sec,0,0)
-        PanelTemp (panelTemp,_60Hz)
-        Battery (battery)
+        panelTemp (panelTemp,_60Hz)
+        battery (battery)
 
         '' every minute, get telegram 5 from the LPM:
-        send_cmd(LPM_ID, "TY", 5)
-        serialIn(LPM_telegram_5,LPM__COMMPORT,300,chr(3),2333)
-  
-        ' 5) parse the data we want out of the string
-        SplitStr (LPM_array(),LPM_telegram,CHR(59),521,4)
-        LPM_code5m = LPM_array(5)
-        LPM_intensityTot = LPM_array(12)
-        LPM_intensityLiquid = LPM_array(13)
-        LPM_intensitySolid = LPM_array(14)
-        LPM_precipAmount = LPM_array(15)
-        LPM_airTemp = LPM_array(519)
-        LPM_numAllParticles = LPM_array(49)
-        SerialFlush(LPM__COMMPORT)
-          
-        '' put intstrument in correct state if it's behaving strangely
-        If LPM_airTemp = NAN
-            'put LPM in configuration mode 
-            s = CHR(13) & "00KY00001" & CHR(13)
-            SerialOut (LPM__COMMPORT,s,"",0,0)
-            'put LPM in polling mode 
-            s = CHR(13) & "00TM00005" & CHR(13)
-            SerialOut (LPM__COMMPORT,s,"",0,0)
-            Delay (0,3,Sec)
-            SerialFlush (LPM__COMMPORT)
-        EndIf
-
+        tr5_retries = -1
+        do
+            tr5_retries += 1
+            send_cmd(LPM_ID, "TY", 5)
+            serialIn(LPM_telegram_5,LPM__COMMPORT,300,chr(3),2333)
+            telegram_5_is_ok = check_telegram_5
+            delay(2,sec)
+        until telegram_5_is_ok OR tr5_retries > MAX_TR5_RETRIES
         callTable LPM_data
+  
+        '' parse the data we want out of the string
+        SplitStr (LPM_tr5_data(),LPM_telegram_5,CHR(59),521,4)
+          
+        get_LPM_state
+        get_LPM_errors
         callTable LPM_state
+
+        if iftime(midnight) then    '' <-- PSEUDO-CODE!
+            '' emit message with several parameters, then zero precip total:
+            logmsg("LPM:" & get_cmd("ZT"),
+                get_cmd("ZB") & " hrs",
+                "errors:" + LPM_errors,
+                "warnings:" + LPM_warnings, 
+                LPM_precip_qty & " mm in " & get_cmd("PT") & " hrs")
+            send_cmd(LPM_ID, "RA")
+        endif
     NextScan
 EndProg
