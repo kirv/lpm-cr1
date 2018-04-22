@@ -39,7 +39,6 @@ sub logmsg(optional s1 as string ="MARK", s2 as string="", s3 as string="",
     calltable(Messages)
 endsub 'logmsg
 
-
 sub send_cmd(id as long, cmd as string, optional value=99999 as long)
     dim s as string
     dim slen
@@ -57,7 +56,7 @@ sub send_cmd(id as long, cmd as string, optional value=99999 as long)
     serialOut (LPM__COMMPORT,s,"",0,0)
 endsub ' send_cmd
 
-'' command DD: Get Diagnostic Data, representing the state of the instrument
+'' command DD: Get Diagnostic Data -- representing the state of the instrument
 public T_interior   : units T_interior   = degC ' 1 - "interior temp [degC]"
 public T_laserdrvr  : units T_laserdrvr  = degC ' 2 - "temp of laser driver 0-80 degC"
 public I_laser      : units I_laser      = mA   ' 3 - "mean value laser current [1/100 mA]"
@@ -72,14 +71,10 @@ public I_housing    : units I_housing    = mA   ' 11 - "current heating housing 
 public I_heads      : units I_heads      = mA   ' 12 - "current heating heads [mA]"
 public I_carriers   : units I_carriers   = mA   ' 13 - "current heating carriers [mA]"
 
-'' commands DX and FM: Get Self Diagnostic, and Get Error Count
-dim LPM_errors(15) as boolean
-dim LPM_error_counts(15) as long
-
-'' bit-mapped error/warning flags
-public LPM_error_flags as long
-
-'''    1234567890123456
+'' command DX: Get Self Diagnostic -- 0 or 1 for 6 errors, 8 warnings
+'' command FM: Get Error Count -- counts for each error and warning flag
+public LPM_errors as long
+public LPM_warnings as long
 
 DataTable(LPM_diagnostics,1,-1)
   DataInterval(0,60,Sec,10)
@@ -97,7 +92,8 @@ DataTable(LPM_diagnostics,1,-1)
   sample(1,I_housing,fp2)
   sample(1,I_heads,fp2)
   sample(1,I_carriers,fp2)
-  sample(1,LPM_error_flags,uint2)
+  sample(1,LPM_errors,uint2)
+  sample(1,LPM_warnings,uint2)
 EndTable
 
 sub get_LPM_state
@@ -121,46 +117,70 @@ sub get_LPM_state
 endsub ' get_LPM_state
 
 
-'' commands DX and FM: Get Self Diagnostic, and Get Error Count
-dim LPM_errors(15) as boolean
-dim LPM_error_counts(15) as long
-
-'' bit-mapped error/warning flags
-public LPM_errors as long
-public LPM_warnings as long
-
 '''    1234567890123456
 
-dim LPM_error_msg(15) as string
-  LPM_error_msg(1) = "ERROR: static signal out of allowed range"
-  LPM_error_msg(2) = "ERROR: laser temperature (analog) too high"
-  LPM_error_msg(3) = "ERROR: laser temperature (digital) too high"
-  LPM_error_msg(4) = "ERROR: laser current (analog) too high"
-  LPM_error_msg(5) = "ERROR: laser current (digital) too high"
-  LPM_error_msg(6) = "ERROR: sensor supply out of allowed range"
-  LPM_error_msg(7) = "WARNING: current: pane heating laser head"
-  LPM_error_msg(8) = "WARNING: current: pane heating receiver head"
-  LPM_error_msg(9) = "WARNING: temperature sensor"
-  LPM_error_msg(10) = "WARNING: heating supply out of allowed range"
-  LPM_error_msg(11) = "WARNING: current: heating housing"
-  LPM_error_msg(12) = "WARNING: current: heating heads"
-  LPM_error_msg(13) = "WARNING: current: heating carriers"
-  LPM_error_msg(14) = "WARNING: control output laser power high"
-  LPM_error_msg(15) = "not used"
+dim LPM_error_msg(6) as string
+  LPM_error_msg(1) = "static signal out of allowed range"
+  LPM_error_msg(2) = "laser temperature (analog) too high"
+  LPM_error_msg(3) = "laser temperature (digital) too high"
+  LPM_error_msg(4) = "laser current (analog) too high"
+  LPM_error_msg(5) = "laser current (digital) too high"
+  LPM_error_msg(6) = "sensor supply out of allowed range"
 
-sub check_LPM_errors
+dim LPM_warning_msg(8) as string
+  LPM_error_msg(1) = "current: pane heating laser head"
+  LPM_error_msg(2) = "current: pane heating receiver head"
+  LPM_error_msg(3) = "temperature sensor"
+  LPM_error_msg(4) = "heating supply out of allowed range"
+  LPM_error_msg(5) = "current: heating housing"
+  LPM_error_msg(6) = "current: heating heads"
+  LPM_error_msg(7) = "current: heating carriers"
+  LPM_error_msg(8) = "control output laser power high"
+
+sub get_LPM_errors
     dim s as string * 30
-    dim errors(15) as string * 1
-    dim bitmap as long
+    dim flags(15) as string * 1 ' 6 errors, 8 warnings, 1 not used
+    dim counts(15) as long
+    dim error_map as long
+    dim warning_map as long
     send_cmd(LPM_ID, "DX")
     serialin(cs,LPM__PORT,300,chr(13),30)
-    SplitStr (s(),errors,CHR(59),521,4)
-    '' look at each entry, compare with current value, message if transition 
-    for i = 1 to 15 do
-        if errors(i) = "0" AND LPM_errmap &&
-        
+    splitStr (s,flags,CHR(59),521,4)
 
+    '' ALSO: get and parse counts via FM command
+
+    '' look at each error flag::
+    for i = 1 to 6 do
+        if flag i is true
+            if error_map bit i was false
+                logmsg( LPM_error_msg(i), "ACTIVE", counts(i) & " times")
+            endif
+            set error_map bit i true
+        else ' flag i is false
+            if error_map bit i was true
+                logmsg( LPM_error_msg(i), "NOT ACTIVE", "count: " & counts(i))
+            endif
+            set error_map bit i false
+        endif
     next i
+
+    '' look at each warning flag::
+    for i = 1 to 8 do
+        if flag i + 6 is true
+            if warning_map bit i was false
+                logmsg( LPM_warning_msg(i), "ACTIVE", counts(i+6) & " times")
+            endif
+            set warning_map bit i true
+        else ' flag i + 6 is false
+            if warning_map bit i was true
+                logmsg( LPM_warning_msg(i), "NOT ACTIVE", "count: " & counts(i+6))
+            endif
+            set warning_map bit i false
+        endif
+    next i
+
+    '' at this point, ACTIVE or NOT ACTIVE messages have been logged, and
+    '' error and warning bitmaps have been updated to reflect the current state
 
 endsub ' check_LPM_errors
 
@@ -198,7 +218,6 @@ function check_telegram_5 as boolean
 endFunction ' check_telegram_5()
 
 dim time(9)
-
 
 beginProg
   
