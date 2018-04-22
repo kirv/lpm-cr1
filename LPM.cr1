@@ -1,5 +1,5 @@
 '' LPM.cr1 -- CR1000 program for Laser Precipitation Monitor at Fairbanks ARM test site
-'' 20180420.4 Ken.Irving@alaska.edu
+'' 20180421.6 Ken.Irving@alaska.edu
 
 ConstTable
 
@@ -57,8 +57,7 @@ sub send_cmd(id as long, cmd as string, optional value=99999 as long)
     serialOut (LPM__COMMPORT,s,"",0,0)
 endsub ' send_cmd
 
-
-'' command DD: Get Diagnostic Data
+'' command DD: Get Diagnostic Data, representing the state of the instrument
 public T_interior   : units T_interior   = degC ' 1 - "interior temp [degC]"
 public T_laserdrvr  : units T_laserdrvr  = degC ' 2 - "temp of laser driver 0-80 degC"
 public I_laser      : units I_laser      = mA   ' 3 - "mean value laser current [1/100 mA]"
@@ -73,25 +72,34 @@ public I_housing    : units I_housing    = mA   ' 11 - "current heating housing 
 public I_heads      : units I_heads      = mA   ' 12 - "current heating heads [mA]"
 public I_carriers   : units I_carriers   = mA   ' 13 - "current heating carriers [mA]"
 
+'' commands DX and FM: Get Self Diagnostic, and Get Error Count
+dim LPM_errors(15) as boolean
+dim LPM_error_counts(15) as long
+
+'' bit-mapped error/warning flags
+public LPM_error_flags as long
+
+'''    1234567890123456
+
 DataTable(LPM_diagnostics,1,-1)
-  DataInterval(0,60,Min,10)
+  DataInterval(0,60,Sec,10)
   sample(1,progSig,uint2)
-  average(1, T_interior,fp2,0)
-  average(1, T_laserdrvr,fp2,0)
-  average(1, I_laser,fp2,0)
-  average(1, V_control,fp2,0)
-  average(1, V_optical,fp2,0)
-  average(1, V_sensor,fp2,0)
-  average(1, I_laser_pane,fp2,0)
-  average(1, I_recvr_pane,fp2,0)
-  average(1, T_ambient,fp2,0)
-  average(1, V_heating,fp2,0)
-  average(1, I_housing,fp2,0)
-  average(1, I_heads,fp2,0)
-  average(1, I_carriers,fp2,0)
+  sample(1,T_interior,fp2)
+  sample(1,T_laserdrvr,fp2)
+  sample(1,I_laser,fp2)
+  sample(1,V_control,fp2)
+  sample(1,V_optical,fp2)
+  sample(1,V_sensor,fp2)
+  sample(1,I_laser_pane,fp2)
+  sample(1,I_recvr_pane,fp2)
+  sample(1,T_ambient,fp2)
+  sample(1,V_heating,fp2)
+  sample(1,I_housing,fp2)
+  sample(1,I_heads,fp2)
+  sample(1,I_carriers,fp2)
+  sample(1,LPM_error_flags,uint2)
 EndTable
 
-''' 1234567890123456
 sub get_LPM_state
     dim cmd_DD_output as string * 
     dim diag(13) as float
@@ -119,6 +127,9 @@ dim LPM_error_counts(15) as long
 
 '' bit-mapped error/warning flags
 public LPM_errors as long
+public LPM_warnings as long
+
+'''    1234567890123456
 
 dim LPM_error_msg(15) as string
   LPM_error_msg(1) = "ERROR: static signal out of allowed range"
@@ -138,12 +149,19 @@ dim LPM_error_msg(15) as string
   LPM_error_msg(15) = "not used"
 
 sub check_LPM_errors
-    dim cmd_DX_out as string * 30
-    dim LPM_errors(15) as boolean
-    dim current_bitmap as long
+    dim s as string * 30
+    dim errors(15) as string * 1
+    dim bitmap as long
     send_cmd(LPM_ID, "DX")
-    serialin(cmd_DX_out,LPM__PORT,300,chr(13),30)
-    SplitStr (cmd_DX_out(),LPM_errors,CHR(59),521,4)
+    serialin(cs,LPM__PORT,300,chr(13),30)
+    SplitStr (s(),errors,CHR(59),521,4)
+    '' look at each entry, compare with current value, message if transition 
+    for i = 1 to 15 do
+        if errors(i) = "0" AND LPM_errmap &&
+        
+
+    next i
+
 endsub ' check_LPM_errors
 
     
