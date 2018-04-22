@@ -124,65 +124,61 @@ dim LPM_error_msg(6) as string
   LPM_error_msg(6) = "sensor supply out of allowed range"
 
 dim LPM_warning_msg(8) as string
-  LPM_error_msg(1) = "current: pane heating laser head"
-  LPM_error_msg(2) = "current: pane heating receiver head"
-  LPM_error_msg(3) = "temperature sensor"
-  LPM_error_msg(4) = "heating supply out of allowed range"
-  LPM_error_msg(5) = "current: heating housing"
-  LPM_error_msg(6) = "current: heating heads"
-  LPM_error_msg(7) = "current: heating carriers"
-  LPM_error_msg(8) = "control output laser power high"
+  LPM_warning_msg(1) = "current: pane heating laser head"
+  LPM_warning_msg(2) = "current: pane heating receiver head"
+  LPM_warning_msg(3) = "temperature sensor"
+  LPM_warning_msg(4) = "heating supply out of allowed range"
+  LPM_warning_msg(5) = "current: heating housing"
+  LPM_warning_msg(6) = "current: heating heads"
+  LPM_warning_msg(7) = "current: heating carriers"
+  LPM_warning_msg(8) = "control output laser power high"
+
+public DX_output as string * 30
+public FM_output as string * 80
 
 sub get_LPM_errors
-    dim s as string * 30
-    dim flags(15) as string * 1 ' 6 errors, 8 warnings, 1 not used
-    dim counts(15) as long
-    dim error_map as long
-    dim warning_map as long
+    dim flag(15) as long ' 6 errors, 8 warnings, 1 not used
+    dim count(15) as long
+    dim mask as long
+    dim i as long
 
-    '' command DX: Get Self Diagnostic -- 0/1 for 6 errors, 8 warnings, 1 not used
+    '' command DX: Get Self Diagnostic -- 0 or 1 for 6 errors, 8 warnings, 1 not used
     send_cmd(LPM_ID, "DX")
-    serialin(s,LPM__PORT,300,chr(13),30)
-    splitStr (s,flags,CHR(59),521,4)
+    serialin(DX_output,LPM__PORT,300,chr(13),30)
+    splitStr (DX_output,flag,CHR(59),521,4)
 
     '' command FM: Get Error Count -- counts for each error and warning flag
     send_cmd(LPM_ID, "FM")
-    serialin(s,LPM__PORT,300,chr(13),30)
-    splitStr (s,counts,CHR(59),521,4)
+    serialin(FM_output,LPM__PORT,300,chr(13),30)
+    splitStr (FM_output,count,CHR(59),521,4)
 
-    '' look at each error flag::
+    '' look at each error flag, emit a message on transition 0 to 1 or 1 to 0:
+    mask = &b000001
     for i = 1 to 6 do
-        if flag i is true
-            if error_map bit i was false
-                logmsg( LPM_error_msg(i), "ACTIVE", counts(i) + " times")
-            endif
-            set error_map bit i true
-        else ' flag i is false
-            if error_map bit i was true
-                logmsg( LPM_error_msg(i), "NOT ACTIVE", "count: " + counts(i))
-            endif
-            set error_map bit i false
+        if LPM_errors & mask = 0 AND flag(i) = 1 then
+            logmsg( "ERROR:", LPM_error_msg(i), "ACTIVE", count(i) + " times")
+            LPM_errors = LPM_errors OR mask 
         endif
+        if LPM_errors & mask > 0 AND flag(i) = 0 then
+            logmsg( "ERROR:", LPM_error_msg(i), "NOT ACTIVE", "count: " + count(i))
+            LPM_errors = LPM_errors NOT mask 
+        endif
+        mask <<= 1 ' &b001 becomes &b010, etc.
     next i
 
-    '' look at each warning flag::
+    '' look at each warning flag:
+    mask = &b00000001
     for i = 1 to 8 do
-        if flag i + 6 is true
-            if warning_map bit i was false
-                logmsg( LPM_warning_msg(i), "ACTIVE", counts(i+6) + " times")
-            endif
-            set warning_map bit i true
-        else ' flag i + 6 is false
-            if warning_map bit i was true
-                logmsg( LPM_warning_msg(i), "NOT ACTIVE", "count: " + counts(i+6))
-            endif
-            set warning_map bit i false
+        if LPM_warnings & mask = 0 AND flag(i+6) = 1 then
+            logmsg( "WARNING:", LPM_warning_msg(i), "ACTIVE", count(i+6) + " times")
+            LPM_warnings = LPM_warnings OR mask 
         endif
+        if LPM_warnings & mask > 0 AND flag(i+6) = 0 then
+            logmsg( "WARNING:", LPM_warning_msg(i), "NOT ACTIVE", "count: " + count(i+6))
+            LPM_warnings = LPM_warnings NOT mask 
+        endif
+        mask <<= 1
     next i
-
-    '' at this point, ACTIVE or NOT ACTIVE messages have been logged, and
-    '' error and warning bitmaps have been updated to reflect the current state
-
 endsub ' check_LPM_errors
 
     
