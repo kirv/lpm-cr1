@@ -10,48 +10,16 @@ ConstTable
     '' instrument operational settings:
     const LPM_ID = 0
     const LPM__COMMPORT = Com1
+    const LPM_DO1__P = 1
+    const LPM_DO2__P = 2
     const LPM_0_PRECIP_HRS = 24
     const MAX_TR5_RETRIES = 10
 
-''''''    1234567890123456
-
 endConstTable
-
-''        1234567890123456
 
 public battery      : units battery = volts 
 public panelTemp    : units panelTemp = deg C
 public progSig as Long
-
-datatable("Messages",1,1000)
-    sample(1,progSig,uint2)
-    sample(1,msg,string)
-endDatatable
-
-sub logmsg(optional s as string="MARK",
-    t as string="", u as string="", v as string="", w as string="")
-    dim msg as string * 80 = s
-    if t != "" then msg += "," & t : if u != "" then msg += "," & u
-    if v != "" then msg += "," & v : if w != "" then msg += "," & w
-    calltable(Messages)
-endsub 'logmsg
-
-sub send_cmd(id as long, cmd as string, optional value=99999 as long)
-    dim s as string
-    dim slen
-    s = ""
-    if value = 99999 then
-        sprintf(s, "%c%02u%s%c", chr(13), id, cmd, chr(13))
-    else
-        sprintf(s, "%c%02u%s%05u%c", chr(13), id, cmd, value, chr(13))
-    endif
-    '' s should now have format "RxxCCR" or "RxxCCnnnnnR"
-    ''     where R=<CR>, xx=ID, CC=command, n=zero-padded arg
-
-    '' proto: serialOut(PORT,OUTSTRING,WAITSTRING,NUMTRIES,TIMEOUT)
-    ''    WAITSTRING: if "", look for echo of each character from instrument
-    serialOut (LPM__COMMPORT,s,"",0,0)
-endsub ' send_cmd
 
 '' command DD: Get Diagnostic Data -- representing the state of the instrument
 public T_interior   : units T_interior   = degC ' 1 - "interior temp [degC]"
@@ -70,6 +38,67 @@ public I_carriers   : units I_carriers   = mA   ' 13 - "current heating carriers
 
 public LPM_errors as long
 public LPM_warnings as long
+
+public DX_output as string * 30
+public FM_output as string * 80
+public DD_output as string * 80
+
+dim TR5_output as string * 2233
+public TR5_output_is_ok as boolean
+public tr5_retries as long
+dim LPM_tr5_data(525) as string
+alias LPM_tr5_data(5)   = LPM_code5m
+alias LPM_tr5_data(15)  = LPM_precipAmount
+
+dim LPM_error_msg(6) as string = {
+    "static signal out of range", 
+    "laser temp (analog) too high", 
+    "laser temp (digital) too high", 
+    "laser current (analog) too high", 
+    "laser current (digital) too high", 
+    "sensor supply out of range" }
+
+dim LPM_warning_msg(8) as string = {
+    "current: pane heating laser head", 
+    "current: pane heating receiver head", 
+    "temperature sensor", 
+    "heating supply out of allowed range", 
+    "current: heating housing", 
+    "current: heating heads", 
+    "current: heating carriers", 
+    "control output laser power high" }
+
+dim time(9)
+
+datatable("Messages",1,1000)
+    sample(1,progSig,uint2)
+    sample(1,msg,string)
+endDatatable
+
+sub logmsg(optional s as string="MARK",
+    t as string="", u as string="", v as string="", w as string="")
+    dim msg as string * 80 = s
+    if t != "" then msg += "," & t : if u != "" then msg += "," & u
+    if v != "" then msg += "," & v : if w != "" then msg += "," & w
+    calltable(Messages)
+endsub 'logmsg
+
+sub lpm_cmd(id as long, cmd as string, optional value=99999 as long)
+    dim s as string
+    dim slen
+    s = ""
+    if value = 99999 then
+        sprintf(s, "%c%02u%s%c", chr(13), id, cmd, chr(13))
+    else
+        sprintf(s, "%c%02u%s%05u%c", chr(13), id, cmd, value, chr(13))
+    endif
+    '' s should now have format "RxxCCR" or "RxxCCnnnnnR"
+    ''     where R=<CR>, xx=ID, CC=command, n=zero-padded arg
+
+    '' proto: serialOut(PORT,OUTSTRING,WAITSTRING,NUMTRIES,TIMEOUT)
+    ''    WAITSTRING: if "", look for echo of each character from instrument
+    serialOut (LPM__COMMPORT,s,"",0,0)
+endsub ' lpm_cmd
 
 DataTable(LPM_state,1,4*128*24*60)
   DataInterval(0,60,Sec,0)
@@ -93,10 +122,9 @@ DataTable(LPM_state,1,4*128*24*60)
 EndTable
 
 sub get_LPM_state
-    dim cmd_DD_output as string * 
     dim diag(13) as float
-    send_cmd(LPM_ID, "DD")
-    serialin(cmd_DD_output,LPM__PORT,300,chr(13),2233)
+    lpm_cmd(LPM_ID, "DD")
+    serialin(DD_output,LPM__PORT,300,chr(13),2233)
     T_interior = diag(1)
     T_laserdrvr = diag(2)       ' "temp of laser driver 0-80 degC"
     I_laser     = diag(3)/100   ' "mean value laser current [1/100 mA]"
@@ -113,41 +141,18 @@ sub get_LPM_state
 endsub ' get_LPM_state
 
 
-'''    1234567890123456
-
-dim LPM_error_msg(6) as string
-  LPM_error_msg(1) = "static signal out of allowed range"
-  LPM_error_msg(2) = "laser temperature (analog) too high"
-  LPM_error_msg(3) = "laser temperature (digital) too high"
-  LPM_error_msg(4) = "laser current (analog) too high"
-  LPM_error_msg(5) = "laser current (digital) too high"
-  LPM_error_msg(6) = "sensor supply out of allowed range"
-
-dim LPM_warning_msg(8) as string
-  LPM_warning_msg(1) = "current: pane heating laser head"
-  LPM_warning_msg(2) = "current: pane heating receiver head"
-  LPM_warning_msg(3) = "temperature sensor"
-  LPM_warning_msg(4) = "heating supply out of allowed range"
-  LPM_warning_msg(5) = "current: heating housing"
-  LPM_warning_msg(6) = "current: heating heads"
-  LPM_warning_msg(7) = "current: heating carriers"
-  LPM_warning_msg(8) = "control output laser power high"
-
-public DX_output as string * 30
-public FM_output as string * 80
-
 sub get_LPM_errors
     dim flag(15) as long ' 6 errors, 8 warnings, 1 not used
     dim count(15) as long
     dim i as long
 
     '' command DX: Get Self Diagnostic -- 0 or 1 for 6 errors, 8 warnings, 1 not used
-    send_cmd(LPM_ID, "DX")
+    lpm_cmd(LPM_ID, "DX")
     serialin(DX_output,LPM__PORT,300,chr(13),30)
     splitStr (DX_output,flag,CHR(59),521,4)
 
     '' command FM: Get Error Count -- counts for each error and warning flag
-    send_cmd(LPM_ID, "FM")
+    lpm_cmd(LPM_ID, "FM")
     serialin(FM_output,LPM__PORT,300,chr(13),30)
     splitStr (FM_output,count,CHR(59),521,4)
 
@@ -158,7 +163,7 @@ sub get_LPM_errors
             LPM_errors = LPM_errors OR &b01 << (i-1) 
         endif
         if LPM_errors & &b01 << (i-1) > 0 AND flag(i) = 0 then
-            logmsg( "ERROR:", LPM_error_msg(i), "NOT ACTIVE", "count: " + count(i))
+            logmsg( "ERROR:", LPM_error_msg(i), "NOT ACTIVE")
             LPM_errors = LPM_errors NOT &b01 << (i-1) 
         endif
     next i
@@ -170,38 +175,30 @@ sub get_LPM_errors
             LPM_warnings = LPM_warnings OR &b01 << (i-1) 
         endif
         if LPM_warnings & &b01 << (i-1) > 0 AND flag(i+6) = 0 then
-            logmsg( "WARNING:", LPM_warning_msg(i), "NOT ACTIVE", "count: " + count(i+6))
+            logmsg( "WARNING:", LPM_warning_msg(i), "NOT ACTIVE")
             LPM_warnings = LPM_warnings NOT &b01 << (i-1) 
         endif
     next i
 endsub ' check_LPM_errors
 
     
-'' Data Telegram 5: Synop, Metar, Disdrometer, Auxiliary Measuring Channels
-dim LPM_telegram_5 as string * 2233
-public telegram_5_is_ok as boolean
-public tr5_retries as long
-dim LPM_tr5_data(525) as string
-alias LPM_tr5_data(5)   = LPM_code5m
-alias LPM_tr5_data(15)  = LPM_precipAmount
-
-DataTable(LPM_data,1,telegram_5_is_ok)
+DataTable(LPM_data,1,TR5_output_is_ok)
   dataInterval(0,60,Sec,10)
-  sample(1,LPM_telegram_5,String)
+  sample(1,TR5_output,String)
   sample(1,progSig,uint2)
   sample(1,tr5_retries,uint2)
 EndTable
     
-function check_telegram_5 as boolean
-    dim i = 0
-    dim a
-    dim sum = 0
-    if len(data_telegram_5) != 2233 then return False
-    if ascii(data_telegram_5(1,1,1)) != 2 then return False
-    if ascii(data_telegram_5(1,1,2233)) != 3 then return False
+function check_TR5_output as boolean
+    dim i as long
+    dim a as string * 1
+    dim sum as long = 0
+    if strlen(TR5_output) != 2233 then return False
+    if ascii(TR5_output(1,1,1)) != 2 then return False
+    if ascii(TR5_output(1,1,2233)) != 3 then return False
     do
         i += 1
-        a = ascii(data_telegram_5(1,1,i))
+        a = ascii(TR5_output(1,1,i))
         if i = 2228 OR i = 2229 then
             '' convert checksum hex nibble "1" to 1, "A" to 10, etc.
             if a>=48 AND a<=57 then a=a-48 else if a>=65 AND a<=70 then a=a-55
@@ -210,11 +207,9 @@ function check_telegram_5 as boolean
         sum += a
     loop until i = 2233
     '' adding the checksum to the sum of bytes should result in 0x00 in last byte
-    if sum && hex(FF00) != 0 then return False
+    if sum << 24 != 0 then return False
     return True
-endFunction ' check_telegram_5()
-
-dim time(9)
+endFunction ' check_TR5_output()
 
 beginProg
   
@@ -222,28 +217,32 @@ beginProg
 
     '' the LPM powers up at 9600, so match that, set LPM to 115200, and match that:
     serialOpen (LPM__COMMPORT,9600,0,300,10000)
-    send_cmd(LPM_ID,"BR",9)                        '' 5:9600, 6:19200, 9:115200
+    '' put instrument in config mode:
+    lpm_cmd(LPM_ID, "KY", 1)
+    lpm_cmd(LPM_ID,"BR",9)                        '' 5:9600, 6:19200, 9:115200
     serialOpen (LPM__COMMPORT,115200,0,300,10000)
     log_message("LPM set to 115200 using " + LPM__COMMPORT)
 
-    '' set instrument to "configuration" command mode:
-    send_cmd(LPM_ID, "KY", 1)
 
     '' disable automatic telegram output (will use TR:5 instead)
-    send_cmd(LPM_ID, "TM", 0)
+    lpm_cmd(LPM_ID, "TM", 0)
 
     '' set the LPM clock from the logger at startup:
     realtime(time) '' 1:year, 2:month, 3:day, 4:hour, 5:minute, 6:second
-    send_cmd(LPM_ID, "ZY", time(1) mod 100)
-    send_cmd(LPM_ID, "ZN", time(2))
-    send_cmd(LPM_ID, "zd", time(3))
-    send_cmd(LPM_ID, "ZH", time(4))
-    send_cmd(LPM_ID, "ZM", time(5))
-    send_cmd(LPM_ID, "ZS", time(6))
+    lpm_cmd(LPM_ID, "ZY", time(1) mod 100)
+    lpm_cmd(LPM_ID, "ZN", time(2))
+    lpm_cmd(LPM_ID, "zd", time(3))
+    lpm_cmd(LPM_ID, "ZH", time(4))
+    lpm_cmd(LPM_ID, "ZM", time(5))
+    lpm_cmd(LPM_ID, "ZS", time(6))
     logmsg("LPM","CLOCK SET:", get_cmd("ZT"), get_cmd("ZB") & " hrs running")
+
+    '' configure digital outputs
+    lpm_cmd(LPM_ID, "D1", 1)
+    lpm_cmd(LPM_ID, "D2", 19)
     
-    '' set instrument back to "normal" command mode:
-    send_cmd(LPM_ID, "KY", 0)
+    '' put instrument in normal command mode:
+    lpm_cmd(LPM_ID, "KY", 0)
 
     Scan (60,sec,0,0)
         panelTemp (panelTemp,_60Hz)
@@ -253,19 +252,23 @@ beginProg
         tr5_retries = -1
         do
             tr5_retries += 1
-            send_cmd(LPM_ID, "TY", 5)
-            serialIn(LPM_telegram_5,LPM__COMMPORT,300,chr(3),2333)
-            telegram_5_is_ok = check_telegram_5
+            lpm_cmd(LPM_ID, "TY", 5)
+            serialIn(TR5_output,LPM__COMMPORT,300,chr(3),2333)
+            TR5_output_is_ok = check_TR5_output
             delay(2,sec)
-        until telegram_5_is_ok OR tr5_retries > MAX_TR5_RETRIES
+        until TR5_output_is_ok OR tr5_retries > MAX_TR5_RETRIES
         callTable LPM_data
   
         '' parse the data we want out of the string
-        SplitStr (LPM_tr5_data(),LPM_telegram_5,CHR(59),521,4)
+        SplitStr (LPM_tr5_data(),TR5_output,CHR(59),521,4)
           
         get_LPM_state
         get_LPM_errors
         callTable LPM_state
+
+        '' read LPM digital output channels 
+        periodAvg(x, LPM_DO1__P, 0, 0)
+        periodAvg(x, LPM_DO2__P, 0, 0)
 
         if iftime(midnight) then    '' <-- PSEUDO-CODE!
             '' emit message with several parameters, then zero precip total:
@@ -274,7 +277,7 @@ beginProg
                 "errors:" + LPM_errors,
                 "warnings:" + LPM_warnings, 
                 LPM_precip_qty & " mm in " & get_cmd("PT") & " hrs")
-            send_cmd(LPM_ID, "RA")
+            lpm_cmd(LPM_ID, "RA")
         endif
     NextScan
 EndProg
