@@ -1,5 +1,5 @@
 '' LPM.cr1 -- CR1000 program for Laser Precipitation Monitor at Fairbanks ARM test site
-'' 20180422.4 Ken.Irving@alaska.edu
+'' 20180425.6 Ken.Irving@alaska.edu
 
 ConstTable
 
@@ -13,7 +13,7 @@ ConstTable
     const LPM_DO1__P = 1
     const LPM_DO2__P = 2
     const LPM_0_PRECIP_HRS = 24
-    const MAX_TR5_RETRIES = 10
+    const MAX_TR5_RETRIES = 5
 
 endConstTable
 
@@ -22,19 +22,19 @@ public panelTemp    : units panelTemp = deg C
 public progSig as Long
 
 '' command DD: Get Diagnostic Data -- representing the state of the instrument
-public T_interior   : units T_interior   = degC ' 1 - "interior temp [degC]"
-public T_laserdrvr  : units T_laserdrvr  = degC ' 2 - "temp of laser driver 0-80 degC"
-public I_laser      : units I_laser      = mA   ' 3 - "mean value laser current [1/100 mA]"
-public V_control    : units V_control    = mV   ' 4 - "control voltage [mV] ref value:  ' 4010+/-5"
-public V_optical    : units V_optical    = mV   ' 5 - "optical control [mV] / control variable"
-public V_sensor     : units V_sensor     = V    ' 6 - "voltage sensor supply [1/10V]"
-public I_laser_pane : units I_laser_pane = mA   ' 7 - "current page heating laser head [mA]"
-public I_recvr_pane : units I_recvr_pane = mA   ' 8 - "current page heating receiver head [mA]"
-public T_ambient    : units T_ambient    = degC ' 9 - "ambient temp [degC]"
-public V_heating    : units V_heating    = V    ' 10 - "voltage heating supply [1/10V]"
-public I_housing    : units I_housing    = mA   ' 11 - "current heating housing [mA]"
-public I_heads      : units I_heads      = mA   ' 12 - "current heating heads [mA]"
-public I_carriers   : units I_carriers   = mA   ' 13 - "current heating carriers [mA]"
+public T_interior   : units T_interior   = degC ' 1: "interior temp [degC]"
+public T_laserdrvr  : units T_laserdrvr  = degC ' 2: "temp of laser driver 0-80 degC"
+public I_laser      : units I_laser      = mA   ' 3: "mean value laser current [1/100 mA]"
+public V_control    : units V_control    = mV   ' 4: "control voltage [mV] ref value:  ' 4010+/-5"
+public V_optical    : units V_optical    = mV   ' 5: "optical control [mV] / control variable"
+public V_sensor     : units V_sensor     = V    ' 6: "voltage sensor supply [1/10V]"
+public I_laser_pane : units I_laser_pane = mA   ' 7: "current page heating laser head [mA]"
+public I_recvr_pane : units I_recvr_pane = mA   ' 8: "current page heating receiver head [mA]"
+public T_ambient    : units T_ambient    = degC ' 9: "ambient temp [degC]"
+public V_heating    : units V_heating    = V    ' 10: "voltage heating supply [1/10V]"
+public I_housing    : units I_housing    = mA   ' 11: "current heating housing [mA]"
+public I_heads      : units I_heads      = mA   ' 12: "current heating heads [mA]"
+public I_carriers   : units I_carriers   = mA   ' 13: "current heating carriers [mA]"
 
 public LPM_errors as long
 public LPM_warnings as long
@@ -45,47 +45,61 @@ public DD_output as string * 80
 
 dim TR5_output as string * 2233
 public TR5_output_is_ok as boolean
-public tr5_retries as long
-dim LPM_tr5_data(525) as string
-alias LPM_tr5_data(5)   = LPM_code5m
-alias LPM_tr5_data(15)  = LPM_precipAmount
+public TR5_retries as long
+dim TR5_data(525) as string
+alias TR5_data(5)   = LPM_code5m
+alias TR5_data(15)  = LPM_precipAmount
 
-dim LPM_error_msg(6) as string = {
-    "static signal out of range", 
-    "laser temp (analog) too high", 
-    "laser temp (digital) too high", 
-    "laser current (analog) too high", 
-    "laser current (digital) too high", 
+dim LPM_error_msg(6) as string = { _
+    "static signal out of range",  _
+    "laser temp (analog) too high",  _
+    "laser temp (digital) too high",  _
+    "laser current (analog) too high",  _
+    "laser current (digital) too high",  _
     "sensor supply out of range" }
 
-dim LPM_warning_msg(8) as string = {
-    "current: pane heating laser head", 
-    "current: pane heating receiver head", 
-    "temperature sensor", 
-    "heating supply out of allowed range", 
-    "current: heating housing", 
-    "current: heating heads", 
-    "current: heating carriers", 
+dim LPM_warning_msg(8) as string = { _
+    "current: pane heating laser head",  _
+    "current: pane heating receiver head",  _
+    "temperature sensor",  _
+    "heating supply out of allowed range",  _
+    "current: heating housing",  _
+    "current: heating heads",  _
+    "current: heating carriers",  _
     "control output laser power high" }
 
 dim time(9)
+dim msg as string * 80
 
-datatable("Messages",1,1000)
+dataTable("Messages",1,1000)
     sample(1,progSig,uint2)
     sample(1,msg,string)
-endDatatable
+endTable
 
-sub logmsg(optional s as string="MARK",
-    t as string="", u as string="", v as string="", w as string="")
-    dim msg as string * 80 = s
-    if t != "" then msg += "," & t : if u != "" then msg += "," & u
-    if v != "" then msg += "," & v : if w != "" then msg += "," & w
+sub logmsg_v1(optional s as string = "MARK", _
+    optional t as string = "", _
+    optional u as string = "", _
+    optional v as string = "", _
+    optional w as string = "")
+    msg = s
+    if t <> "" then msg &= "," & t : if u <> "" then msg &= "," & u
+    if v <> "" then msg &= "," & v : if w <> "" then msg &= "," & w
     calltable(Messages)
 endsub 'logmsg
 
-sub lpm_cmd(id as long, cmd as string, optional value=99999 as long)
+sub logmsg(optional s as string = "MARK", _
+    optional t as string = "", : optional u as string = "", _
+    optional v as string = "", : optional w as string = "")
+    msg = s & " " & 
+    if t <> "" then msg &= "," & t
+    if u <> "" then msg &= "," & u
+    if v <> "" then msg &= "," & v
+    if w <> "" then msg &= "," & w
+    calltable(Messages)
+endsub 'logmsg
+
+sub lpm_cmd(id as long, cmd as string, optional value as long = 99999)
     dim s as string
-    dim slen
     s = ""
     if value = 99999 then
         sprintf(s, "%c%02u%s%c", chr(13), id, cmd, chr(13))
@@ -99,6 +113,13 @@ sub lpm_cmd(id as long, cmd as string, optional value=99999 as long)
     ''    WAITSTRING: if "", look for echo of each character from instrument
     serialOut (LPM__COMMPORT,s,"",0,0)
 endsub ' lpm_cmd
+
+function get_lpm_cmd(id as long, cmd as string, optional value as long = 99999)
+    dim s as string * 80
+    lpm_cmd(id, cmd, value)
+    serialin(s,LPM__COMMPORT,300,chr(13),2233)
+    return s
+endFunction ' get_lpm_cmd()
 
 DataTable(LPM_state,1,4*128*24*60)
   DataInterval(0,60,Sec,0)
@@ -118,13 +139,13 @@ DataTable(LPM_state,1,4*128*24*60)
   sample(1,I_carriers,fp2)
   sample(1,LPM_errors,uint2)
   sample(1,LPM_warnings,uint2)
-  sample(1,LPM_tr5_retries,uint2)
+  sample(1,TR5_retries,uint2)
 EndTable
 
 sub get_LPM_state
     dim diag(13) as float
     lpm_cmd(LPM_ID, "DD")
-    serialin(DD_output,LPM__PORT,300,chr(13),2233)
+    serialin(DD_output,LPM__COMMPORT,300,chr(13),2233)
     T_interior = diag(1)
     T_laserdrvr = diag(2)       ' "temp of laser driver 0-80 degC"
     I_laser     = diag(3)/100   ' "mean value laser current [1/100 mA]"
@@ -148,54 +169,54 @@ sub get_LPM_errors
 
     '' command DX: Get Self Diagnostic -- 0 or 1 for 6 errors, 8 warnings, 1 not used
     lpm_cmd(LPM_ID, "DX")
-    serialin(DX_output,LPM__PORT,300,chr(13),30)
-    splitStr (DX_output,flag,CHR(59),521,4)
+    serialin(DX_output,LPM__COMMPORT,300,chr(13),30)
+    splitStr (flag(),DX_output,CHR(59),521,2)
 
     '' command FM: Get Error Count -- counts for each error and warning flag
     lpm_cmd(LPM_ID, "FM")
-    serialin(FM_output,LPM__PORT,300,chr(13),30)
-    splitStr (FM_output,count,CHR(59),521,4)
+    serialin(FM_output,LPM__COMMPORT,300,chr(13),30)
+    splitStr (count(),FM_output,CHR(59),521,2)
 
     '' look at each error flag, emit a message on transition 0 to 1 or 1 to 0:
-    for i = 1 to 6 do
-        if LPM_errors & &b01 << (i-1) = 0 AND flag(i) = 1 then
+    for i = 1 to 6
+        if LPM_errors AND &b01 << (i-1) = 0 AND flag(i) = 1 then
             logmsg( "ERROR:", LPM_error_msg(i), "ACTIVE", count(i) + " times")
             LPM_errors = LPM_errors OR &b01 << (i-1) 
         endif
-        if LPM_errors & &b01 << (i-1) > 0 AND flag(i) = 0 then
+        if LPM_errors AND &b01 << (i-1) > 0 AND flag(i) = 0 then
             logmsg( "ERROR:", LPM_error_msg(i), "NOT ACTIVE")
-            LPM_errors = LPM_errors NOT &b01 << (i-1) 
+            LPM_errors = LPM_errors OR NOT &b01 << (i-1) 
         endif
     next i
 
     '' look at each warning flag:
-    for i = 1 to 8 do
-        if LPM_warnings & &b01 << (i-1) = 0 AND flag(i+6) = 1 then
+    for i = 1 to 8
+        if LPM_warnings AND &b01 << (i-1) = 0 AND flag(i+6) = 1 then
             logmsg( "WARNING:", LPM_warning_msg(i), "ACTIVE", count(i+6) + " times")
             LPM_warnings = LPM_warnings OR &b01 << (i-1) 
         endif
-        if LPM_warnings & &b01 << (i-1) > 0 AND flag(i+6) = 0 then
+        if LPM_warnings AND &b01 << (i-1) > 0 AND flag(i+6) = 0 then
             logmsg( "WARNING:", LPM_warning_msg(i), "NOT ACTIVE")
-            LPM_warnings = LPM_warnings NOT &b01 << (i-1) 
+            LPM_warnings = LPM_warnings OR NOT &b01 << (i-1) 
         endif
     next i
 endsub ' check_LPM_errors
 
     
-DataTable(LPM_data,1,TR5_output_is_ok)
+DataTable(LPM_data,TR5_output_is_ok,-1)
   dataInterval(0,60,Sec,10)
   sample(1,TR5_output,String)
   sample(1,progSig,uint2)
-  sample(1,tr5_retries,uint2)
+  sample(1,TR5_retries,uint2)
 EndTable
     
 function check_TR5_output as boolean
     dim i as long
     dim a as string * 1
     dim sum as long = 0
-    if strlen(TR5_output) != 2233 then return False
-    if ascii(TR5_output(1,1,1)) != 2 then return False
-    if ascii(TR5_output(1,1,2233)) != 3 then return False
+    if len(TR5_output) <> 2233 then return False
+    if ascii(TR5_output(1,1,1)) <> 2 then return False
+    if ascii(TR5_output(1,1,2233)) <> 3 then return False
     do
         i += 1
         a = ascii(TR5_output(1,1,i))
@@ -207,7 +228,7 @@ function check_TR5_output as boolean
         sum += a
     loop until i = 2233
     '' adding the checksum to the sum of bytes should result in 0x00 in last byte
-    if sum << 24 != 0 then return False
+    if sum << 24 <> 0 then return False
     return True
 endFunction ' check_TR5_output()
 
@@ -215,13 +236,15 @@ beginProg
   
     progSig = status.ProgSignature
 
+    logmsg()
+
     '' the LPM powers up at 9600, so match that, set LPM to 115200, and match that:
     serialOpen (LPM__COMMPORT,9600,0,300,10000)
     '' put instrument in config mode:
     lpm_cmd(LPM_ID, "KY", 1)
     lpm_cmd(LPM_ID,"BR",9)                        '' 5:9600, 6:19200, 9:115200
     serialOpen (LPM__COMMPORT,115200,0,300,10000)
-    log_message("LPM set to 115200 using " + LPM__COMMPORT)
+    logmsg("LPM set to 115200 using " + LPM__COMMPORT)
 
 
     '' disable automatic telegram output (will use TR:5 instead)
@@ -235,7 +258,7 @@ beginProg
     lpm_cmd(LPM_ID, "ZH", time(4))
     lpm_cmd(LPM_ID, "ZM", time(5))
     lpm_cmd(LPM_ID, "ZS", time(6))
-    logmsg("LPM","CLOCK SET:", get_cmd("ZT"), get_cmd("ZB") & " hrs running")
+    logmsg("LPM","CLOCK SET:", get_lpm_cmd(LPM_ID,"ZT"), get_lpm_cmd(LPM_ID,"ZB") & " hrs running")
 
     '' configure digital outputs
     lpm_cmd(LPM_ID, "D1", 1)
@@ -249,35 +272,38 @@ beginProg
         battery (battery)
 
         '' every minute, get telegram 5 from the LPM:
-        tr5_retries = -1
+        TR5_retries = -1
         do
-            tr5_retries += 1
+            TR5_retries += 1
             lpm_cmd(LPM_ID, "TY", 5)
             serialIn(TR5_output,LPM__COMMPORT,300,chr(3),2333)
-            TR5_output_is_ok = check_TR5_output
-            delay(2,sec)
-        until TR5_output_is_ok OR tr5_retries > MAX_TR5_RETRIES
+            if check_TR5_output() then TR5_output_is_ok = True
+            delay(0,2,sec)
+        loop until TR5_output_is_ok OR TR5_retries > MAX_TR5_RETRIES
         callTable LPM_data
   
         '' parse the data we want out of the string
-        SplitStr (LPM_tr5_data(),TR5_output,CHR(59),521,4)
+        SplitStr (TR5_data(),TR5_output,CHR(59),521,2)
           
         get_LPM_state
         get_LPM_errors
         callTable LPM_state
 
-        '' read LPM digital output channels 
-        periodAvg(x, LPM_DO1__P, 0, 0)
-        periodAvg(x, LPM_DO2__P, 0, 0)
+        '' read LPM digital output channels -- COMMENTED-OUT FOR NOW
+      ' periodAvg(x, LPM_DO1__P, 0, 0)
+      ' periodAvg(x, LPM_DO2__P, 0, 0)
 
-        if iftime(midnight) then    '' <-- PSEUDO-CODE!
+        if timeIntoInterval(0,1,day) then
             '' emit message with several parameters, then zero precip total:
-            logmsg("LPM:" & get_cmd("ZT"),
-                get_cmd("ZB") & " hrs",
-                "errors:" + LPM_errors,
-                "warnings:" + LPM_warnings, 
-                LPM_precip_qty & " mm in " & get_cmd("PT") & " hrs")
+            logmsg("LPM:" & get_lpm_cmd(LPM_ID,"ZT"), _
+                get_lpm_cmd(LPM_ID,"ZB") & " hrs", _
+                "errors:" + LPM_errors, _
+                "warnings:" + LPM_warnings)
+             '' LPM_precip_qty & " mm in " & get_lpm_cmd(LPM_ID,"PT") & " hrs")
             lpm_cmd(LPM_ID, "RA")
         endif
+
+        if timeintointerval(0,5,min) then logmsg()
+
     NextScan
 EndProg
