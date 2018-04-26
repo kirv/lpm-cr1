@@ -1,5 +1,5 @@
 '' LPM.cr1 -- CR1000 program for Laser Precipitation Monitor at Fairbanks ARM test site
-'' 20180425.6 Ken.Irving@alaska.edu
+'' 20180426.5 Ken.Irving@alaska.edu
 
 ConstTable
 
@@ -71,15 +71,14 @@ dim LPM_warning_msg(8) as string = { _
 dim time(9)
 dim msg as string * 80
 
-dataTable("Messages",1,1000)
+dataTable("Messages",1,100)
     sample(1,progSig,uint2)
     sample(1,msg,string)
 endTable
 
 sub logmsg(optional s as string = "MARK", _
-    optional t as string = "", : optional u as string = "", _
-    optional v as string = "", : optional w as string = "") _
-    optional x as string = "", : optional y as string = "")
+    optional t as string = "", optional u as string = "", optional v as string = "", _
+    optional w as string = "", optional x as string = "", optional y as string = "")
     msg = s & " " & t & " " & u & " " & v & " " & w & " " & x & " " & y
     msg = trim(msg)
     calltable(Messages)
@@ -108,7 +107,7 @@ function get_lpm_cmd(id as long, cmd as string, optional value as long = 99999)
     return s
 endFunction ' get_lpm_cmd()
 
-DataTable(LPM_state,1,4*128*24*60)
+DataTable(LPM_state,1,-1)
   DataInterval(0,60,Sec,0)
   sample(1,progSig,uint2)
   sample(1,T_interior,fp2)
@@ -133,6 +132,7 @@ sub get_LPM_state
     dim diag(13) as float
     lpm_cmd(LPM_ID, "DD")
     serialin(DD_output,LPM__COMMPORT,300,chr(13),2233)
+    splitStr (diag(),DD_output,CHR(59),13,2)
     T_interior = diag(1)
     T_laserdrvr = diag(2)       ' "temp of laser driver 0-80 degC"
     I_laser     = diag(3)/100   ' "mean value laser current [1/100 mA]"
@@ -157,12 +157,12 @@ sub get_LPM_errors
     '' command DX: Get Self Diagnostic -- 0 or 1 for 6 errors, 8 warnings, 1 not used
     lpm_cmd(LPM_ID, "DX")
     serialin(DX_output,LPM__COMMPORT,300,chr(13),30)
-    splitStr (flag(),DX_output,CHR(59),521,2)
+    splitStr (flag(),DX_output,CHR(59),15,2)
 
     '' command FM: Get Error Count -- counts for each error and warning flag
     lpm_cmd(LPM_ID, "FM")
     serialin(FM_output,LPM__COMMPORT,300,chr(13),30)
-    splitStr (count(),FM_output,CHR(59),521,2)
+    splitStr (count(),FM_output,CHR(59),15,2)
 
     '' look at each error flag, emit a message on transition 0 to 1 or 1 to 0:
     for i = 1 to 6
@@ -222,7 +222,6 @@ endFunction ' check_TR5_output()
 beginProg
   
     progSig = status.ProgSignature
-
     logmsg()
 
     '' the LPM powers up at 9600, so match that, set LPM to 115200, and match that:
@@ -253,6 +252,8 @@ beginProg
     
     '' put instrument in normal command mode:
     lpm_cmd(LPM_ID, "KY", 0)
+
+    logmsg(time)
 
     Scan (60,sec,0,0)
         panelTemp (panelTemp,_60Hz)
