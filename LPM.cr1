@@ -76,25 +76,12 @@ dataTable("Messages",1,1000)
     sample(1,msg,string)
 endTable
 
-sub logmsg_v1(optional s as string = "MARK", _
-    optional t as string = "", _
-    optional u as string = "", _
-    optional v as string = "", _
-    optional w as string = "")
-    msg = s
-    if t <> "" then msg &= "," & t : if u <> "" then msg &= "," & u
-    if v <> "" then msg &= "," & v : if w <> "" then msg &= "," & w
-    calltable(Messages)
-endsub 'logmsg
-
 sub logmsg(optional s as string = "MARK", _
     optional t as string = "", : optional u as string = "", _
-    optional v as string = "", : optional w as string = "")
-    msg = s & " " & 
-    if t <> "" then msg &= "," & t
-    if u <> "" then msg &= "," & u
-    if v <> "" then msg &= "," & v
-    if w <> "" then msg &= "," & w
+    optional v as string = "", : optional w as string = "") _
+    optional x as string = "", : optional y as string = "")
+    msg = s & " " & t & " " & u & " " & v & " " & w & " " & x & " " & y
+    msg = trim(msg)
     calltable(Messages)
 endsub 'logmsg
 
