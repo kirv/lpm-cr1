@@ -2,7 +2,6 @@
 '' 20180426.5 Ken.Irving@alaska.edu
 
 ConstTable
-
     '' instrument make and model:
     const LPM_NAME  = "Laser Precipitation Monitor"
     const LPM_MODEL = "5.4110.11.100"
@@ -14,7 +13,6 @@ ConstTable
     const LPM_DO2__P = 2
     const LPM_0_PRECIP_HRS = 24
     const MAX_TR5_RETRIES = 5
-
 endConstTable
 
 public battery      : units battery = volts 
@@ -38,11 +36,9 @@ public I_carriers   : units I_carriers   = mA   ' 13: "current heating carriers 
 
 public LPM_errors as long
 public LPM_warnings as long
-
 public DX_output as string * 30
 public FM_output as string * 80
 public DD_output as string * 80
-
 dim TR5_output as string * 2233
 public TR5_output_is_ok as boolean
 public TR5_retries as long
@@ -50,7 +46,7 @@ dim TR5_data(525) as string
 alias TR5_data(5)   = LPM_code5m
 alias TR5_data(15)  = LPM_precipAmount
 
-dim LPM_error_msg(6) as string = { _
+dim LPM_error_msg(6) as string * 40 = { _
     "static signal out of range",  _
     "laser temp (analog) too high",  _
     "laser temp (digital) too high",  _
@@ -58,7 +54,7 @@ dim LPM_error_msg(6) as string = { _
     "laser current (digital) too high",  _
     "sensor supply out of range" }
 
-dim LPM_warning_msg(8) as string = { _
+dim LPM_warning_msg(8) as string * 40 = { _
     "current: pane heating laser head",  _
     "current: pane heating receiver head",  _
     "temperature sensor",  _
@@ -76,9 +72,10 @@ dataTable("Messages",1,100)
     sample(1,msg,string)
 endTable
 
-sub logmsg(optional s as string = "MARK", _
-    optional t as string = "", optional u as string = "", optional v as string = "", _
-    optional w as string = "", optional x as string = "", optional y as string = "")
+sub logmsg(optional s as string * 40 = "MARK", _
+    optional t as string * 40 = "", optional u as string * 40 = "", _
+    optional v as string * 40 = "", optional w as string * 40 = "", _
+    optional x as string * 40 = "", optional y as string * 40 = "")
     msg = s & " " & t & " " & u & " " & v & " " & w & " " & x & " " & y
     msg = trim(msg)
     calltable(Messages)
@@ -148,7 +145,6 @@ sub get_LPM_state
     I_carriers  = diag(13)      ' "current heating carriers [mA]"
 endsub ' get_LPM_state
 
-
 sub get_LPM_errors
     dim flag(15) as long ' 6 errors, 8 warnings, 1 not used
     dim count(15) as long
@@ -167,11 +163,11 @@ sub get_LPM_errors
     '' look at each error flag, emit a message on transition 0 to 1 or 1 to 0:
     for i = 1 to 6
         if LPM_errors AND &b01 << (i-1) = 0 AND flag(i) = 1 then
-            logmsg( "ERROR:", LPM_error_msg(i), "ACTIVE", count(i), "times")
+            logmsg( "ERROR:", LPM_error_msg(i), "( count:", count(i), ")")
             LPM_errors = LPM_errors OR &b01 << (i-1) 
         endif
         if LPM_errors AND &b01 << (i-1) > 0 AND flag(i) = 0 then
-            logmsg( "ERROR:", LPM_error_msg(i), "NOT ACTIVE")
+            logmsg( "error off:", LPM_error_msg(i))
             LPM_errors = LPM_errors OR NOT &b01 << (i-1) 
         endif
     next i
@@ -179,17 +175,44 @@ sub get_LPM_errors
     '' look at each warning flag:
     for i = 1 to 8
         if LPM_warnings AND &b01 << (i-1) = 0 AND flag(i+6) = 1 then
-            logmsg( "WARNING:", LPM_warning_msg(i), "ACTIVE", count(i+6), "times")
+            logmsg( "WARNING:", LPM_warning_msg(i), "( count:", count(i+6), ")")
             LPM_warnings = LPM_warnings OR &b01 << (i-1) 
         endif
         if LPM_warnings AND &b01 << (i-1) > 0 AND flag(i+6) = 0 then
-            logmsg( "WARNING:", LPM_warning_msg(i), "NOT ACTIVE")
+            logmsg( "warning off:", LPM_warning_msg(i))
             LPM_warnings = LPM_warnings OR NOT &b01 << (i-1) 
         endif
     next i
 endsub ' check_LPM_errors
 
-    
+sub test_LPM_msgs
+    dim i as long
+    for i = 1 to 6
+        logmsg( "ERROR:", LPM_error_msg(i), "( count:", 9, ")")
+        logmsg( "error off:", LPM_error_msg(i))
+    next i
+    for i = 1 to 8
+        logmsg( "WARNING:", LPM_warning_msg(i), "( count:", 9, ")")
+        logmsg( "warning off:", LPM_warning_msg(i))
+    next i
+endsub ' check_LPM_errors
+
+sub test_LPM_msgs2
+    dim i as long
+    for i = 1 to 6
+        logmsg( "ERROR:", LPM_error_msg(i), "( count:", 9, ")")
+    next i
+    for i = 1 to 8
+        logmsg( "WARNING:", LPM_warning_msg(i), "( count:", 9, ")")
+    next i
+    for i = 1 to 6
+        logmsg( "error off:", LPM_error_msg(i))
+    next i
+    for i = 1 to 8
+        logmsg( "warning off:", LPM_warning_msg(i))
+    next i
+endsub ' check_LPM_errors
+
 DataTable(LPM_data,TR5_output_is_ok,-1)
   dataInterval(0,60,Sec,10)
   sample(1,TR5_output,String)
@@ -220,7 +243,6 @@ function check_TR5_output as boolean
 endFunction ' check_TR5_output()
 
 beginProg
-  
     progSig = status.ProgSignature
 
     '' the LPM powers up at 9600, so match that, set LPM to 115200, and match that:
@@ -250,6 +272,8 @@ beginProg
     
     '' put instrument in normal command mode:
     lpm_cmd( "KY", 0)
+
+    test_LPM_msgs()
 
     Scan (60,sec,0,0)
         panelTemp (panelTemp,_60Hz)
