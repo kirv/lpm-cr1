@@ -1,5 +1,5 @@
 '' LPM.cr1 -- CR1000 program for Laser Precipitation Monitor at Fairbanks ARM test site
-'' 20180426.5 Ken.Irving@alaska.edu
+'' 20180427.8 Ken.Irving@alaska.edu
 
 ConstTable
     '' instrument make and model:
@@ -8,7 +8,7 @@ ConstTable
 
     '' instrument operational settings:
     const LPM_ID = 0
-    const LPM__COMMPORT = Com1
+    const LPM__COMMPORT = Com1      ' Com1 uses C1=Tx, C2=Rx
     const LPM_DO1__P = 1
     const LPM_DO2__P = 2
     const LPM_0_PRECIP_HRS = 24
@@ -185,34 +185,6 @@ sub get_LPM_errors
     next i
 endsub ' check_LPM_errors
 
-sub test_LPM_msgs
-    dim i as long
-    for i = 1 to 6
-        logmsg( "ERROR:", LPM_error_msg(i), "( count:", 9, ")")
-        logmsg( "error off:", LPM_error_msg(i))
-    next i
-    for i = 1 to 8
-        logmsg( "WARNING:", LPM_warning_msg(i), "( count:", 9, ")")
-        logmsg( "warning off:", LPM_warning_msg(i))
-    next i
-endsub ' check_LPM_errors
-
-sub test_LPM_msgs2
-    dim i as long
-    for i = 1 to 6
-        logmsg( "ERROR:", LPM_error_msg(i), "( count:", 9, ")")
-    next i
-    for i = 1 to 8
-        logmsg( "WARNING:", LPM_warning_msg(i), "( count:", 9, ")")
-    next i
-    for i = 1 to 6
-        logmsg( "error off:", LPM_error_msg(i))
-    next i
-    for i = 1 to 8
-        logmsg( "warning off:", LPM_warning_msg(i))
-    next i
-endsub ' check_LPM_errors
-
 DataTable(LPM_data,TR5_output_is_ok,-1)
   dataInterval(0,60,Sec,10)
   sample(1,TR5_output,String)
@@ -245,16 +217,16 @@ endFunction ' check_TR5_output()
 beginProg
     progSig = status.ProgSignature
 
-    '' the LPM powers up at 9600, so match that, set LPM to 115200, and match that:
+    '' the MD485 is fixed at 9600, so the LPM should be as well
     serialOpen (LPM__COMMPORT,9600,0,300,10000)
     '' put instrument in config mode:
     lpm_cmd("KY", 1)
-    lpm_cmd("BR",9)                        '' 5:9600, 6:19200, 9:115200
-    serialOpen (LPM__COMMPORT,115200,0,300,10000)
-    logmsg("LPM set to 115200")
+    lpm_cmd("BR",5)                        '' 5:9600, 6:19200, 9:115200
+    lpm_cmd("BD",1)                        '' 0:rs422, 1:rs485 (half duplex)
+    logmsg("LPM set to 9600, half duplex")
 
     '' disable automatic telegram output (will use TR:5 instead)
-    lpm_cmd( "TM", 0)
+  ' lpm_cmd( "TM", 0)
 
     '' set the LPM clock from the logger at startup:
     realtime(time) '' 1:year, 2:month, 3:day, 4:hour, 5:minute, 6:second
@@ -267,13 +239,11 @@ beginProg
     logmsg("LPM","CLOCK SET:", get_lpm("ZT"), "runtime:", get_lpm("ZB"), "hrs")
 
     '' configure digital outputs
-    lpm_cmd( "D1", 1)
-    lpm_cmd( "D2", 19)
+  ' lpm_cmd( "D1", 1)
+  ' lpm_cmd( "D2", 19)
     
     '' put instrument in normal command mode:
     lpm_cmd( "KY", 0)
-
-    test_LPM_msgs()
 
     Scan (60,sec,0,0)
         panelTemp (panelTemp,_60Hz)
