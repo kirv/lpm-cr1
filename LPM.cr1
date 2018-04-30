@@ -1,5 +1,5 @@
 '' LPM.cr1 -- CR1000 program for Laser Precipitation Monitor at Fairbanks ARM test site
-'' 20180427.8 Ken.Irving@alaska.edu
+'' 20180429.9 Ken.Irving@alaska.edu
 
 ConstTable
     '' instrument make and model:
@@ -12,7 +12,7 @@ ConstTable
     const LPM_DO1__P = 1
     const LPM_DO2__P = 2
     const LPM_0_PRECIP_HRS = 24
-    const MAX_TR5_RETRIES = 5
+    const MAX_TM5_RETRIES = 3
 endConstTable
 
 public battery      : units battery = volts 
@@ -36,15 +36,16 @@ public I_carriers   : units I_carriers   = mA   ' 13: "current heating carriers 
 
 public LPM_errors as long
 public LPM_warnings as long
-public DX_output as string * 30
-public FM_output as string * 80
-public DD_output as string * 80
-dim TR5_output as string * 2233
-public TR5_output_is_ok as boolean
-public TR5_retries as long
-dim TR5_data(525) as string
-alias TR5_data(5)   = LPM_code5m
-alias TR5_data(15)  = LPM_precipAmount
+public DX_string as string * 30
+public FM_string as string * 80
+public DD_string as string * 80
+dim TM5_string as string * 2233
+public TM5_string_is_ok as boolean
+public TM5_retries as long
+public TM5_timer as long
+dim TM5_data(525) as string
+alias TM5_data(5)   = LPM_code5m
+alias TM5_data(15)  = LPM_precipAmount
 
 dim LPM_error_msg(6) as string * 40 = { _
     "static signal out of range",  _
@@ -122,14 +123,14 @@ DataTable(LPM_state,1,-1)
   sample(1,I_carriers,fp2)
   sample(1,LPM_errors,uint2)
   sample(1,LPM_warnings,uint2)
-  sample(1,TR5_retries,uint2)
+  sample(1,TM5_retries,uint2)
 EndTable
 
 sub get_LPM_state
     dim diag(13) as float
     lpm_cmd("DD")
-    serialin(DD_output,LPM__COMMPORT,300,chr(13),2233)
-    splitStr (diag(),DD_output,CHR(59),13,2)
+    serialin(DD_string,LPM__COMMPORT,300,chr(13),2233)
+    splitStr (diag(),DD_string,CHR(59),13,2)
     T_interior = diag(1)
     T_laserdrvr = diag(2)       ' "temp of laser driver 0-80 degC"
     I_laser     = diag(3)/100   ' "mean value laser current [1/100 mA]"
@@ -152,13 +153,13 @@ sub get_LPM_errors
 
     '' command DX: Get Self Diagnostic -- 0 or 1 for 6 errors, 8 warnings, 1 not used
     lpm_cmd("DX")
-    serialin(DX_output,LPM__COMMPORT,300,chr(13),30)
-    splitStr (flag(),DX_output,CHR(59),15,2)
+    serialin(DX_string,LPM__COMMPORT,300,chr(13),30)
+    splitStr (flag(),DX_string,CHR(59),15,2)
 
     '' command FM: Get Error Count -- counts for each error and warning flag
     lpm_cmd("FM")
-    serialin(FM_output,LPM__COMMPORT,300,chr(13),30)
-    splitStr (count(),FM_output,CHR(59),15,2)
+    serialin(FM_string,LPM__COMMPORT,300,chr(13),30)
+    splitStr (count(),FM_string,CHR(59),15,2)
 
     '' look at each error flag, emit a message on transition 0 to 1 or 1 to 0:
     for i = 1 to 6
@@ -185,23 +186,24 @@ sub get_LPM_errors
     next i
 endsub ' check_LPM_errors
 
-DataTable(LPM_data,TR5_output_is_ok,-1)
+DataTable(LPM_data,TM5_string_is_ok,-1)
   dataInterval(0,60,Sec,10)
-  sample(1,TR5_output,String)
+  sample(1,TM5_string,String)
   sample(1,progSig,uint2)
-  sample(1,TR5_retries,uint2)
+  sample(1,TM5_timer,uint2)
+  sample(1,TM5_retries,uint2)
 EndTable
     
-function check_TR5_output as boolean
+function check_TM5_string as boolean
     dim i as long
     dim a as string * 1
     dim sum as long = 0
-    if len(TR5_output) <> 2233 then return False
-    if ascii(TR5_output(1,1,1)) <> 2 then return False
-    if ascii(TR5_output(1,1,2233)) <> 3 then return False
+    if len(TM5_string) <> 2233 then return False
+    if ascii(TM5_string(1,1,1)) <> 2 then return False
+    if ascii(TM5_string(1,1,2233)) <> 3 then return False
     do
         i += 1
-        a = ascii(TR5_output(1,1,i))
+        a = ascii(TM5_string(1,1,i))
         if i = 2228 OR i = 2229 then
             '' convert checksum hex nibble "1" to 1, "A" to 10, etc.
             if a>=48 AND a<=57 then a=a-48 else if a>=65 AND a<=70 then a=a-55
@@ -212,7 +214,7 @@ function check_TR5_output as boolean
     '' adding the checksum to the sum of bytes should result in 0x00 in last byte
     if sum << 24 <> 0 then return False
     return True
-endFunction ' check_TR5_output()
+endFunction ' check_TM5_string()
 
 beginProg
     progSig = status.ProgSignature
@@ -225,9 +227,6 @@ beginProg
     lpm_cmd("BD",1)                        '' 0:rs422, 1:rs485 (half duplex)
     logmsg("LPM set to 9600, half duplex")
 
-    '' disable automatic telegram output (will use TR:5 instead)
-  ' lpm_cmd( "TM", 0)
-
     '' set the LPM clock from the logger at startup:
     realtime(time) '' 1:year, 2:month, 3:day, 4:hour, 5:minute, 6:second
     lpm_cmd( "ZY", time(1) mod 100)
@@ -237,6 +236,9 @@ beginProg
     lpm_cmd( "ZM", time(5))
     lpm_cmd( "ZS", time(6))
     logmsg("LPM","CLOCK SET:", get_lpm("ZT"), "runtime:", get_lpm("ZB"), "hrs")
+
+    '' configure automatic data telegram 5 output:
+    lpm_cmd( "TM",5)
 
     '' configure digital outputs
   ' lpm_cmd( "D1", 1)
@@ -249,19 +251,25 @@ beginProg
         panelTemp (panelTemp,_60Hz)
         battery (battery)
 
-        '' every minute, get telegram 5 from the LPM:
-        TR5_retries = -1
-        do
-            TR5_retries += 1
-            lpm_cmd( "TY", 5)
-            serialIn(TR5_output,LPM__COMMPORT,300,chr(3),2333)
-            if check_TR5_output() then TR5_output_is_ok = True
-            delay(0,2,sec)
-        loop until TR5_output_is_ok OR TR5_retries > MAX_TR5_RETRIES
+        '' every minute, read data telegram 5 from the LPM:
+        
+        timer(1,sec,2)
+        TM5_retries = 0
+        serialIn(TM5_string,LPM__COMMPORT,300,chr(3),2333)
+        TM5_string_is_ok = check_TM5_string()
+        do while TM5_string_is_ok = False
+            TM5_retries += 1
+            lpm_cmd( "TR",5)
+            serialIn(TM5_string,LPM__COMMPORT,300,chr(3),2333)
+            TM5_string_is_ok = check_TM5_string()
+            if TM5_retries >= MAX_TM5_RETRIES then exitDo
+            delay(0,1,sec)
+        loop
+        TM5_timer = timer(1,sec,1)
         callTable LPM_data
   
-        '' parse the data we want out of the string
-        SplitStr (TR5_data(),TR5_output,CHR(59),525,2)
+        '' parse any data fields we want out of the telegram 5 string:
+        SplitStr (TM5_data(),TM5_string,CHR(59),525,2)
           
         get_LPM_state
         get_LPM_errors
@@ -283,3 +291,20 @@ beginProg
 
     NextScan
 EndProg
+
+'' CRBasic instruction prototypes:
+''
+''  serialOut(
+''      Port
+''      OutString
+''      WaitString : if "", look for echo of each character from instrument
+''      NumTries
+''      Timeout
+''  )
+''
+''  timer(
+''      TimerNo : timer object identifier, number or variable
+''      TUnits  : timer units: usec, msec, sec, min, hr
+''      TOption : 0=start, 1=stop, 2=reset and start, 3=stop and reset, 5=read only
+
+''  )
