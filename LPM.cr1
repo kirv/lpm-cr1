@@ -24,13 +24,8 @@ public battery      : units battery = volts
 public panelTemp    : units panelTemp = deg C
 public progSig as Long
 
-public LPM_errors as long
-public LPM_warnings as long
-public DX_raw as string * 30
-public FM_raw as string * 80
-public DD_raw as string * 80
 dim TM5_raw as string * 2233
-public TM5_checksum as boolean
+public TM5_checksum as boolean      ' true if TM5_raw checksum is good
 public TM5_bytes as long
 public TM5_retries as long
 public TM5_timer as long        : units TM5_timer = sec
@@ -38,9 +33,12 @@ dim LPM(525) as string
 alias LPM(5)   = LPM_code5m
 alias LPM(15)  = LPM_precipAmount
 
-'' LPM error and warning flags (TM5 and DX) and associated counts (FM)
+'' LPM error and warning flags:
+public LPM_errors as long
+public LPM_warnings as long
 dim LPM_error(6) as string * 40
 dim LPM_warning(9) as string * 40
+dim FM_raw as string * 80
 dim LPM_err_count(15) as long
 dim got_error_counts as boolean 
 
@@ -58,7 +56,6 @@ public V_heating    : units V_heating    = V    ' 10: "voltage heating supply [1
 public I_housing    : units I_housing    = mA   ' 11: "current heating housing [mA]"
 public I_heads      : units I_heads      = mA   ' 12: "current heating heads [mA]"
 public I_carriers   : units I_carriers   = mA   ' 13: "current heating carriers [mA]"
-
 
 dim time(9)
 dim msg as string * 80
@@ -86,7 +83,7 @@ sub lpm_cmd(cmd as string, optional value as long = 99999)
     else
         sprintf(s, "%02u%s%05u%c", LPM_ID, cmd, value, CR)
     endif
-    '' s is "xxCCR" or "xxCCnnnnnR", where xx=ID, CC=cmd, n=zero-padded arg, R=<CR>
+    '' s is "xxCCR" or "xxCCnnnnnR", where xx=ID, CC=cmd, n=0-padded arg, R=<CR>
     serialOut (LPM__COMMPORT,s,"",0,0)
 endsub ' lpm_cmd
 
@@ -120,24 +117,7 @@ DataTable(LPM_state,1,-1)
   sample(1,TM5_timer,uint2)
 EndTable
 
-sub get_LPM_state
-    '' LPM analog diagnostic data from DD[1..13] or LPM[38..50]
-    T_interior = LPM(37+1)
-    T_laserdrvr = LPM(37+2)       ' "temp of laser driver 0-80 degC"
-    I_laser     = LPM(37+3)/100   ' "mean value laser current [1/100 mA]"
-    V_control   = LPM(37+4)       ' "control voltage [mV] ref value: 4010+/-5"
-    V_optical   = LPM(37+5)       ' "optical control [mV] / control variable"
-    V_sensor    = LPM(37+6)/10    ' "voltage sensor supply [1/10V]"
-    I_laser_pane= LPM(37+7)       ' "current page heating laser head [mA]"
-    I_recvr_pane= LPM(37+8)       ' "current page heating receiver head [mA]"
-    T_ambient   = LPM(37+9)       ' "ambient temp [degC]"
-    V_heating   = LPM(37+10)/10   ' "voltage heating supply [1/10V]"
-    I_housing   = LPM(37+11)      ' "current heating housing [mA]"
-    I_heads     = LPM(37+12)      ' "current heating heads [mA]"
-    I_carriers  = LPM(37+13)      ' "current heating carriers [mA]"
-endsub ' get_LPM_state
-
-sub get_error_counts
+sub get_error_counts ' called if needed by get_LPM_errors() and get_LPM_warnings()
     '' LPM error and warning counts are from FM[1..6] and FM[7..15]
     lpm_cmd("FM")
     serialIn(FM_raw,LPM__COMMPORT,300,CR,80)
@@ -145,7 +125,7 @@ sub get_error_counts
     got_error_counts = True
 endsub ' get_error_counts
 
-sub get_LPM_errors
+sub get_LPM_errors ' called by get_LPM_state()
     dim i as long
     '' LPM error flags are from LPM[23..28] (also see DX[1..6])
     '' LPM error counts are from FX[1..6]
@@ -162,7 +142,7 @@ sub get_LPM_errors
     next i
 endsub ' get_LPM_errors
 
-sub get_LPM_warnings
+sub get_LPM_warnings ' called by get_LPM_state()
     dim i as long
     '' LPM warning flags are from LPM[29..37] (also see DX[7..15])
     '' LPM warning counts are from FX[7..15]
@@ -178,6 +158,26 @@ sub get_LPM_warnings
         endif
     next i
 endsub ' check_LPM_errors
+
+sub get_LPM_state
+    '' LPM analog diagnostic data from DD[1..13] or LPM[38..50]
+    T_interior = LPM(37+1)
+    T_laserdrvr = LPM(37+2)       ' "temp of laser driver 0-80 degC"
+    I_laser     = LPM(37+3)/100   ' "mean value laser current [1/100 mA]"
+    V_control   = LPM(37+4)       ' "control voltage [mV] ref value: 4010+/-5"
+    V_optical   = LPM(37+5)       ' "optical control [mV] / control variable"
+    V_sensor    = LPM(37+6)/10    ' "voltage sensor supply [1/10V]"
+    I_laser_pane= LPM(37+7)       ' "current page heating laser head [mA]"
+    I_recvr_pane= LPM(37+8)       ' "current page heating receiver head [mA]"
+    T_ambient   = LPM(37+9)       ' "ambient temp [degC]"
+    V_heating   = LPM(37+10)/10   ' "voltage heating supply [1/10V]"
+    I_housing   = LPM(37+11)      ' "current heating housing [mA]"
+    I_heads     = LPM(37+12)      ' "current heating heads [mA]"
+    I_carriers  = LPM(37+13)      ' "current heating carriers [mA]"
+    got_error_counts = False
+    get_LPM_errors
+    get_LPM_warnings
+endsub ' get_LPM_state
 
 DataTable(LPM,TM5_checksum,-1)
   dataInterval(0,60,Sec,10)
@@ -228,7 +228,6 @@ sub init_LPM_messages
     LPM_warning(9) = "not used"
 endSub ' init_LPM_messages
 
-
 beginProg
     progSig = status.ProgSignature
 
@@ -267,7 +266,7 @@ beginProg
         panelTemp (panelTemp,_60Hz)
         battery (battery)
 
-        '' every minute, read data telegram 5 from the LPM, and retry if necessary
+        '' every minute, read data telegram 5 from the LPM, retry if necessary
         timer(1,sec,2)
         TM5_retries = 0
         serialIn(TM5_raw,LPM__COMMPORT,1500,ETX,2233)
@@ -284,14 +283,10 @@ beginProg
         TM5_bytes = len(TM5_raw)
         callTable LPM
   
-        '' parse any data fields we want out of the telegram 5 string:
         SplitStr (LPM(),TM5_raw,SEMICOLON,525,2)
           
         '' get operating state of the LPM as analog values, binary errors and warnings:
         get_LPM_state
-        got_error_counts = False
-        get_LPM_errors
-        get_LPM_warnings
         callTable LPM_state
 
         '' read LPM digital output channels -- COMMENTED-OUT FOR NOW
