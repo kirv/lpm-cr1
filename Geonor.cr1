@@ -56,6 +56,7 @@ public gnr_F2avg(3)
 
 '' a thermistor is taped to each vibrating wire transducer:
 public gnr_R(3)     : units gnr_R = Ohms  : alias gnr_R = gnr1_R, gnr2_R, gnr3_R
+public gnr_Ravg(3)
 public gnr_T(3)     : units gnr_T = Deg C  : alias gnr_T = gnr1_T, gnr2_T, gnr3_T
 
 '' derived Geonor variables
@@ -74,6 +75,8 @@ public gnr_htr_step     ' current heater control step
 public gnr_htr_on_ratio ' heater control setpoint, ratio of ON/OFF times
 
 dim msg as string * 80
+dim X(3)
+dim i
 
 dataTable("Messages",1,100)
     sample(1,progSig,uint2)
@@ -96,16 +99,6 @@ DataTable(Geonor_raw,1,-1)
     sample (3,gnr_R,ieee4)
 EndTable
 
-DataTable(Geonor_raw2,1,-1)
-    DataInterval(0,60,sec,10)
-    Sample(1,progSig,uint2)
-    Average (3,gnr_F,FP2,False)
-    StdDev (3,gnr_F,FP2,False)
-    Average (3,gnr_F2,FP2,False)
-    StdDev (3,gnr_F2,FP2,False)
-    Sample (3,gnr_T,FP2)
-EndTable
-
 DataTable(Geonor_data,1,-1)
     DataInterval(0,60,sec,10)
     Sample(1,progSig,uint2)
@@ -121,27 +114,15 @@ function read_Geonor_RTD()
     BrHalf (x,1,mV250,GNR_RTD__SE,GNR_RTD__EX,1,250,0,0,250,1.0,0)
     r = GNR_REF_R*x/(1-x)
     t = r * GNR_RTD_M + GNR_RTD_B
-    prt(t2,1,x,1,0)
     return t
+    '' following is the alternative prt() to evaluate:
+    prt(t2,1,x,1,0)
 endFunction
 
-Sub read_xdcr_therms
-    dim lnR
-    dim X(3)
-    dim R(3)
-    dim i as long
-    BrHalf (X(),3,mV2500,GNR_THERM__SE,GNR_THERM__EX,3,2500,0,0,250,1.0,0)
-    For i=1 To 3
-        R(i) = GNR_THERM_REF_R*X(i)/(1-X(i))
-        lnR = ln(R(i))
-        gnr_T(i) = (1/(THERM_A + THERM_B*lnR + THERM_C*lnR^3)) - 273.15
-    Next i
-EndSub
-
-'   1234567890123456
-
-function thermistor_T(R as float) as float
-    return (1/(THERM_A + THERM_B*ln(R) + THERM_C*ln(R)^3)) - 273.15
+function thermistor_T(R)
+    dim T
+    T = (1/(THERM_A + THERM_B*ln(R) + THERM_C*ln(R)^3)) - 273.15
+    return T
 endFunction
 
 sub heater_control
@@ -164,6 +145,12 @@ sub log_gnr_metadata
     calltable(Messages)
 endSub
 
+function calc_wire_depth(freq, A, B, F0)
+    dim level
+    level = 10*(A*(freq-F0) + B*(freq-F0)^2)
+    return level
+endfunction
+
 BeginProg
     progSig = status.ProgSignature
     gnr_htr_maxsteps = GNR_HTR_PERIOD
@@ -174,39 +161,40 @@ BeginProg
         pulseCount(gnr2_F,1,GNR2__PP,0,1,1.0,0)
         pulseCount(gnr3_F,1,GNR3__PP,0,1,1.0,0)
         
-        '' for redundancy, measure F2 frequency using period averaging:
-        periodAvg(gnr_F2,3,mV250,GNR1__SE,0,1,500,1000,1,0)
-
         '' read Geonor wire transducer thermistors:
-        read_gnr_xdcr_R()
         BrHalf (X(),3,mV2500,GNR_THERM__SE,GNR_THERM__EX,3,2500,0,0,250,1.0,0)
         For i=1 To 3
             gnr_R(i) = GNR_THERM_REF_R*X(i)/(1-X(i))
         Next i
 
+        callTable Geonor_raw
+
         '' update running averages for processing and logging in 60-second scan
         avgRun(gnr_Favg, 3, gnr_F(), 6)
-        avgRun(gnr_F2avg, 3, gnr_F2(), 6)
         avgRun(gnr_Ravg, 3, gnr_R(), 6)
-        
-        callTable Geonor_raw
     NextScan
+
+    SlowSequence
+    Scan(2,sec,0,0)
+        '' for redundancy, measure F2 frequency using period averaging:
+        periodAvg(gnr_F2,3,mV250,GNR1__SE,0,1,500,1000,1,0)
+        avgRun(gnr_F2avg, 3, gnr_F2(), 6)
 
     SlowSequence
     Scan(60,sec,0,0)
         panelTemp(panelTemp,_60Hz)
         battery(battery)
 
-        '' calculate fluid level in bucket from frequency using calibration constants:
-        gnr1_lvl = 10*(GNR1_A*(gnr_Favg(1)-GNR1_F0) + GNR1_B*(gnr_Favg(1)-GNR1_F0)^2)
-        gnr2_lvl = 10*(GNR2_A*(gnr_Favg(2)-GNR2_F0) + GNR2_B*(gnr_Favg(2)-GNR2_F0)^2)
-        gnr3_lvl = 10*(GNR3_A*(gnr_Favg(3)-GNR3_F0) + GNR3_B*(gnr_Favg(3)-GNR3_F0)^2)
-        
-        '' for redundancy, measure f2 frequency using period averaging:
-        gnr1_lvl2 = 10*(GNR1_A*(gnr_F2avg(1)-GNR1_F0) + GNR1_B*(gnr_F2avg(1)-GNR1_F0)^2)
-        gnr2_lvl2 = 10*(GNR2_A*(gnr_F2avg(2)-GNR2_F0) + GNR2_B*(gnr_F2avg(2)-GNR2_F0)^2)
-        gnr3_lvl2 = 10*(GNR3_A*(gnr_F2avg(3)-GNR3_F0) + GNR3_B*(gnr_F2avg(3)-GNR3_F0)^2)
-        
+        '' calculate fluid level in bucket from pulseCount() frequency
+        gnr1_lvl = calc_wire_depth(gnr_Favg(1), GNR1_A, GNR1_B, GNR1_F0)
+        gnr2_lvl = calc_wire_depth(gnr_Favg(2), GNR2_A, GNR2_B, GNR2_F0)
+        gnr3_lvl = calc_wire_depth(gnr_Favg(3), GNR3_A, GNR3_B, GNR3_F0)
+
+        '' calculate fluid level in bucket from periodAvg() frequency (experimental)
+        gnr1_lvl2 = calc_wire_depth(gnr_F2avg(1), GNR1_A, GNR1_B, GNR1_F0)
+        gnr2_lvl2 = calc_wire_depth(gnr_F2avg(2), GNR2_A, GNR2_B, GNR2_F0)
+        gnr3_lvl2 = calc_wire_depth(gnr_F2avg(3), GNR3_A, GNR3_B, GNR3_F0)
+
         callTable Geonor_data
     NextScan
 EndProg
