@@ -47,15 +47,16 @@ public battery    : units battery = volts
 public progSig as Long
   
 '' measured Geonor variables; f:frequency from pulseCount():
-public gnr_f(3)     : units gnr_f = Hz     : alias gnr_f = gnr1_f, gnr2_f, gnr3_f
-public gnr_favg(3)
+public gnr_F(3)     : units gnr_F = Hz     : alias gnr_F = gnr1_F, gnr2_F, gnr3_F
+public gnr_Favg(3)
 
 '' measured Geonor variables; f2:frequency from periodAverage():
-public gnr_f2(3)    : units gnr_f2 = Hz    : alias gnr_f2 = gnr1_f2, gnr2_f2, gnr3_f2
-public gnr_f2avg(3)
+public gnr_F2(3)    : units gnr_F2 = Hz    : alias gnr_F2 = gnr1_F2, gnr2_F2, gnr3_F2
+public gnr_F2avg(3)
 
 '' a thermistor is taped to each vibrating wire transducer:
-public gnr_t(3)     : units gnr_t = Deg C  : alias gnr_t = gnr1_temp, gnr2_temp, gnr3_temp
+public gnr_R(3)     : units gnr_R = Ohms  : alias gnr_R = gnr1_R, gnr2_R, gnr3_R
+public gnr_T(3)     : units gnr_T = Deg C  : alias gnr_T = gnr1_T, gnr2_T, gnr3_T
 
 '' derived Geonor variables
 public gnr_level(3) : units gnr_level = mm : alias gnr_level = gnr1_lvl,gnr2_lvl,gnr3_lvl 
@@ -72,15 +73,37 @@ public gnr_htr_maxsteps ' number of scans comprising heater control period
 public gnr_htr_step     ' current heater control step 
 public gnr_htr_on_ratio ' heater control setpoint, ratio of ON/OFF times
 
+dim msg as string * 80
+
+dataTable("Messages",1,100)
+    sample(1,progSig,uint2)
+    sample(1,msg,string)
+endTable
+
+sub logmsg(optional s as string * 40 = "MARK", _
+    optional t as string * 40 = "", optional u as string * 40 = "", _
+    optional v as string * 40 = "", optional w as string * 40 = "", _
+    optional x as string * 40 = "", optional y as string * 40 = "")
+    msg = s & " " & t & " " & u & " " & v & " " & w & " " & x & " " & y
+    msg = trim(msg)
+    calltable(Messages)
+endsub
 
 DataTable(Geonor_raw,1,-1)
+    DataInterval(0,10,sec,0)
+    Sample(1,progSig,uint2)
+    sample(3,gnr_F,ieee4)
+    sample (3,gnr_R,ieee4)
+EndTable
+
+DataTable(Geonor_raw2,1,-1)
     DataInterval(0,60,sec,10)
     Sample(1,progSig,uint2)
-    Average (3,gnr_f,FP2,False)
-    StdDev (3,gnr_f,FP2,False)
-    Average (3,gnr_f2,FP2,False)
-    StdDev (3,gnr_f2,FP2,False)
-    Sample (3,gnr_t,FP2)
+    Average (3,gnr_F,FP2,False)
+    StdDev (3,gnr_F,FP2,False)
+    Average (3,gnr_F2,FP2,False)
+    StdDev (3,gnr_F2,FP2,False)
+    Sample (3,gnr_T,FP2)
 EndTable
 
 DataTable(Geonor_data,1,-1)
@@ -100,9 +123,9 @@ function read_Geonor_RTD()
     t = r * GNR_RTD_M + GNR_RTD_B
     prt(t2,1,x,1,0)
     return t
-endFunction ' read_Geonor_RTD
+endFunction
 
-Sub read_xdcr_temps
+Sub read_xdcr_therms
     dim lnR
     dim X(3)
     dim R(3)
@@ -111,51 +134,61 @@ Sub read_xdcr_temps
     For i=1 To 3
         R(i) = GNR_THERM_REF_R*X(i)/(1-X(i))
         lnR = ln(R(i))
-        gnr_t(i) = (1/(THERM_A + THERM_B*lnR + THERM_C*lnR^3)) - 273.15
+        gnr_T(i) = (1/(THERM_A + THERM_B*lnR + THERM_C*lnR^3)) - 273.15
     Next i
-EndSub ' read_xdcr_temps
+EndSub
+
+'   1234567890123456
+
+function thermistor_T(R as float) as float
+    return (1/(THERM_A + THERM_B*ln(R) + THERM_C*ln(R)^3)) - 273.15
+endFunction
 
 sub heater_control
     ' increment state step counter modulus the control period:
     gnr_htr_step = (gnr_htr_step + 1) mod gnr_htr_maxsteps
     gnr_htr_state = gnr_htr_step < gnr_htr_on_ratio * gnr_htr_maxsteps
     portSet(4,gnr_htr_state)
-endSub ' heater_control
+endSub
+
+sub log_gnr_metadata
+    logmsg("Geonor vibrating wire transducer constants follow:")
+    sprintf(msg, "GNR1: F0=%.*g A=%.*g B=%.*g",1,GNR1_F0,6,GNR1_A,6,GNR1_B)
+    calltable(Messages)
+    sprintf(msg, "GNR2: F0=%.*g A=%.*g B=%.*g",2,GNR2_F0,6,GNR2_A,6,GNR2_B)
+    calltable(Messages)
+    sprintf(msg, "GNR3: F0=%.*g A=%.*g B=%.*g",3,GNR3_F0,6,GNR3_A,6,GNR3_B)
+    calltable(Messages)
+    logmsg("Geonor vibrating wire xdcr Steinhart & Hart constants follow:"
+    sprintf(msg, "GNR1..3 xdcrs: A=%.*g B=%.*g C=%.*g", 8,THERM_A,8,THERM_B,4,THERM_C)
+    calltable(Messages)
+endSub
 
 BeginProg
     progSig = status.ProgSignature
     gnr_htr_maxsteps = GNR_HTR_PERIOD
+    log_gnr_metadata()
+
     Scan (10,sec,0,0)
-            
-        '' pulseCount(Dest,Reps,PChan,Config,Option,Mult,Ofs)
-        ''     PChan: n+10 to use control port n
-        ''     Config: high frequency (0), AC (1), switch closure (2)
-        ''     Option: counts (0), frequency (1), mSec for running average (>1)
-        pulseCount(gnr1_f,1,GNR1__PP,0,1,1.0,0)
-        pulseCount(gnr2_f,1,GNR2__PP,0,1,1.0,0)
-        pulseCount(gnr3_f,1,GNR3__PP,0,1,1.0,0)
+        pulseCount(gnr1_F,1,GNR1__PP,0,1,1.0,0)
+        pulseCount(gnr2_F,1,GNR2__PP,0,1,1.0,0)
+        pulseCount(gnr3_F,1,GNR3__PP,0,1,1.0,0)
         
-        '' for redundancy, measure f2 frequency using period averaging:
-        '' periodAvg(Dest,Reps,Range,SEChan,Threshold,Option,Cycles,Timeout,Mult,Ofs)
-        ''     Threshold: mV; use if signal is not centered on 0 mV
-        ''     Option: return period (0) or frequency (1)
-        ''     Cycles: number of cycles to average
-        ''     Timeout: max mSec to wait for number of cycles to be measured
-        periodAvg(gnr_f2,3,mV250,GNR1__SE,0,1,500,1000,1,0)
+        '' for redundancy, measure F2 frequency using period averaging:
+        periodAvg(gnr_F2,3,mV250,GNR1__SE,0,1,500,1000,1,0)
 
-        '' update running averages for the f and f2 values:
-        '' avgRun(Dest, Reps, Source, Number)
-        ''     Reps: number of array values to (separately) average
-        ''     Number: number of values to include in running average
-        avgRun(gnr_favg, 3, gnr_f(), 6)
-        avgRun(gnr_f2avg, 3, gnr_f2(), 6)
+        '' read Geonor wire transducer thermistors:
+        read_gnr_xdcr_R()
+        BrHalf (X(),3,mV2500,GNR_THERM__SE,GNR_THERM__EX,3,2500,0,0,250,1.0,0)
+        For i=1 To 3
+            gnr_R(i) = GNR_THERM_REF_R*X(i)/(1-X(i))
+        Next i
 
-
-        '' read Geonor transducer thermistors once just before logging raw data:
-        if iftime(0, 60, sec) then
-            read_xdcr_temps
-        endif
-
+        '' update running averages for processing and logging in 60-second scan
+        avgRun(gnr_Favg, 3, gnr_F(), 6)
+        avgRun(gnr_F2avg, 3, gnr_F2(), 6)
+        avgRun(gnr_Ravg, 3, gnr_R(), 6)
+        
         callTable Geonor_raw
     NextScan
 
@@ -165,16 +198,66 @@ BeginProg
         battery(battery)
 
         '' calculate fluid level in bucket from frequency using calibration constants:
-        gnr1_lvl = 10*(GNR1_A*(gnr_favg(1)-GNR1_F0) + GNR1_B*(gnr_favg(1)-GNR1_F0)^2)
-        gnr2_lvl = 10*(GNR2_A*(gnr_favg(2)-GNR2_F0) + GNR2_B*(gnr_favg(2)-GNR2_F0)^2)
-        gnr3_lvl = 10*(GNR3_A*(gnr_favg(3)-GNR3_F0) + GNR3_B*(gnr_favg(3)-GNR3_F0)^2)
+        gnr1_lvl = 10*(GNR1_A*(gnr_Favg(1)-GNR1_F0) + GNR1_B*(gnr_Favg(1)-GNR1_F0)^2)
+        gnr2_lvl = 10*(GNR2_A*(gnr_Favg(2)-GNR2_F0) + GNR2_B*(gnr_Favg(2)-GNR2_F0)^2)
+        gnr3_lvl = 10*(GNR3_A*(gnr_Favg(3)-GNR3_F0) + GNR3_B*(gnr_Favg(3)-GNR3_F0)^2)
         
         '' for redundancy, measure f2 frequency using period averaging:
-        gnr1_lvl2 = 10*(GNR1_A*(gnr_f2avg(1)-GNR1_F0) + GNR1_B*(gnr_f2avg(1)-GNR1_F0)^2)
-        gnr2_lvl2 = 10*(GNR2_A*(gnr_f2avg(2)-GNR2_F0) + GNR2_B*(gnr_f2avg(2)-GNR2_F0)^2)
-        gnr3_lvl2 = 10*(GNR3_A*(gnr_f2avg(3)-GNR3_F0) + GNR3_B*(gnr_f2avg(3)-GNR3_F0)^2)
+        gnr1_lvl2 = 10*(GNR1_A*(gnr_F2avg(1)-GNR1_F0) + GNR1_B*(gnr_F2avg(1)-GNR1_F0)^2)
+        gnr2_lvl2 = 10*(GNR2_A*(gnr_F2avg(2)-GNR2_F0) + GNR2_B*(gnr_F2avg(2)-GNR2_F0)^2)
+        gnr3_lvl2 = 10*(GNR3_A*(gnr_F2avg(3)-GNR3_F0) + GNR3_B*(gnr_F2avg(3)-GNR3_F0)^2)
         
         callTable Geonor_data
     NextScan
 EndProg
 
+'' CRBasic instruction example calls and prototypes:
+''
+''  pulseCount(gnr2_F,1,GNR2__PP,0,1,1.0,0)
+''  pulseCount(
+''      Dest,
+''      Reps,
+''      PChan:      n+10 to use control port n
+''      Config:     high frequency (0), AC (1), switch closure (2)
+''      Option:     counts (0), frequency (1), mSec for running average (>1)
+''      Mult,
+''      Ofs)
+''  )
+''
+''  periodAvg(gnr_F2,3,mV250,GNR1__SE,0,1,500,1000,1,0)
+''  periodAvg(
+''      Dest,
+''      Reps,
+''      Range,
+''      SEChan,
+''      Threshold:  mV; use if signal is not centered on 0 mV
+''      Option:     return period (0) or frequency (1)
+''      Cycles:     number of cycles to average
+''      Timeout:    max mSec to wait for number of cycles to be measured
+''      Mult,
+''      Ofs
+''  )
+''
+''  avgRun(gnr_Favg, 3, gnr_F(), 6)
+''  avgRun(
+''      Dest, 
+''      Reps:       number of array values to (separately) average
+''      Source, 
+''      Number:     number of values to include in running average
+''  )
+''
+''  BrHalf(X(),3,mV2500,GNR_THERM__SE,GNR_THERM__EX,3,2500,0,0,250,1.0,0)
+''  BrHalf(
+''      Dest
+''      Reps
+''      Range
+''      SEChan
+''      ExChan
+''      MeasPEx
+''      ExmV
+''      RevEx
+''      SettlingTime
+''      Integ
+''      Mult
+''      Offset
+''  )
