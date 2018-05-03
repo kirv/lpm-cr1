@@ -78,6 +78,10 @@ dim msg as string * 80
 dim X(3)
 dim i
 
+'' KW contains calibration sconstants for vibrating wires, KT for thermistors
+dim KW(3,3) as float
+dim KT(3) as float
+
 dataTable("Messages",1,100)
     sample(1,progSig,uint2)
     sample(1,msg,string)
@@ -110,16 +114,15 @@ EndTable
 
 function read_Geonor_RTD()
     '' TODO: see if the crBasic prt() instruction can be used in lieu of all this...
-    dim x, r, t, t2
+    dim x, t, t2
     BrHalf (x,1,mV250,GNR_RTD__SE,GNR_RTD__EX,1,250,0,0,250,1.0,0)
-    r = GNR_REF_R*x/(1-x)
-    t = r * GNR_RTD_M + GNR_RTD_B
+    t = GNR_REF_R*x/(1-x) * GNR_RTD_M + GNR_RTD_B
     return t
     '' following is the alternative prt() to evaluate:
     prt(t2,1,x,1,0)
 endFunction
 
-function thermistor_T(R)
+function calc_therm_T(R)
     dim T
     T = (1/(THERM_A + THERM_B*ln(R) + THERM_C*ln(R)^3)) - 273.15
     return T
@@ -134,15 +137,22 @@ endSub
 
 sub log_gnr_metadata
     logmsg("Geonor vibrating wire transducer constants follow:")
-    sprintf(msg, "GNR1: F0=%.*g A=%.*g B=%.*g",1,GNR1_F0,6,GNR1_A,6,GNR1_B)
+    sprintf(msg, "GNR1: SN=%d F0=%.*g A=%.*g B=%.*g",1,GNR1_SN,GNR1_F0,6,GNR1_A,6,GNR1_B)
     calltable(Messages)
-    sprintf(msg, "GNR2: F0=%.*g A=%.*g B=%.*g",2,GNR2_F0,6,GNR2_A,6,GNR2_B)
+    sprintf(msg, "GNR2: SN=%d F0=%.*g A=%.*g B=%.*g",2,GNR2_SN,GNR2_F0,6,GNR2_A,6,GNR2_B)
     calltable(Messages)
-    sprintf(msg, "GNR3: F0=%.*g A=%.*g B=%.*g",3,GNR3_F0,6,GNR3_A,6,GNR3_B)
+    sprintf(msg, "GNR3: SN=%d F0=%.*g A=%.*g B=%.*g",3,GNR3_SN,GNR3_F0,6,GNR3_A,6,GNR3_B)
     calltable(Messages)
     logmsg("Geonor vibrating wire xdcr Steinhart & Hart constants follow:"
     sprintf(msg, "GNR1..3 xdcrs: A=%.*g B=%.*g C=%.*g", 8,THERM_A,8,THERM_B,4,THERM_C)
     calltable(Messages)
+endSub
+
+sub init_gnr_calib
+    KW(1,1) = {GNR1_A, GNR1_B, GNR1_F0}
+    KW(2,1) = {GNR2_A, GNR2_B, GNR2_F0}
+    KW(3,1) = {GNR3_A, GNR3_B, GNR3_F0}
+    KT() = {THERM_A, THERM_B, THERM_C} 
 endSub
 
 function calc_wire_depth(freq, A, B, F0)
@@ -155,8 +165,10 @@ BeginProg
     progSig = status.ProgSignature
     gnr_htr_maxsteps = GNR_HTR_PERIOD
     log_gnr_metadata()
+    init_gnr_calib()
 
     Scan (10,sec,0,0)
+        '' measure vibrating wire cycles since last scan, save as frequency
         pulseCount(gnr1_F,1,GNR1__PP,0,1,1.0,0)
         pulseCount(gnr2_F,1,GNR2__PP,0,1,1.0,0)
         pulseCount(gnr3_F,1,GNR3__PP,0,1,1.0,0)
@@ -167,6 +179,7 @@ BeginProg
             gnr_R(i) = GNR_THERM_REF_R*X(i)/(1-X(i))
         Next i
 
+        '' log the raw wire frequency and thermistor resistance measurements:
         callTable Geonor_raw
 
         '' update running averages for processing and logging in 60-second scan
@@ -176,9 +189,9 @@ BeginProg
 
     SlowSequence
     Scan(2,sec,0,0)
-        '' for redundancy, measure F2 frequency using period averaging:
-        periodAvg(gnr_F2,3,mV250,GNR1__SE,0,1,500,1000,1,0)
-        avgRun(gnr_F2avg, 3, gnr_F2(), 6)
+        '' experimental and redundant: measure frequency using period averaging:
+        periodAvg(gnr_F2,3,mV250,GNR1__SE,0,1,100,150,1,0)
+        avgRun(gnr_F2avg, 3, gnr_F2(), 30)
 
     SlowSequence
     Scan(60,sec,0,0)
@@ -194,6 +207,11 @@ BeginProg
         gnr1_lvl2 = calc_wire_depth(gnr_F2avg(1), GNR1_A, GNR1_B, GNR1_F0)
         gnr2_lvl2 = calc_wire_depth(gnr_F2avg(2), GNR2_A, GNR2_B, GNR2_F0)
         gnr3_lvl2 = calc_wire_depth(gnr_F2avg(3), GNR3_A, GNR3_B, GNR3_F0)
+
+        '' calculate wire thermistor temps from averaged resistance:
+        gnr1_T = calc_therm_T(gnr_Ravg(1))
+        gnr2_T = calc_therm_T(gnr_Ravg(2))
+        gnr3_T = calc_therm_T(gnr_Ravg(3))
 
         callTable Geonor_data
     NextScan
