@@ -78,16 +78,16 @@ dim msg as string * 80
 dim X(3)
 dim i
 
-'' KW contains calibration sconstants for vibrating wires, KT for thermistors
-dim KW(3,3) as float
-dim KT(3) as float
+'' Kw contains calibration sconstants for vibrating wires, Kt for thermistors
+dim Kw(3,3) as float
+dim Kt(3) as float
 
 dataTable("Messages",1,100)
     sample(1,progSig,uint2)
     sample(1,msg,string)
 endTable
 
-sub logmsg(optional s as string * 40 = "MARK", _
+sub logmsg(optional s as string * 80 = "MARK", _
     optional t as string * 40 = "", optional u as string * 40 = "", _
     optional v as string * 40 = "", optional w as string * 40 = "", _
     optional x as string * 40 = "", optional y as string * 40 = "")
@@ -148,11 +148,15 @@ sub log_gnr_metadata
     calltable(Messages)
 endSub
 
+0        1         2         3         4         5         6
+123456789012345678901234567890123456789012345678901234567890
+Geonor vibrating wire xdcr Steinhart & Hart constants follow:"
+
 sub init_gnr_calib
-    KW(1,1) = {GNR1_A, GNR1_B, GNR1_F0}
-    KW(2,1) = {GNR2_A, GNR2_B, GNR2_F0}
-    KW(3,1) = {GNR3_A, GNR3_B, GNR3_F0}
-    KT() = {THERM_A, THERM_B, THERM_C} 
+    Kw(1,1) = {GNR1_A, GNR1_B, GNR1_F0}
+    Kw(2,1) = {GNR2_A, GNR2_B, GNR2_F0}
+    Kw(3,1) = {GNR3_A, GNR3_B, GNR3_F0}
+    Kt() = {THERM_A, THERM_B, THERM_C} 
 endSub
 
 function calc_wire_depth(freq, A, B, F0)

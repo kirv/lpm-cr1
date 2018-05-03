@@ -65,7 +65,7 @@ dataTable("Messages",1,100)
     sample(1,msg,string)
 endTable
 
-sub logmsg(optional s as string * 40 = "MARK", _
+sub logmsg(optional s as string * 80 = "MARK", _
     optional t as string * 40 = "", optional u as string * 40 = "", _
     optional v as string * 40 = "", optional w as string * 40 = "", _
     optional x as string * 40 = "", optional y as string * 40 = "")
