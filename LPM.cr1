@@ -308,6 +308,7 @@ EndProg
 
 '' CRBasic instruction prototypes:
 ''  
+''  serialOpen(LPM__COMMPORT,9600,0,300,10000)
 ''  serialOpen(
 ''      ComPort     : Com1 (uses C1 and C2), ..., ComRS232 (uses DB9F) 
 ''      BaudRate    : 9600, 19200, 115200, etc.
@@ -316,6 +317,7 @@ EndProg
 ''      BufferSize  : buffer size in bytes for ring memory used for the port
 ''  )
 ''
+''  serialin(s,LPM__COMMPORT,300,chr(13),2233)
 ''  serialIn(
 ''      Dest            : string variable to contain results
 ''      ComPort         : COM1=(C1,C2), COM2=(C3,C4), ..., ComRS232=db9F, ...
@@ -327,6 +329,7 @@ EndProg
 ''      MaxNumChars     : instruction will return when max chars have been received
 ''  )
 ''
+''  serialOut(LPM__COMMPORT,s,"",0,0)
 ''  serialOut(
 ''      ComPort
 ''      OutString       : string to send
@@ -341,6 +344,7 @@ EndProg
 ''      TOption : 0=start, 1=stop, 2=reset and start, 3=stop and reset, 5=read only
 ''  )
 ''
+''  splitStr(diag(),DD_string,CHR(59),13,2)
 ''  splitStr(
 ''      SplitResult     : string array to contain results
 ''      SearchString    : string to split

@@ -271,3 +271,12 @@ EndProg
 ''      Mult
 ''      Offset
 ''  )
+''
+''  prt(t2,1,x,1,0)
+''  prt(
+''      Dest
+''      Reps
+''      ExChan
+''      Mult
+''      Offset
+''  )
