@@ -122,9 +122,9 @@ function read_Geonor_RTD()
     prt(t2,1,x,1,0)
 endFunction
 
-function calc_therm_T(R)
+function calc_therm_T(R, A, B, C)
     dim T
-    T = (1/(THERM_A + THERM_B*ln(R) + THERM_C*ln(R)^3)) - 273.15
+    T = (1/(A + B*ln(R) + C*ln(R)^3)) - 273.15
     return T
 endFunction
 
@@ -135,28 +135,26 @@ sub heater_control
     portSet(4,gnr_htr_state)
 endSub
 
-sub log_gnr_metadata
+sub init_gnr_calib
     logmsg("Geonor vibrating wire transducer constants follow:")
+
+    Kw(1,1) = {GNR1_A, GNR1_B, GNR1_F0}
     sprintf(msg, "GNR1: SN=%d F0=%.*g A=%.*g B=%.*g",1,GNR1_SN,GNR1_F0,6,GNR1_A,6,GNR1_B)
     calltable(Messages)
+
+    Kw(2,1) = {GNR2_A, GNR2_B, GNR2_F0}
     sprintf(msg, "GNR2: SN=%d F0=%.*g A=%.*g B=%.*g",2,GNR2_SN,GNR2_F0,6,GNR2_A,6,GNR2_B)
     calltable(Messages)
+
+    Kw(3,1) = {GNR3_A, GNR3_B, GNR3_F0}
     sprintf(msg, "GNR3: SN=%d F0=%.*g A=%.*g B=%.*g",3,GNR3_SN,GNR3_F0,6,GNR3_A,6,GNR3_B)
     calltable(Messages)
-    logmsg("Geonor vibrating wire xdcr Steinhart & Hart constants follow:"
+
+    logmsg("Geonor vibrating wire xdcr thermistors Steinhart & Hart constants follow:"
+
+    Kt() = {THERM_A, THERM_B, THERM_C} 
     sprintf(msg, "GNR1..3 xdcrs: A=%.*g B=%.*g C=%.*g", 8,THERM_A,8,THERM_B,4,THERM_C)
     calltable(Messages)
-endSub
-
-0        1         2         3         4         5         6
-123456789012345678901234567890123456789012345678901234567890
-Geonor vibrating wire xdcr Steinhart & Hart constants follow:"
-
-sub init_gnr_calib
-    Kw(1,1) = {GNR1_A, GNR1_B, GNR1_F0}
-    Kw(2,1) = {GNR2_A, GNR2_B, GNR2_F0}
-    Kw(3,1) = {GNR3_A, GNR3_B, GNR3_F0}
-    Kt() = {THERM_A, THERM_B, THERM_C} 
 endSub
 
 function calc_wire_depth(freq, A, B, F0)
@@ -168,7 +166,6 @@ endfunction
 BeginProg
     progSig = status.ProgSignature
     gnr_htr_maxsteps = GNR_HTR_PERIOD
-    log_gnr_metadata()
     init_gnr_calib()
 
     Scan (10,sec,0,0)
@@ -202,20 +199,16 @@ BeginProg
         panelTemp(panelTemp,_60Hz)
         battery(battery)
 
-        '' calculate fluid level in bucket from pulseCount() frequency
-        gnr1_lvl = calc_wire_depth(gnr_Favg(1), GNR1_A, GNR1_B, GNR1_F0)
-        gnr2_lvl = calc_wire_depth(gnr_Favg(2), GNR2_A, GNR2_B, GNR2_F0)
-        gnr3_lvl = calc_wire_depth(gnr_Favg(3), GNR3_A, GNR3_B, GNR3_F0)
+        for i=1 to 3
+            '' calculate fluid level in bucket from pulseCount() frequency
+            gnr_lvl(i) = calc_wire_depth(gnr_Favg(i), Kw(i,1), Kw(i,2), Kw(i,3))
 
-        '' calculate fluid level in bucket from periodAvg() frequency (experimental)
-        gnr1_lvl2 = calc_wire_depth(gnr_F2avg(1), GNR1_A, GNR1_B, GNR1_F0)
-        gnr2_lvl2 = calc_wire_depth(gnr_F2avg(2), GNR2_A, GNR2_B, GNR2_F0)
-        gnr3_lvl2 = calc_wire_depth(gnr_F2avg(3), GNR3_A, GNR3_B, GNR3_F0)
+            '' calculate fluid level in bucket from periodAvg() frequency
+            gnr_lvl2(i) = calc_wire_depth(gnr_F2avg(i), Kw(i,1), Kw(i,2), Kw(i,3))
 
-        '' calculate wire thermistor temps from averaged resistance:
-        gnr1_T = calc_therm_T(gnr_Ravg(1))
-        gnr2_T = calc_therm_T(gnr_Ravg(2))
-        gnr3_T = calc_therm_T(gnr_Ravg(3))
+            '' calculate wire thermistor temps from averaged resistance:
+            gnr_T(i) = calc_therm_T(gnr_Ravg(i), Kt(1), Kt(2), Kt(3))
+        next i
 
         callTable Geonor_data
     NextScan
