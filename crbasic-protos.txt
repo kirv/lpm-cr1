@@ -1,0 +1,122 @@
+
+'' CRBasic instruction example calls and prototypes:
+''
+''  pulseCount(gnr2_F,1,GNR2__PP,0,1,1.0,0)
+''  pulseCount(
+''      Dest,
+''      Reps,
+''      PChan:      n+10 to use control port n
+''      Config:     high frequency (0), AC (1), switch closure (2)
+''      Option:     counts (0), frequency (1), mSec for running average (>1)
+''      Mult,
+''      Ofs)
+''  )
+''
+''  periodAvg(gnr_F2,3,mV250,GNR1__SE,0,1,500,1000,1,0)
+''  periodAvg(
+''      Dest,
+''      Reps,
+''      Range,
+''      SEChan,
+''      Threshold:  mV; use if signal is not centered on 0 mV
+''      Option:     return period (0) or frequency (1)
+''      Cycles:     number of cycles to average
+''      Timeout:    max mSec to wait for number of cycles to be measured
+''      Mult,
+''      Ofs
+''  )
+''
+''  avgRun(gnr_Favg, 3, gnr_F(), 6)
+''  avgRun(
+''      Dest, 
+''      Reps:       number of array values to (separately) average
+''      Source, 
+''      Number:     number of values to include in running average
+''  )
+''
+''  BrHalf(X(),3,mV2500,GNR_THERM__SE,GNR_THERM__EX,3,2500,0,0,250,1.0,0)
+''  BrHalf(
+''      Dest
+''      Reps
+''      Range
+''      SEChan
+''      ExChan
+''      MeasPEx
+''      ExmV
+''      RevEx
+''      SettlingTime
+''      Integ
+''      Mult
+''      Offset
+''  )
+''
+''  prt(t2,1,x,1,0)
+''  prt(
+''      Dest
+''      Reps
+''      ExChan
+''      Mult
+''      Offset
+''  )
+
+'' CRBasic instruction prototypes:
+''  
+''  serialOpen(LPM__COMMPORT,9600,0,300,10000)
+''  serialOpen(
+''      ComPort     : Com1 (uses C1 and C2), ..., ComRS232 (uses DB9F) 
+''      BaudRate    : 9600, 19200, 115200, etc.
+''      Format      : 0=no parity, 1 stop bit, 8 data bits
+''      TxDelay     : usec delay before outputting strings
+''      BufferSize  : buffer size in bytes for ring memory used for the port
+''  )
+''
+''  serialin(s,LPM__COMMPORT,300,chr(13),2233)
+''  serialIn(
+''      Dest            : string variable to contain results
+''      ComPort         : COM1=(C1,C2), COM2=(C3,C4), ..., ComRS232=db9F, ...
+''      TimeOut         : time in .01 seconds to complete call; 0=no time limit
+''      TerminationChar : character that signals end of output
+''                      : entered as a number from 0 to 255: it is not included in results
+''                      : entered as a string value: it is included in result
+''                      : entered as a number < 0 or null string: no termination char
+''      MaxNumChars     : instruction will return when max chars have been received
+''  )
+''
+''  serialOut(LPM__COMMPORT,s,"",0,0)
+''  serialOut(
+''      ComPort
+''      OutString       : string to send
+''      WaitString      : if "", look for echo of each character from instrument
+''      NumTries        : if 0, send once, return number of bytes sent
+''      Timeout         : if 0, don't check for WaitString
+''  )
+''
+''  timer(
+''      TimerNo : timer object identifier, number or variable
+''      TUnits  : timer units: usec, msec, sec, min, hr
+''      TOption : 0=start, 1=stop, 2=reset and start, 3=stop and reset, 5=read only
+''  )
+''
+''  splitStr(diag(),DD_string,CHR(59),13,2)
+''  splitStr(
+''      SplitResult     : string array to contain results
+''      SearchString    : string to split
+''      FilterString    : delimiter to split on
+''      NumSplit        : max number of strings to return
+''      SplitOption     : 0: numeric
+''                      : 1: non-numeric
+''                      : 2: split SearchString on the entire FilterString
+''                      : 3: split SearchString on any character in FilterString
+''                      : 4: HeaderFilter: return string portion preceding FilterString
+''                      : 5: FooterFilter: return string portion following FilterString
+''                      : 6: HeaderFilterChars ...
+''                      : 7: FooterFilterChars ...
+''                      : 8: filters hexadecimal numbers?
+''                      : 1x: x as above, return NAN or "" for empty elements
+''  )
+'' 
+''  NOTE: The definitive documentation for CRBasic is the Windows Help file associated
+''        with the CRBasic editor included as part of Campbell Scientific LoggerNet.  No
+''        other online or offline documentation exists, to my knowledge.
+
+
