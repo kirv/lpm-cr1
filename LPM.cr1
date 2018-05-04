@@ -57,7 +57,7 @@ public I_housing    : units I_housing    = mA   ' 11: "current heating housing [
 public I_heads      : units I_heads      = mA   ' 12: "current heating heads [mA]"
 public I_carriers   : units I_carriers   = mA   ' 13: "current heating carriers [mA]"
 
-dim time(9)
+dim logger_time(9)
 dim msg as string * 80
 
 dataTable("Messages",1,100)
@@ -241,13 +241,13 @@ beginProg
     logmsg("LPM set to 9600, half duplex")
 
     '' set the LPM clock from the logger at startup:
-    realtime(time) '' 1:year, 2:month, 3:day, 4:hour, 5:minute, 6:second
-    lpm_cmd("ZY", time(1) mod 100)
-    lpm_cmd("ZN", time(2))
-    lpm_cmd("ZD", time(3))
-    lpm_cmd("ZH", time(4))
-    lpm_cmd("ZM", time(5))
-    lpm_cmd("ZS", time(6))
+    realtime(logger_time) '' 1:year, 2:month, 3:day, 4:hour, 5:minute, 6:second
+    lpm_cmd("ZY", logger_time(1) mod 100)
+    lpm_cmd("ZN", logger_time(2))
+    lpm_cmd("ZD", logger_time(3))
+    lpm_cmd("ZH", logger_time(4))
+    lpm_cmd("ZM", logger_time(5))
+    lpm_cmd("ZS", logger_time(6))
     logmsg("LPM","CLOCK SET:", get_lpm("ZT"), "runtime:", get_lpm("ZB"), "hrs")
 
     '' configure automatic data telegram 5 output:
