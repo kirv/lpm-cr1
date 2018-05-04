@@ -1,5 +1,5 @@
 '' LPM.cr1 -- CR1000 program for Laser Precipitation Monitor at Fairbanks ARM test site
-'' 20180501.51 Ken.Irving@alaska.edu
+'' 20180503.63 Ken.Irving@alaska.edu
 
 ConstTable
     '' instrument make and model:
@@ -8,9 +8,11 @@ ConstTable
 
     '' instrument operational settings:
     const LPM_ID = 0
-    const LPM__COMMPORT = Com1      ' Com1 uses C1=Tx, C2=Rx
-    const LPM_DO1__P = 1
-    const LPM_DO2__P = 2
+    const LPM__COMMPORT = Com1      ' C1=Tx, C2=Rx
+    const LPM_DO1_PARAM = 17
+    const LPM_DO2_PARAM = 19
+    const LPM_DO1__P = 2
+    const LPM_DO2__P = 3
     const LPM_0_PRECIP_HRS = 24
     const MAX_TM5_RETRIES = 3
 endConstTable
@@ -32,6 +34,11 @@ public TM5_timer as long        : units TM5_timer = sec
 dim LPM(525) as string
 alias LPM(5)   = LPM_code5m
 alias LPM(15)  = LPM_precipAmount
+
+public do17_freq as float    : units do17 = Hz
+public metar17 as string * 5
+public do19_freq as float    : units do19 = Hz
+public metar19 as string * 5
 
 '' LPM error and warning flags:
 public LPM_errors as long
@@ -228,6 +235,66 @@ sub init_LPM_messages
     LPM_warning(9) = "not used"
 endSub ' init_LPM_messages
 
+dim d17(13,2) as float
+dim d19(21,2) as float
+dim metar_code(90) as string * 5
+
+sub init_synop_metar
+    '' prep to transform D17 and D19 output frequency to METAR code string
+    '' arrays for D17 (Table 4) and D19 (Table 5) relate frequency to SYNOP code
+    '' array for METAR codes is indexed on SYNOP code, so is sparsely used
+
+    d17(1) = { 5,       90 } '   metar_code(90) =  "NP"
+    d17(2) = { 10,      51 } '   metar_code(51) = "-DZ"
+    d17(3) = { 20,      52 } '   metar_code(52) =  "DZ"
+    d17(4) = { 25,      41 } '   metar_code(41) = "-UP"
+    d17(5) = { 33.33,   57 } '   metar_code(57) = "-RADZ"
+    d17(6) = { 41.66,   58 } '   metar_code(58) =  "RADZ"
+    d17(7) = { 50,      67 } '   metar_code(67) = "-RASN"
+    d17(8) = { 62.5,    68 } '   metar_code(68) =  "RASN"
+    d17(9) = { 83.33,   77 } '   metar_code(77) =  "SG"
+    d17(10) = { 100,    71 } '   metar_code(71) = "-SN"
+    d17(11) = { 125,    72 } '   metar_code(72) =  "SN"
+    d17(12) = { 166.67, 75 } '   metar_code(75) =  "GS"
+    d17(13) = { 250,    89 } '   metar_code(89) =  "GR"
+
+    d19(1) = { 2.5,     41 } :   metar_code(41) = "-UP"
+    d19(2) = { 5,       42 } :   metar_code(42) =  "UP"
+    d19(3) = { 10,      90 } :   metar_code(90) =  "NP"
+    d19(4) = { 15.15,   51 } :   metar_code(51) = "-DZ"
+    d19(5) = { 20,      52 } :   metar_code(52) =  "DZ"
+    d19(6) = { 22.73,   53 } :   metar_code(53) = "+DZ"
+    d19(7) = { 25,      57 } :   metar_code(57) = "-RADZ"
+    d19(8) = { 29.41,   58 } :   metar_code(58) =  "RADZ"
+    d19(9) = { 33.33,   61 } :   metar_code(61) = "-RA"
+    d19(10) = { 38.46,  62 } :   metar_code(62) =  "RA"
+    d19(11) = { 41.66,  63 } :   metar_code(63) = "+RA"
+    d19(12) = { 45.45,  67 } :   metar_code(67) = "-RASN"
+    d19(13) = { 50,     68 } :   metar_code(68) =  "RASN"
+    d19(14) = { 55.56,  77 } :   metar_code(77) =  "SG"
+    d19(15) = { 62.5,   71 } :   metar_code(71) = "-SN"
+    d19(16) = { 71.43,  72 } :   metar_code(72) =  "SN"
+    d19(17) = { 83.33,  73 } :   metar_code(73) = "+SN"
+    d19(18) = { 100,    74 } :   metar_code(74) = "-GS"
+    d19(19) = { 125,    75 } :   metar_code(75) =  "GS"
+    d19(20) = { 166.67, 76 } :   metar_code(76) = "+GS"
+    d19(21) = { 250,    89 } :   metar_code(89) =  "GR"
+endsub
+
+function freq_to_metar(param as long, f as float) as string * 5
+    dim i as long
+    if param = 17 
+        for i=1 to 13
+            if abs(d17(i,1)-f) < 1 then return metar_code(d17(i,2))
+        next i
+    elsif param = 19 
+        for i=1 to 21
+            if abs(d17(i,1)-f) < 1 then return metar_code(d17(i,2))
+        next i
+    endif
+    return "?????"
+endfunction
+
 beginProg
     progSig = status.ProgSignature
 
@@ -261,6 +328,7 @@ beginProg
     lpm_cmd("KY", 0)
 
     init_LPM_messages
+    init_synop_metar( @synop_tab_4680() )
 
     Scan (60,sec,0,0)
         panelTemp (panelTemp,_60Hz)
@@ -289,9 +357,11 @@ beginProg
         get_LPM_state
         callTable LPM_state
 
-        '' read LPM digital output channels -- COMMENTED-OUT FOR NOW
-      ' periodAvg(x, LPM_DO1__P, 0, 0)
-      ' periodAvg(x, LPM_DO2__P, 0, 0)
+        '' read LPM digital output channels
+        periodAvg(do1_freq, LPM_DO1__P, 0, 0)
+        periodAvg(do2_freq, LPM_DO2__P, 0, 0)
+        metar1 = freq_to_metar(LPM_DO1_PARAM, do1_freq)
+        metar2 = freq_to_metar(LPM_DO1_PARAM, do2_freq)
 
         if timeIntoInterval(0,1,day) then
             '' emit message with several parameters, then zero precip total:
