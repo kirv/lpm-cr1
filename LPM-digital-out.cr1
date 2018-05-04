@@ -1,0 +1,97 @@
+'' LPM-digital-out.cr1
+'' 20180504.30 Ken.Irving@alaska.edu
+
+ConstTable
+    const LPM_NAME  = "Laser Precipitation Monitor"
+    const LPM_MODEL = "5.4110.11.100"
+    const LPM_DO1_PARAM = 17
+    const LPM_DO2_PARAM = 19
+    const LPM_DO1__SE = 2
+    const LPM_DO2__SE = 3
+    const METAR_SHOW_FREQ = 1
+endConstTable
+
+public progSig as Long
+
+dim do_freq(2) as float     : units do_freq = Hz
+alias do_freq = do1_freq, do2_freq
+public metar1 as string
+public metar2 as string
+
+dim d17(13,2) as float
+dim d19(21,2) as float
+dim metar_code(90) as string * 5
+
+sub init_synop_metar
+    '' prep to transform D17 and D19 output frequency to METAR code string
+    '' arrays for D17 (Table 4) and D19 (Table 5) relate frequency to SYNOP code
+    '' array for METAR codes is indexed on SYNOP code, so is sparsely used
+
+    d17(1,1) = 5        : d17(1,2) =    90  ''  metar_code(90) =  "NP"
+    d17(2,1) = 10       : d17(2,2) =    51  ''  metar_code(51) = "-DZ"
+    d17(3,1) = 20       : d17(3,2) =    52  ''  metar_code(52) =  "DZ"
+    d17(4,1) = 25       : d17(4,2) =    41  ''  metar_code(41) = "-UP"
+    d17(5,1) = 33.33    : d17(5,2) =    57  ''  metar_code(57) = "-RADZ"
+    d17(6,1) = 41.66    : d17(6,2) =    58  ''  metar_code(58) =  "RADZ"
+    d17(7,1) = 50       : d17(7,2) =    67  ''  metar_code(67) = "-RASN"
+    d17(8,1) = 62.5     : d17(8,2) =    68  ''  metar_code(68) =  "RASN"
+    d17(9,1) = 83.33    : d17(9,2) =    77  ''  metar_code(77) =  "SG"
+    d17(10,1) = 100     : d17(10,2) =   71  ''  metar_code(71) = "-SN"
+    d17(11,1) = 125     : d17(11,2) =   72  ''  metar_code(72) =  "SN"
+    d17(12,1) = 166.67  : d17(12,2) =   75  ''  metar_code(75) =  "GS"
+    d17(13,1) = 250     : d17(13,2) =   89  ''  metar_code(89) =  "GR"
+
+    d19(1,1) = 2.5      : d19(1,2) =    41  :   metar_code(41) = "-UP"
+    d19(2,1) = 5        : d19(2,2) =    42  :   metar_code(42) =  "UP"
+    d19(3,1) = 10       : d19(3,2) =    90  :   metar_code(90) =  "NP"
+    d19(4,1) = 15.15    : d19(4,2) =    51  :   metar_code(51) = "-DZ"
+    d19(5,1) = 20       : d19(5,2) =    52  :   metar_code(52) =  "DZ"
+    d19(6,1) = 22.73    : d19(6,2) =    53  :   metar_code(53) = "+DZ"
+    d19(7,1) = 25       : d19(7,2) =    57  :   metar_code(57) = "-RADZ"
+    d19(8,1) = 29.41    : d19(8,2) =    58  :   metar_code(58) =  "RADZ"
+    d19(9,1) = 33.33    : d19(9,2) =    61  :   metar_code(61) = "-RA"
+    d19(10,1) = 38.46   : d19(10,2) =   62  :   metar_code(62) =  "RA"
+    d19(11,1) = 41.66   : d19(11,2) =   63  :   metar_code(63) = "+RA"
+    d19(12,1) = 45.45   : d19(12,2) =   67  :   metar_code(67) = "-RASN"
+    d19(13,1) = 50      : d19(13,2) =   68  :   metar_code(68) =  "RASN"
+    d19(14,1) = 55.56   : d19(14,2) =   77  :   metar_code(77) =  "SG"
+    d19(15,1) = 62.5    : d19(15,2) =   71  :   metar_code(71) = "-SN"
+    d19(16,1) = 71.43   : d19(16,2) =   72  :   metar_code(72) =  "SN"
+    d19(17,1) = 83.33   : d19(17,2) =   73  :   metar_code(73) = "+SN"
+    d19(18,1) = 100     : d19(18,2) =   74  :   metar_code(74) = "-GS"
+    d19(19,1) = 125     : d19(19,2) =   75  :   metar_code(75) =  "GS"
+    d19(20,1) = 166.67  : d19(20,2) =   76  :   metar_code(76) = "+GS"
+    d19(21,1) = 250     : d19(21,2) =   89  :   metar_code(89) =  "GR"
+endsub
+
+function freq_to_metar(param as long, f as float) as string * 5
+    dim i as long
+    if param = 17 
+        for i=1 to 13
+            if abs(d17(i,1)-f) < 1 then return metar_code(d17(i,2))
+        next i
+    else if param = 19 
+        for i=1 to 21
+            if abs(d17(i,1)-f) < 1 then return metar_code(d17(i,2))
+        next i
+    endif
+    return "?????"
+endfunction
+
+beginProg
+    progSig = status.ProgSignature
+
+    init_synop_metar()
+
+    Scan (60,sec,0,0)
+
+        '' read LPM digital output channels
+        periodAvg(do_freq(), 2, mV250, LPM_DO1__SE, 0, 1, 100, 500, 1, 0)
+        metar1 = freq_to_metar(LPM_DO1_PARAM, do1_freq)
+        metar2 = freq_to_metar(LPM_DO1_PARAM, do2_freq)
+    
+        if METAR_SHOW_FREQ then metar1 &= " : " + do1_freq
+        if METAR_SHOW_FREQ then metar2 &= " : " + do2_freq
+
+    NextScan
+EndProg
