@@ -12,16 +12,13 @@ ConstTable
 endConstTable
 
 public progSig as Long
-
-public random_freq as Boolean
-
 public do_freq(2) as float  : units do_freq = Hz    : alias do_freq = do1_freq, do2_freq
 public metar1 as string
 public metar2 as string
-
 dim d17(13,2) as float
 dim d19(21,2) as float
 dim metar_code(90) as string * 5
+public random_freq as Boolean
 
 sub init_synop_metar
     '' prep to transform D17 and D19 output frequency to METAR code string
