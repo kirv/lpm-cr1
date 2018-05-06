@@ -1,5 +1,5 @@
 ' cr1000 program for Geonor T200B-3 with heater
-' ki 20180426.59
+' ki 20180506.46
 
 ConstTable
 
@@ -138,21 +138,21 @@ endSub
 sub init_gnr_calib
     logmsg("Geonor vibrating wire transducer constants follow:")
 
-    Kw(1,1) = {GNR1_A, GNR1_B, GNR1_F0}
+    Kw(1,1) = GNR1_A    : Kw(1,2) = GNR1_B  : Kw(1,3) = GNR1_F0
     sprintf(msg, "GNR1: SN=%d F0=%.*g A=%.*g B=%.*g",1,GNR1_SN,GNR1_F0,6,GNR1_A,6,GNR1_B)
     calltable(Messages)
 
-    Kw(2,1) = {GNR2_A, GNR2_B, GNR2_F0}
+    Kw(2,1) = GNR2_A    : Kw(2,2) = GNR2_B  : Kw(2,3) = GNR2_F0
     sprintf(msg, "GNR2: SN=%d F0=%.*g A=%.*g B=%.*g",2,GNR2_SN,GNR2_F0,6,GNR2_A,6,GNR2_B)
     calltable(Messages)
 
-    Kw(3,1) = {GNR3_A, GNR3_B, GNR3_F0}
+    Kw(3,1) = GNR3_A    : Kw(3,2) = GNR3_B  : Kw(3,3) = GNR3_F0
     sprintf(msg, "GNR3: SN=%d F0=%.*g A=%.*g B=%.*g",3,GNR3_SN,GNR3_F0,6,GNR3_A,6,GNR3_B)
     calltable(Messages)
 
     logmsg("Geonor vibrating wire xdcr thermistors Steinhart & Hart constants follow:"
 
-    Kt() = {THERM_A, THERM_B, THERM_C} 
+    Kt(1) = THERM_A     : Kt(2) = THERM_B   : Kt(3) = THERM_C 
     sprintf(msg, "GNR1..3 xdcrs: A=%.*g B=%.*g C=%.*g", 8,THERM_A,8,THERM_B,4,THERM_C)
     calltable(Messages)
 endSub
@@ -193,6 +193,7 @@ BeginProg
         '' experimental and redundant: measure frequency using period averaging:
         periodAvg(gnr_F2,3,mV250,GNR1__SE,0,1,100,150,1,0)
         avgRun(gnr_F2avg, 3, gnr_F2(), 30)
+    NextScan
 
     SlowSequence
     Scan(60,sec,0,0)
@@ -201,10 +202,10 @@ BeginProg
 
         for i=1 to 3
             '' calculate fluid level in bucket from pulseCount() frequency
-            gnr_lvl(i) = calc_wire_depth(gnr_Favg(i), Kw(i,1), Kw(i,2), Kw(i,3))
+            gnr_level(i) = calc_wire_depth(gnr_Favg(i), Kw(i,1), Kw(i,2), Kw(i,3))
 
             '' calculate fluid level in bucket from periodAvg() frequency
-            gnr_lvl2(i) = calc_wire_depth(gnr_F2avg(i), Kw(i,1), Kw(i,2), Kw(i,3))
+            gnr_level2(i) = calc_wire_depth(gnr_F2avg(i), Kw(i,1), Kw(i,2), Kw(i,3))
 
             '' calculate wire thermistor temps from averaged resistance:
             gnr_T(i) = calc_therm_T(gnr_Ravg(i), Kt(1), Kt(2), Kt(3))
