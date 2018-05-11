@@ -1,5 +1,5 @@
 ' cr1000 program for Geonor T200B-3 with heater
-' ki 20180511.54
+' ki 20180511.58
 
 ConstTable
 
@@ -21,7 +21,10 @@ ConstTable
     const GNR_RTD__SE = 7 
     const GNR_RTD__EX = 2
     const GNR_RTD_R0 = 1000 ' Ohms
-    const GNR_HTR_PERIOD = 10  ' number of scans for heater control 100% duty cycle
+
+    const HTR_RELAY__P = 1      ' control port wired to solid state relay
+    const HTR_SCAN_SEC = 2      ' control scan time, also minimum heater ON time
+    const HTR_PERIOD_SEC = 30   ' duty cycle period for heater control
 
     '' thermistors taped to each (of 3) Geonor vibrating wire transducer:
     const GNR_THERM__SE = 4
@@ -55,10 +58,14 @@ public gnr_last_level
 
 '' Geonor orifice RTD and heater
 public gnr_orifice_temp     : units gnr_orifice_temp = deg C
-public gnr_htr_state as boolean
-public gnr_htr_maxsteps ' number of scans comprising heater control period
-public gnr_htr_step     ' current heater control step 
+public gnr_htr_period       : units gnr_htr_period = sec    '' 100% duty cycle time
 public gnr_htr_on_ratio ' heater control setpoint, ratio of ON/OFF times
+public gnr_htr_state as boolean
+
+'' ambient air temperature and humidity
+'' TODO: define these using HMP45C or equivalent sensor!!
+public AT   : units AT = degC
+public RH   : units RH = %
 
 dim msg as string * 80
 dim X(3)
@@ -97,6 +104,13 @@ DataTable(Geonor_data,1,-1)
     Average(1,gnr_htr_state,fp2,false)
 EndTable
 
+DataTable(Geonor_heater,1,-1)
+    DataInterval(0,60,min,10)
+    Sample(1,progSig,uint2)
+    average(1,gnr_orifice_temp,fp2,false)
+    average(1,gnr_htr_state,fp2,false)
+EndTable
+
 function read_Geonor_RTD()
     dim x
     dim T
@@ -110,13 +124,6 @@ function calc_therm_T(R, A, B, C)
     T = (1/(A + B*ln(R) + C*ln(R)^3)) - 273.15
     return T
 endFunction
-
-sub heater_control
-    ' increment state step counter modulus the control period:
-    gnr_htr_step = (gnr_htr_step + 1) mod gnr_htr_maxsteps
-    gnr_htr_state = gnr_htr_step < gnr_htr_on_ratio * gnr_htr_maxsteps
-    portSet(4,gnr_htr_state)
-endSub
 
 sub init_gnr_calib
     logmsg("Geonor vibrating wire transducer constants follow:")
@@ -146,9 +153,29 @@ function calc_wire_depth(freq, A, B, F0)
     return level
 endfunction
 
+function htr_relay_control(ratio as float, period as long) as boolean
+    dim elapsed as float
+    dim ontime as float
+    dim state as boolean
+    elapsed = timer(HTR_SCAN_SEC,sec,4)                 '' read timer
+    if elapsed = 0 then timer(HTR_SCAN_SEC,sec,0)       '' start timer if not running
+    ontime = ratio * period
+    if ontime < HTR_SCAN_SEC then ontime = 0
+    if elapsed > period then timer(HTR_SCAN_SEC,sec,2)  '' restart timer
+    if ontime < elapsed and ontime > 0 then state = 1 else state = 0
+    portSet(HTR_RELAY__P,state)
+endfunction
+
+function gnr_htr_strategy(AT, RH, orifice_temp) as float
+    '' TODO: DEFINE SOME SORT OF STRATEGY FOR CONTROLLING ORIFICE HEATER 
+    '' OUTPUT RATIO SHOULD BE >=0 AND <=1
+    return 0
+endfunction
+
+
 BeginProg
     progSig = status.ProgSignature
-    gnr_htr_maxsteps = GNR_HTR_PERIOD
+    gnr_htr_period = HTR_PERIOD_SEC
     init_gnr_calib()
 
     Scan (10,sec,0,0)
@@ -169,6 +196,14 @@ BeginProg
         '' update running averages for processing and logging in 60-second scan
         avgRun(gnr_Favg, 3, gnr_F(), 6)
         avgRun(gnr_Ravg, 3, gnr_R(), 6)
+    NextScan
+
+    SlowSequence
+    Scan(HTR_SCAN_SEC,sec,0,0)
+        gnr_orifice_temp = read_Geonor_RTD()
+        gnr_htr_on_ratio = gnr_htr_strategy(AT, RH, gnr_orifice_temp)
+        gnr_htr_state = htr_relay_control(gnr_htr_on_ratio, gnr_htr_period)
+        callTable(Geonor_heater)
     NextScan
 
     SlowSequence
