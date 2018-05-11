@@ -4,16 +4,13 @@
 ConstTable
 
     '' Geonor nameplate data:
-    const GEONOR_MANUF = "Geonor"
-    const GEONOR_NAME  = "Precipitation Gauge"
+    const GEONOR_NAME  = "Geonor Precipitation Gauge"
     const GEONOR_MODEL = "T-200B3 - 600mm"
-    const GEONOR_WEB   = "www.geonor.com"
-    const GEONOR_SN    = "343 16"
     
-    ' Geonor transducer serial numbers, pulse and analog input channels:
-    const GNR1_SN = 62417 : const GNR1__PP = 1  : const GNR1__SE = 1
-    const GNR2_SN = 62517 : const GNR2__PP = 2  : const GNR2__SE = 2
-    const GNR3_SN = 62617 : const GNR3__PP = 18 : const GNR3__SE = 3
+    ' Geonor transducer serial numbers, pulse input channels:
+    const GNR1_SN = 62417 : const GNR1__PP = 1
+    const GNR2_SN = 62517 : const GNR2__PP = 2
+    const GNR3_SN = 62617 : const GNR3__PP = 18
     
     ' Geonor transducer calibration constants:
     const GNR1_F0 = 1050.4 : const GNR1_A = 0.0164316 : const GNR1_B = 0.00000921903
@@ -50,10 +47,6 @@ public progSig as Long
 public gnr_F(3)     : units gnr_F = Hz     : alias gnr_F = gnr1_F, gnr2_F, gnr3_F
 public gnr_Favg(3)
 
-'' measured Geonor variables; f2:frequency from periodAverage():
-public gnr_F2(3)    : units gnr_F2 = Hz    : alias gnr_F2 = gnr1_F2, gnr2_F2, gnr3_F2
-public gnr_F2avg(3)
-
 '' a thermistor is taped to each vibrating wire transducer:
 public gnr_R(3)     : units gnr_R = Ohms  : alias gnr_R = gnr1_R, gnr2_R, gnr3_R
 public gnr_Ravg(3)
@@ -61,8 +54,6 @@ public gnr_T(3)     : units gnr_T = Deg C  : alias gnr_T = gnr1_T, gnr2_T, gnr3_
 
 '' derived Geonor variables
 public gnr_level(3) : units gnr_level = mm : alias gnr_level = gnr1_lvl,gnr2_lvl,gnr3_lvl 
-public gnr_level2(3) : units gnr_level2 = mm
-alias gnr_level2 = gnr1_lvl2,gnr2_lvl2,gnr3_lvl2 
 public gnr_precip   : units gnr_precip = mm
 public gnr_last_level 
  
@@ -189,13 +180,6 @@ BeginProg
     NextScan
 
     SlowSequence
-    Scan(2,sec,0,0)
-        '' experimental and redundant: measure frequency using period averaging:
-        periodAvg(gnr_F2,3,mV250,GNR1__SE,0,1,100,150,1,0)
-        avgRun(gnr_F2avg, 3, gnr_F2(), 30)
-    NextScan
-
-    SlowSequence
     Scan(60,sec,0,0)
         panelTemp(panelTemp,_60Hz)
         battery(battery)
@@ -203,9 +187,6 @@ BeginProg
         for i=1 to 3
             '' calculate fluid level in bucket from pulseCount() frequency
             gnr_level(i) = calc_wire_depth(gnr_Favg(i), Kw(i,1), Kw(i,2), Kw(i,3))
-
-            '' calculate fluid level in bucket from periodAvg() frequency
-            gnr_level2(i) = calc_wire_depth(gnr_F2avg(i), Kw(i,1), Kw(i,2), Kw(i,3))
 
             '' calculate wire thermistor temps from averaged resistance:
             gnr_T(i) = calc_therm_T(gnr_Ravg(i), Kt(1), Kt(2), Kt(3))
