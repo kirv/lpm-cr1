@@ -1,5 +1,5 @@
 ' cr1000 program for Geonor T200B-3 with heater
-' ki 20180506.46
+' ki 20180511.54
 
 ConstTable
 
@@ -21,6 +21,7 @@ ConstTable
     const GNR_RTD__SE = 7 
     const GNR_RTD__EX = 2
     const GNR_RTD_R0 = 1000 ' Ohms
+    const GNR_HTR_PERIOD = 10  ' number of scans for heater control 100% duty cycle
 
     '' thermistors taped to each (of 3) Geonor vibrating wire transducer:
     const GNR_THERM__SE = 4
@@ -32,7 +33,6 @@ ConstTable
     const THERM_B = 0.0002386780
     const THERM_C = 0.0000001000
 
-    const GNR_HTR_PERIOD = 10  ' number of scans for heater control 100% duty cycle
 EndConstTable
 
 public panelTemp  : units panelTemp = deg C
@@ -52,7 +52,6 @@ public gnr_T(3)     : units gnr_T = Deg C  : alias gnr_T = gnr1_T, gnr2_T, gnr3_
 public gnr_level(3) : units gnr_level = mm : alias gnr_level = gnr1_lvl,gnr2_lvl,gnr3_lvl 
 public gnr_precip   : units gnr_precip = mm
 public gnr_last_level 
- 
 
 '' Geonor orifice RTD and heater
 public gnr_orifice_temp     : units gnr_orifice_temp = deg C
@@ -94,7 +93,6 @@ DataTable(Geonor_data,1,-1)
     DataInterval(0,60,sec,10)
     Sample(1,progSig,uint2)
     sample (3,gnr_level,FP2)
-    sample (3,gnr_level2,FP2)
     Sample(1,gnr_orifice_temp,FP2)
     Average(1,gnr_htr_state,fp2,false)
 EndTable
