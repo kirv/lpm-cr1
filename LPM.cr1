@@ -1,5 +1,5 @@
 '' LPM.cr1 -- CR1000 program for Laser Precipitation Monitor at Fairbanks ARM test site
-'' 20180504.55 Ken.Irving@alaska.edu
+'' 20180511.56 Ken.Irving@alaska.edu
 
 ConstTable
     '' instrument make and model:
@@ -51,18 +51,18 @@ dim got_error_counts as boolean
 
 '' LPM diagnostic analog data from DD[1..13] or LPM[38..50]
 public T_interior   : units T_interior   = degC ' 1: "interior temp [degC]"
-public T_laserdrvr  : units T_laserdrvr  = degC ' 2: "temp of laser driver 0-80 degC"
-public I_laser      : units I_laser      = mA   ' 3: "mean value laser current [1/100 mA]"
-public V_control    : units V_control    = mV   ' 4: "control voltage [mV] ref value:  ' 4010+/-5"
-public V_optical    : units V_optical    = mV   ' 5: "optical control [mV] / control variable"
-public V_sensor     : units V_sensor     = V    ' 6: "voltage sensor supply [1/10V]"
-public I_laser_pane : units I_laser_pane = mA   ' 7: "current page heating laser head [mA]"
-public I_recvr_pane : units I_recvr_pane = mA   ' 8: "current page heating receiver head [mA]"
+public T_laserdrvr  : units T_laserdrvr  = degC ' 2: "laser driver temp 0-80 degC"
+public I_laser      : units I_laser      = mA   ' 3: "laser current mean [1/100 mA]"
+public V_control    : units V_control    = mV   ' 4: "control voltage [mV] ref value"
+public V_optical    : units V_optical    = mV   ' 5: "optical control [mV]/control var"
+public V_sensor     : units V_sensor     = V    ' 6: "voltage supply [1/10V]"
+public I_laser_pane : units I_laser_pane = mA   ' 7: "laser pane heating current [mA]"
+public I_recvr_pane : units I_recvr_pane = mA   ' 8: "receiver pane heating current [mA]"
 public T_ambient    : units T_ambient    = degC ' 9: "ambient temp [degC]"
-public V_heating    : units V_heating    = V    ' 10: "voltage heating supply [1/10V]"
-public I_housing    : units I_housing    = mA   ' 11: "current heating housing [mA]"
-public I_heads      : units I_heads      = mA   ' 12: "current heating heads [mA]"
-public I_carriers   : units I_carriers   = mA   ' 13: "current heating carriers [mA]"
+public V_heating    : units V_heating    = V    ' 10: "voltage heating supply voltage[1/10V]"
+public I_housing    : units I_housing    = mA   ' 11: "heating housing current [mA]"
+public I_heads      : units I_heads      = mA   ' 12: "heating heads current [mA]"
+public I_carriers   : units I_carriers   = mA   ' 13: "heating carriers current [mA]"
 
 dim logger_time(9)
 dim msg as string * 80
