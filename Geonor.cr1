@@ -18,13 +18,9 @@ ConstTable
     const GNR3_F0 = 1066.0 : const GNR3_A = 0.0165758 : const GNR3_B = 0.00000916086
     
     '' Geonor orifice RTD, Minco S665PFY40B, 1000 Ohms at 0C
-    '' derived an empirical (linear) relation from dataset from -40 to 0C 
-    '' and confirmed with several resistance vs temperature measurements
-    '' (note that the sensor is an RTD, not a thermistor)
-    const GNR_RTD_M = 0.25 ' degrees/Ohm
-    const GNR_RTD_B = -250 ' degrees C
-    const GNR_REF_R = 1000 ' Ohms
-    const GNR_RTD__SE = 7  : const GNR_RTD__EX = 2
+    const GNR_RTD__SE = 7 
+    const GNR_RTD__EX = 2
+    const GNR_RTD_R0 = 1000 ' Ohms
 
     '' thermistors taped to each (of 3) Geonor vibrating wire transducer:
     const GNR_THERM__SE = 4
@@ -104,13 +100,11 @@ DataTable(Geonor_data,1,-1)
 EndTable
 
 function read_Geonor_RTD()
-    '' TODO: see if the crBasic prt() instruction can be used in lieu of all this...
-    dim x, t, t2
+    dim x, R, T
     BrHalf (x,1,mV250,GNR_RTD__SE,GNR_RTD__EX,1,250,0,0,250,1.0,0)
-    t = GNR_REF_R*x/(1-x) * GNR_RTD_M + GNR_RTD_B
-    return t
-    '' following is the alternative prt() to evaluate:
-    prt(t2,1,x,1,0)
+    R = GNR_RTD_R0*x/(1-x)
+    prt(t2,1,R/GNR_RTD_R0,1,0)
+    return T
 endFunction
 
 function calc_therm_T(R, A, B, C)
