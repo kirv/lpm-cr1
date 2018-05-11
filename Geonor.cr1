@@ -100,10 +100,10 @@ DataTable(Geonor_data,1,-1)
 EndTable
 
 function read_Geonor_RTD()
-    dim x, R, T
+    dim x
+    dim T
     BrHalf (x,1,mV250,GNR_RTD__SE,GNR_RTD__EX,1,250,0,0,250,1.0,0)
-    R = GNR_RTD_R0*x/(1-x)
-    prt(t2,1,R/GNR_RTD_R0,1,0)
+    prt(T,1,x/(1-x),1,0)
     return T
 endFunction
 
@@ -185,6 +185,8 @@ BeginProg
             '' calculate wire thermistor temps from averaged resistance:
             gnr_T(i) = calc_therm_T(gnr_Ravg(i), Kt(1), Kt(2), Kt(3))
         next i
+
+        gnr_orifice_temp = read_Geonor_RTD()
 
         callTable Geonor_data
     NextScan
