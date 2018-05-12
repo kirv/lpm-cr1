@@ -43,16 +43,16 @@ public battery    : units battery = volts
 public progSig as Long
   
 '' measured Geonor variables; f:frequency from pulseCount():
-public gnr_F(3)     : units gnr_F = Hz     : alias gnr_F = gnr1_F, gnr2_F, gnr3_F
+public gnr_F(3)     : units gnr_F = Hz     : alias gnr_F = g1_F, g2_F, g3_F
 public gnr_Favg(3)
 
 '' a thermistor is taped to each vibrating wire transducer:
-public gnr_R(3)     : units gnr_R = Ohms  : alias gnr_R = gnr1_R, gnr2_R, gnr3_R
+public gnr_R(3)     : units gnr_R = Ohms  : alias gnr_R = g1_R, g2_R, g3_R
 public gnr_Ravg(3)
-public gnr_T(3)     : units gnr_T = Deg C  : alias gnr_T = gnr1_T, gnr2_T, gnr3_T
+public gnr_T(3)     : units gnr_T = Deg C  : alias gnr_T = g1_T, g2_T, g3_T
 
 '' derived Geonor variables
-public gnr_level(3) : units gnr_level = mm : alias gnr_level = gnr1_lvl,gnr2_lvl,gnr3_lvl 
+public gnr_level(3) : units gnr_level = mm : alias gnr_level = g1_lvl,g2_lvl,g3_lvl 
 public gnr_precip   : units gnr_precip = mm
 public gnr_last_level 
 
@@ -180,9 +180,9 @@ BeginProg
 
     Scan (10,sec,0,0)
         '' measure vibrating wire cycles since last scan, save as frequency
-        pulseCount(gnr1_F,1,GNR1__PP,0,1,1.0,0)
-        pulseCount(gnr2_F,1,GNR2__PP,0,1,1.0,0)
-        pulseCount(gnr3_F,1,GNR3__PP,0,1,1.0,0)
+        pulseCount(g1_F,1,GNR1__PP,0,1,1.0,0)
+        pulseCount(g2_F,1,GNR2__PP,0,1,1.0,0)
+        pulseCount(g3_F,1,GNR3__PP,0,1,1.0,0)
         
         '' read Geonor wire transducer thermistors:
         BrHalf (X(),3,mV2500,GNR_THERM__SE,GNR_THERM__EX,3,2500,0,0,250,1.0,0)
