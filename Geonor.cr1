@@ -100,13 +100,6 @@ DataTable(Geonor_data,1,-1)
     DataInterval(0,60,sec,10)
     Sample(1,progSig,uint2)
     sample (3,gnr_level,FP2)
-    Sample(1,gnr_orifice_T,FP2)
-    Average(1,gnr_htr_state,fp2,false)
-EndTable
-
-DataTable(Geonor_heater,1,-1)
-    DataInterval(0,60,min,10)
-    Sample(1,progSig,uint2)
     average(1,gnr_orifice_T,fp2,false)
     average(1,gnr_htr_state,fp2,false)
 EndTable
