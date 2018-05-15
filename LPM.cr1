@@ -8,7 +8,7 @@ ConstTable
 
     '' instrument operational settings:
     const LPM_ID = 0
-    const LPM__COMMPORT = Com1      ' C1=Tx, C2=Rx
+    const LPM__COMMPORT = Com1      ' C1=Tx (db9F-pin3), C2=Rx (db9F-pin2)
     const LPM_DO1_PARAM = 17
     const LPM_DO2_PARAM = 19
     const LPM_DO1__SE = 2
