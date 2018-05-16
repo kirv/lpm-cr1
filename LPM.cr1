@@ -79,7 +79,7 @@ sub logmsg(optional s as string * 80 = "MARK", _
     msg = s & " " & t & " " & u & " " & v & " " & w & " " & x & " " & y
     msg = trim(msg)
     calltable(Messages)
-endsub 'logmsg
+endsub
 
 sub lpm_cmd(cmd as string, optional value as long = 99999)
     dim s as string
@@ -92,14 +92,14 @@ sub lpm_cmd(cmd as string, optional value as long = 99999)
     endif
     '' s is "xxCCR" or "xxCCnnnnnR", where xx=ID, CC=cmd, n=0-padded arg, R=<CR>
     serialOut (LPM__COMMPORT,s,"",0,0)
-endsub ' lpm_cmd
+endsub
 
 function get_lpm(cmd as string, optional value as long = 99999)
     dim s as string * 80
     lpm_cmd(cmd, value)
     serialin(s,LPM__COMMPORT,300,CR,2233)
     return s
-endFunction ' get_lpm()
+endFunction
 
 DataTable(LPM_state,1,-1)
   DataInterval(0,60,Sec,0)
@@ -130,7 +130,7 @@ sub get_error_counts ' called if needed by get_LPM_errors() and get_LPM_warnings
     serialIn(FM_raw,LPM__COMMPORT,300,CR,80)
     SplitStr (LPM_err_count(),FM_raw,SEMICOLON,15,2)
     got_error_counts = True
-endsub ' get_error_counts
+endsub
 
 sub get_LPM_errors ' called by get_LPM_state()
     dim i as long
@@ -147,7 +147,7 @@ sub get_LPM_errors ' called by get_LPM_state()
             LPM_errors = LPM_errors OR NOT &b01 << (i-1) 
         endif
     next i
-endsub ' get_LPM_errors
+endsub
 
 sub get_LPM_warnings ' called by get_LPM_state()
     dim i as long
@@ -164,7 +164,7 @@ sub get_LPM_warnings ' called by get_LPM_state()
             LPM_warnings = LPM_warnings OR NOT &b01 << (i-1) 
         endif
     next i
-endsub ' check_LPM_errors
+endsub
 
 sub get_LPM_state
     '' LPM analog diagnostic data from DD[1..13] or LPM[38..50]
@@ -184,7 +184,7 @@ sub get_LPM_state
     got_error_counts = False
     get_LPM_errors
     get_LPM_warnings
-endsub ' get_LPM_state
+endsub
 
 DataTable(LPM,TM5_checksum,-1)
   dataInterval(0,60,Sec,10)
@@ -196,11 +196,11 @@ function check_TM5_raw as boolean
     dim i as long
     dim a as string * 1
     dim sum as long
-    i = 0
-    sum = 0
     if len(TM5_raw) <> 2233 then return False
     if ascii(TM5_raw(1,1,1)) <> 2 then return False
     if ascii(TM5_raw(1,1,2233)) <> 3 then return False
+    i = 0
+    sum = 0
     do
         i += 1
         a = ascii(TM5_raw(1,1,i))
@@ -214,7 +214,7 @@ function check_TM5_raw as boolean
     '' adding the checksum to the sum of bytes should result in 0x00 in last byte
     if sum << 24 <> 0 then return False
     return True
-endFunction ' check_TM5_raw()
+endFunction
 
 sub init_LPM_messages
     '' LPM error flags from LPM[22..28] or DX[1..6]
@@ -235,7 +235,7 @@ sub init_LPM_messages
     LPM_warning(7) = "current: heating carriers"
     LPM_warning(8) = "control output laser power high"
     LPM_warning(9) = "not used"
-endSub ' init_LPM_messages
+endSub
 
 dim d17(13,2) as float
 dim d19(21,2) as float
