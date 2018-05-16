@@ -1,5 +1,5 @@
 '' LPM.cr1 -- CR1000 program for Laser Precipitation Monitor at Fairbanks ARM test site
-'' 20180511.56 Ken.Irving@alaska.edu
+'' 20180515.98 Ken.Irving@alaska.edu
 
 ConstTable
     '' instrument make and model:
@@ -195,7 +195,9 @@ EndTable
 function check_TM5_raw as boolean
     dim i as long
     dim a as string * 1
-    dim sum as long = 0
+    dim sum as long
+    i = 0
+    sum = 0
     if len(TM5_raw) <> 2233 then return False
     if ascii(TM5_raw(1,1,1)) <> 2 then return False
     if ascii(TM5_raw(1,1,2233)) <> 3 then return False
