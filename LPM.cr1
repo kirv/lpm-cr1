@@ -1,5 +1,5 @@
 '' LPM.cr1 -- CR1000 program for Laser Precipitation Monitor at Fairbanks ARM test site
-'' 20180515.98 Ken.Irving@alaska.edu
+'' 20180516.61 Ken.Irving@alaska.edu
 
 ConstTable
     '' instrument make and model:
@@ -31,7 +31,7 @@ public TM5_checksum as boolean      ' true if TM5_raw checksum is good
 public TM5_bytes as long
 public TM5_retries as long
 public TM5_timer as long        : units TM5_timer = sec
-dim LPM(525) as string
+public LPM(524) as string
 alias LPM(5)   = LPM_code5m
 alias LPM(15)  = LPM_precipAmount
 
@@ -134,15 +134,15 @@ endsub
 
 sub get_LPM_errors ' called by get_LPM_state()
     dim i as long
-    '' LPM error flags are from LPM[23..28] (also see DX[1..6])
+    '' LPM error flags are from LPM[21..27] (also see DX[1..6])
     '' LPM error counts are from FX[1..6]
     for i = 1 to 6
-        if LPM_errors AND &b01 << (i-1) = 0 AND LPM(22+i) = 1 then
+        if LPM_errors AND &b01 << (i-1) = 0 AND LPM(20+i) = 1 then
             if NOT got_error_counts then get_error_counts()
             logmsg("ERROR:", LPM_error(i), "( count:", LPM_err_count(i), ")")
             LPM_errors = LPM_errors OR &b01 << (i-1) 
         endif
-        if LPM_errors AND &b01 << (i-1) > 0 AND LPM(22+i) = 0 then
+        if LPM_errors AND &b01 << (i-1) > 0 AND LPM(20+i) = 0 then
             logmsg("error off:", LPM_error(i))
             LPM_errors = LPM_errors OR NOT &b01 << (i-1) 
         endif
@@ -151,15 +151,15 @@ endsub
 
 sub get_LPM_warnings ' called by get_LPM_state()
     dim i as long
-    '' LPM warning flags are from LPM[29..37] (also see DX[7..15])
+    '' LPM warning flags are from LPM[28..36] (also see DX[7..15])
     '' LPM warning counts are from FX[7..15]
     for i = 1 to 8
-        if LPM_warnings AND &b01 << (i-1) = 0 AND LPM(28+i) = 1 then
+        if LPM_warnings AND &b01 << (i-1) = 0 AND LPM(27+i) = 1 then
             if NOT got_error_counts then get_error_counts()
             logmsg("WARNING:", LPM_warning(i), "( count:", LPM_err_count(i+6), ")")
             LPM_warnings = LPM_warnings OR &b01 << (i-1) 
         endif
-        if LPM_warnings AND &b01 << (i-1) > 0 AND LPM(28+i) = 0 then
+        if LPM_warnings AND &b01 << (i-1) > 0 AND LPM(27+i) = 0 then
             logmsg("warning off:", LPM_warning(i))
             LPM_warnings = LPM_warnings OR NOT &b01 << (i-1) 
         endif
@@ -167,20 +167,20 @@ sub get_LPM_warnings ' called by get_LPM_state()
 endsub
 
 sub get_LPM_state
-    '' LPM analog diagnostic data from DD[1..13] or LPM[38..50]
-    T_interior = LPM(37+1)
-    T_laserdrvr = LPM(37+2)       ' "temp of laser driver 0-80 degC"
-    I_laser     = LPM(37+3)/100   ' "mean value laser current [1/100 mA]"
-    V_control   = LPM(37+4)       ' "control voltage [mV] ref value: 4010+/-5"
-    V_optical   = LPM(37+5)       ' "optical control [mV] / control variable"
-    V_sensor    = LPM(37+6)/10    ' "voltage sensor supply [1/10V]"
-    I_laser_pane= LPM(37+7)       ' "current page heating laser head [mA]"
-    I_recvr_pane= LPM(37+8)       ' "current page heating receiver head [mA]"
-    T_ambient   = LPM(37+9)       ' "ambient temp [degC]"
-    V_heating   = LPM(37+10)/10   ' "voltage heating supply [1/10V]"
-    I_housing   = LPM(37+11)      ' "current heating housing [mA]"
-    I_heads     = LPM(37+12)      ' "current heating heads [mA]"
-    I_carriers  = LPM(37+13)      ' "current heating carriers [mA]"
+    '' LPM analog diagnostic data from DD[1..13] or LPM[37..49]
+    T_interior = LPM(36+1)
+    T_laserdrvr = LPM(36+2)       ' "temp of laser driver 0-80 degC"
+    I_laser     = LPM(36+3)/100   ' "mean value laser current [1/100 mA]"
+    V_control   = LPM(36+4)       ' "control voltage [mV] ref value: 4010+/-5"
+    V_optical   = LPM(36+5)       ' "optical control [mV] / control variable"
+    V_sensor    = LPM(36+6)/10    ' "voltage sensor supply [1/10V]"
+    I_laser_pane= LPM(36+7)       ' "current page heating laser head [mA]"
+    I_recvr_pane= LPM(36+8)       ' "current page heating receiver head [mA]"
+    T_ambient   = LPM(36+9)       ' "ambient temp [degC]"
+    V_heating   = LPM(36+10)/10   ' "voltage heating supply [1/10V]"
+    I_housing   = LPM(36+11)      ' "current heating housing [mA]"
+    I_heads     = LPM(36+12)      ' "current heating heads [mA]"
+    I_carriers  = LPM(36+13)      ' "current heating carriers [mA]"
     got_error_counts = False
     get_LPM_errors
     get_LPM_warnings
@@ -217,7 +217,7 @@ function check_TM5_raw as boolean
 endFunction
 
 sub init_LPM_messages
-    '' LPM error flags from LPM[22..28] or DX[1..6]
+    '' LPM error flags from LPM[21..27] or DX[1..6]
     LPM_error(1) = "static signal out of range"
     LPM_error(2) = "laser temp (analog) too high"
     LPM_error(3) = "laser temp (digital) too high"
@@ -225,7 +225,7 @@ sub init_LPM_messages
     LPM_error(5) = "laser current (digital) too high"
     LPM_error(6) = "sensor supply out of range"
 
-    '' LPM warning flags from LPM[29..37] or DX[7..15]
+    '' LPM warning flags from LPM[28..36] or DX[7..15]
     LPM_warning(1) = "current: pane heating laser head"
     LPM_warning(2) = "current: pane heating receiver head"
     LPM_warning(3) = "temperature sensor"
@@ -353,7 +353,8 @@ beginProg
         TM5_bytes = len(TM5_raw)
         callTable LPM
   
-        SplitStr (LPM(),TM5_raw,SEMICOLON,525,2)
+        SplitStr (LPM(),TM5_raw,SEMICOLON,524,5)
+        LPM(1) = right(LPM(1),2)    ' clean <STX> from LPM ID code NN
           
         '' get operating state of the LPM as analog values, binary errors and warnings:
         get_LPM_state
