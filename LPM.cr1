@@ -169,18 +169,21 @@ endsub
 sub get_LPM_state
     '' LPM analog diagnostic data from DD[1..13] or LPM[37..49]
     T_interior = LPM(36+1)
-    T_laserdrvr = LPM(36+2)       ' "temp of laser driver 0-80 degC"
-    I_laser     = LPM(36+3)/100   ' "mean value laser current [1/100 mA]"
-    V_control   = LPM(36+4)       ' "control voltage [mV] ref value: 4010+/-5"
-    V_optical   = LPM(36+5)       ' "optical control [mV] / control variable"
-    V_sensor    = LPM(36+6)/10    ' "voltage sensor supply [1/10V]"
-    I_laser_pane= LPM(36+7)       ' "current page heating laser head [mA]"
-    I_recvr_pane= LPM(36+8)       ' "current page heating receiver head [mA]"
-    T_ambient   = LPM(36+9)       ' "ambient temp [degC]"
-    V_heating   = LPM(36+10)/10   ' "voltage heating supply [1/10V]"
-    I_housing   = LPM(36+11)      ' "current heating housing [mA]"
-    I_heads     = LPM(36+12)      ' "current heating heads [mA]"
-    I_carriers  = LPM(36+13)      ' "current heating carriers [mA]"
+    T_laserdrvr = LPM(36+2)     ' "temp of laser driver 0-80 degC"
+    I_laser     = LPM(36+3)     ' "mean value laser current [1/100 mA]"
+    I_laser /= 100              ' (scaling has to be done after assignment)
+    V_control   = LPM(36+4)     ' "control voltage [mV] ref value: 4010+/-5"
+    V_optical   = LPM(36+5)     ' "optical control [mV] / control variable"
+    V_sensor    = LPM(36+6)     ' "voltage sensor supply [1/10V]"
+    V_sensor /= 10
+    I_laser_pane= LPM(36+7)     ' "current page heating laser head [mA]"
+    I_recvr_pane= LPM(36+8)     ' "current page heating receiver head [mA]"
+    T_ambient   = LPM(36+9)     ' "ambient temp [degC]"
+    V_heating   = LPM(36+10)    ' "voltage heating supply [1/10V]"
+    V_heating /= 10
+    I_housing   = LPM(36+11)    ' "current heating housing [mA]"
+    I_heads     = LPM(36+12)    ' "current heating heads [mA]"
+    I_carriers  = LPM(36+13)    ' "current heating carriers [mA]"
     got_error_counts = False
     get_LPM_errors
     get_LPM_warnings
