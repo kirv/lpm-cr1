@@ -1,5 +1,5 @@
 '' LPM.cr1 -- CR1000 program for Laser Precipitation Monitor at Fairbanks ARM test site
-'' 20180516.61 Ken.Irving@alaska.edu
+'' 20180518.52 Ken.Irving@alaska.edu
 
 ConstTable
     '' instrument make and model:
@@ -248,7 +248,6 @@ sub init_synop_metar
     '' prep to transform D17 and D19 output frequency to METAR code string
     '' arrays for D17 (Table 4) and D19 (Table 5) relate frequency to SYNOP code
     '' array for METAR codes is indexed on SYNOP code, so is sparsely used
-
     d17(1,1) = 5        : d17(1,2) =    90  ''  metar_code(90) =  "NP"
     d17(2,1) = 10       : d17(2,2) =    51  ''  metar_code(51) = "-DZ"
     d17(3,1) = 20       : d17(3,2) =    52  ''  metar_code(52) =  "DZ"
@@ -303,11 +302,12 @@ endfunction
 beginProg
     progSig = status.ProgSignature
 
-    '' the MD485 is fixed at 9600, so the LPM should be as well
     serialOpen (LPM__COMMPORT,9600,0,300,4000)
 
     '' put instrument in config mode:
     lpm_cmd("KY",1)
+
+    '' set baud rate to 9600, half-duplex:
     lpm_cmd("BR",5)                        '' 5:9600, 6:19200, 9:115200
     lpm_cmd("BD",1)                        '' 0:rs422, 1:rs485 (half duplex)
     logmsg("LPM set to 9600, half duplex")
@@ -322,10 +322,8 @@ beginProg
     lpm_cmd("ZS", logger_time(6))
     logmsg("LPM","CLOCK SET:", get_lpm("ZT"), "runtime:", get_lpm("ZB"), "hrs")
 
-    '' configure automatic data telegram 5 output:
+    '' configure automatic data telegram 5 output and digital outputs:
     lpm_cmd("TM",5)
-
-    '' configure digital outputs
   ' lpm_cmd("D1", 1)
   ' lpm_cmd("D2", 19)
     
@@ -359,16 +357,12 @@ beginProg
         SplitStr (LPM(),TM5_raw,SEMICOLON,524,5)
         LPM(1) = right(LPM(1),2)    ' clean <STX> from LPM ID code NN
           
-        '' get operating state of the LPM as analog values, binary errors and warnings:
+        '' get LPM operating state: analog values, binary errors and warnings:
         get_LPM_state
         callTable LPM_state
 
-     '' '' FOR TESTING, COMMENT-OUT periodAvg() CALLS:
-        '' read LPM digital output channels
-     '' periodAvg(do_freq(), 2, mV250, LPM_DO1__SE, 0, 1, 50, 100, 1, 0)
-
-        do1_freq = RND * 250
-        do2_freq = do1_freq
+        '' read LPM digital output channels, resolve metar codes
+        periodAvg(do_freq(), 2, mV250, LPM_DO1__SE, 0, 1, 50, 100, 1, 0)
 
         metar1 = freq_to_metar(LPM_DO1_PARAM, do1_freq)
         metar2 = freq_to_metar(LPM_DO2_PARAM, do2_freq)
@@ -390,3 +384,4 @@ beginProg
 
     NextScan
 EndProg
+
