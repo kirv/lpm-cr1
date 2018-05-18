@@ -1,5 +1,5 @@
 '' LPM.cr1 -- CR1000 program for Laser Precipitation Monitor at Fairbanks ARM test site
-'' 20180518.52 Ken.Irving@alaska.edu
+'' 20180518.56 Ken.Irving@alaska.edu
 
 ConstTable
     '' instrument make and model:
@@ -35,8 +35,7 @@ public LPM(524) as string
 alias LPM(5)   = LPM_code5m
 alias LPM(15)  = LPM_precipAmount
 
-public do1_freq as float    : units do1_freq = Hz
-public do2_freq as float    : units do2_freq = Hz
+public do_F(2) as float : units do_F = Hz   : alias do_F = do1_freq, do2_freq
 public metar1 as string * 5
 public metar2 as string * 5
 
@@ -48,6 +47,8 @@ dim LPM_warning(9) as string * 40
 dim FM_raw as string * 80
 dim LPM_err_count(15) as long
 dim got_error_counts as boolean 
+
+public debug_errs, debug_warn
 
 '' LPM diagnostic analog data from DD[1..13] or LPM[37..49]
 public T_interior   : units T_interior   = degC ' 1: "interior temp [degC]"
@@ -128,7 +129,7 @@ sub get_error_counts ' called if needed by get_LPM_errors() and get_LPM_warnings
     '' LPM error and warning counts are from FM[1..6] and FM[7..15]
     lpm_cmd("FM")
     serialIn(FM_raw,LPM__COMMPORT,300,CR,80)
-    SplitStr (LPM_err_count(),FM_raw,SEMICOLON,15,2)
+    SplitStr (LPM_err_count(),FM_raw,SEMICOLON,15,5)
     got_error_counts = True
 endsub
 
@@ -137,14 +138,15 @@ sub get_LPM_errors ' called by get_LPM_state()
     '' LPM error flags are from LPM[21..27] (also see DX[1..6])
     '' LPM error counts are from FX[1..6]
     for i = 1 to 6
-        if LPM_errors AND &b01 << (i-1) = 0 AND LPM(20+i) = 1 then
+        debug_errs += 1
+        if (LPM_errors AND (&b01 << (i-1)) = 0) AND LPM(20+i) = 1 then
             if NOT got_error_counts then get_error_counts()
             logmsg("ERROR:", LPM_error(i), "( count:", LPM_err_count(i), ")")
-            LPM_errors = LPM_errors OR &b01 << (i-1) 
+            LPM_errors = LPM_errors OR (&b01 << (i-1)) 
         endif
-        if LPM_errors AND &b01 << (i-1) > 0 AND LPM(20+i) = 0 then
+        if (LPM_errors AND (&b01 << (i-1)) > 0) AND LPM(20+i) = 0 then
             logmsg("error off:", LPM_error(i))
-            LPM_errors = LPM_errors OR NOT &b01 << (i-1) 
+            LPM_errors = LPM_errors OR NOT (&b01 << (i-1)) 
         endif
     next i
 endsub
@@ -154,14 +156,15 @@ sub get_LPM_warnings ' called by get_LPM_state()
     '' LPM warning flags are from LPM[28..36] (also see DX[7..15])
     '' LPM warning counts are from FX[7..15]
     for i = 1 to 8
-        if LPM_warnings AND &b01 << (i-1) = 0 AND LPM(27+i) = 1 then
+        debug_warn += 1
+        if (LPM_warnings AND (&b01 << (i-1)) = 0) AND LPM(27+i) = 1 then
             if NOT got_error_counts then get_error_counts()
             logmsg("WARNING:", LPM_warning(i), "( count:", LPM_err_count(i+6), ")")
-            LPM_warnings = LPM_warnings OR &b01 << (i-1) 
+            LPM_warnings = LPM_warnings OR (&b01 << (i-1))
         endif
-        if LPM_warnings AND &b01 << (i-1) > 0 AND LPM(27+i) = 0 then
+        if (LPM_warnings AND (&b01 << (i-1)) > 0) AND LPM(27+i) = 0 then
             logmsg("warning off:", LPM_warning(i))
-            LPM_warnings = LPM_warnings OR NOT &b01 << (i-1) 
+            LPM_warnings = LPM_warnings OR NOT (&b01 << (i-1))
         endif
     next i
 endsub
@@ -185,8 +188,8 @@ sub get_LPM_state
     I_heads     = LPM(36+12)    ' "current heating heads [mA]"
     I_carriers  = LPM(36+13)    ' "current heating carriers [mA]"
     got_error_counts = False
-    get_LPM_errors
-    get_LPM_warnings
+    get_LPM_errors()
+    get_LPM_warnings()
 endsub
 
 DataTable(LPM,TM5_checksum,-1)
@@ -333,6 +336,9 @@ beginProg
     init_LPM_messages
     init_synop_metar()
 
+    '' FOR TESTING, disable attempt to get error counts:
+    got_error_counts = True
+
     Scan (60,sec,0,0)
         panelTemp (panelTemp,_60Hz)
         battery (battery)
@@ -358,11 +364,11 @@ beginProg
         LPM(1) = right(LPM(1),2)    ' clean <STX> from LPM ID code NN
           
         '' get LPM operating state: analog values, binary errors and warnings:
-        get_LPM_state
+        get_LPM_state()
         callTable LPM_state
 
         '' read LPM digital output channels, resolve metar codes
-        periodAvg(do_freq(), 2, mV250, LPM_DO1__SE, 0, 1, 50, 100, 1, 0)
+        periodAvg(do_F(), 2, mV250, LPM_DO1__SE, 0, 1, 50, 100, 1, 0)
 
         metar1 = freq_to_metar(LPM_DO1_PARAM, do1_freq)
         metar2 = freq_to_metar(LPM_DO2_PARAM, do2_freq)
