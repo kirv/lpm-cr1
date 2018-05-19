@@ -1,5 +1,5 @@
 '' LPM.cr1 -- CR1000 program for Laser Precipitation Monitor at Fairbanks ARM test site
-'' 20180518.56 Ken.Irving@alaska.edu
+'' 20180518.60 Ken.Irving@alaska.edu
 
 ConstTable
     '' instrument make and model:
@@ -48,7 +48,7 @@ dim FM_raw as string * 80
 dim LPM_err_count(15) as long
 dim got_error_counts as boolean 
 
-public debug_errs, debug_warn
+public debug_scans as long
 
 '' LPM diagnostic analog data from DD[1..13] or LPM[37..49]
 public T_interior   : units T_interior   = degC ' 1: "interior temp [degC]"
@@ -127,49 +127,18 @@ EndTable
 
 sub get_error_counts ' called if needed by get_LPM_errors() and get_LPM_warnings()
     '' LPM error and warning counts are from FM[1..6] and FM[7..15]
-    lpm_cmd("FM")
-    serialIn(FM_raw,LPM__COMMPORT,300,CR,80)
-    SplitStr (LPM_err_count(),FM_raw,SEMICOLON,15,5)
+ '' '' FOR TESTING, comment out the lpm_cmd() and other code:
+ '' lpm_cmd("FM")
+ '' serialIn(FM_raw,LPM__COMMPORT,300,CR,80)
+ '' SplitStr (LPM_err_count(),FM_raw,SEMICOLON,15,5)
     got_error_counts = True
 endsub
 
-sub get_LPM_errors ' called by get_LPM_state()
-    dim i as long
-    '' LPM error flags are from LPM[21..27] (also see DX[1..6])
-    '' LPM error counts are from FX[1..6]
-    for i = 1 to 6
-        debug_errs += 1
-        if (LPM_errors AND (&b01 << (i-1)) = 0) AND LPM(20+i) = 1 then
-            if NOT got_error_counts then get_error_counts()
-            logmsg("ERROR:", LPM_error(i), "( count:", LPM_err_count(i), ")")
-            LPM_errors = LPM_errors OR (&b01 << (i-1)) 
-        endif
-        if (LPM_errors AND (&b01 << (i-1)) > 0) AND LPM(20+i) = 0 then
-            logmsg("error off:", LPM_error(i))
-            LPM_errors = LPM_errors OR NOT (&b01 << (i-1)) 
-        endif
-    next i
-endsub
-
-sub get_LPM_warnings ' called by get_LPM_state()
-    dim i as long
-    '' LPM warning flags are from LPM[28..36] (also see DX[7..15])
-    '' LPM warning counts are from FX[7..15]
-    for i = 1 to 8
-        debug_warn += 1
-        if (LPM_warnings AND (&b01 << (i-1)) = 0) AND LPM(27+i) = 1 then
-            if NOT got_error_counts then get_error_counts()
-            logmsg("WARNING:", LPM_warning(i), "( count:", LPM_err_count(i+6), ")")
-            LPM_warnings = LPM_warnings OR (&b01 << (i-1))
-        endif
-        if (LPM_warnings AND (&b01 << (i-1)) > 0) AND LPM(27+i) = 0 then
-            logmsg("warning off:", LPM_warning(i))
-            LPM_warnings = LPM_warnings OR NOT (&b01 << (i-1))
-        endif
-    next i
-endsub
-
 sub get_LPM_state
+    dim i as long
+    dim mask as long
+    dim flag as long
+
     '' LPM analog diagnostic data from DD[1..13] or LPM[37..49]
     T_interior = LPM(36+1)
     T_laserdrvr = LPM(36+2)     ' "temp of laser driver 0-80 degC"
@@ -187,9 +156,49 @@ sub get_LPM_state
     I_housing   = LPM(36+11)    ' "current heating housing [mA]"
     I_heads     = LPM(36+12)    ' "current heating heads [mA]"
     I_carriers  = LPM(36+13)    ' "current heating carriers [mA]"
+
+    '' clear this flag so we can get the error and warning counts from FX[1..15]
     got_error_counts = False
-    get_LPM_errors()
-    get_LPM_warnings()
+
+    '' FOR TESTING: spoof an alarm turning on (or off) every 3 scans:
+    debug_scans += 1
+    if debug_scans mod 3 = 0 then 
+        if LPM(23) = "0" then LPM(23) = "1" else LPM(23) = "0"
+    endif
+
+    '' LPM error flags are from LPM[21..27] (also see DX[1..6])
+    mask = 1
+    for i = 1 to 6
+        flag = LPM(20+i)
+        if flag = 1 and (LPM_errors AND mask) = 0 then
+            if NOT got_error_counts then get_error_counts()
+            logmsg("ERROR:", LPM_error(i), "( count:", LPM_err_count(i), ")")
+            LPM_errors = LPM_errors OR mask 
+        endif
+        if flag = 0 and (LPM_errors AND mask) > 0 then
+            logmsg("error off:", LPM_error(i))
+            LPM_errors = LPM_errors XOR mask 
+        endif
+        mask *= 2
+    next i
+
+    '' LPM warning flags are from LPM[28..36] (also see DX[7..15])
+    mask = 1
+    for i = 1 to 8
+        flag = LPM(27+i)
+        if flag = 1 then logmsg("DEBUG warnings, flag", i, "is 1")
+        if flag = 1 and (LPM_warnings AND mask) = 0 then
+            if NOT got_error_counts then get_error_counts()
+            logmsg("WARNING:", LPM_warning(i), "( count:", LPM_err_count(i+6), ")")
+            LPM_warnings = LPM_warnings OR mask 
+        endif
+        if flag = 0 and (LPM_warnings AND mask) > 0 then
+            logmsg("warning off:", LPM_warning(i))
+            LPM_warnings = LPM_warnings XOR mask 
+        endif
+        mask *= 2
+    next i
+
 endsub
 
 DataTable(LPM,TM5_checksum,-1)
@@ -335,9 +344,6 @@ beginProg
 
     init_LPM_messages
     init_synop_metar()
-
-    '' FOR TESTING, disable attempt to get error counts:
-    got_error_counts = True
 
     Scan (60,sec,0,0)
         panelTemp (panelTemp,_60Hz)
