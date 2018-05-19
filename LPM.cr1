@@ -1,5 +1,5 @@
 '' LPM.cr1 -- CR1000 program for Laser Precipitation Monitor at Fairbanks ARM test site
-'' 20180518.60 Ken.Irving@alaska.edu
+'' 20180518.71 Ken.Irving@alaska.edu
 
 ConstTable
     '' instrument make and model:
@@ -125,7 +125,7 @@ EndTable
 
 sub get_error_counts ' called if needed by get_LPM_errors() and get_LPM_warnings()
     '' LPM error and warning counts are from FM[1..6] and FM[7..15]
- '' '' FOR TESTING, comment out the lpm_cmd() and other code:
+ '' '' for now, comment out lpm_cmd() since LPM is read-only!
  '' lpm_cmd("FM")
  '' serialIn(FM_raw,LPM__COMMPORT,300,CR,80)
  '' SplitStr (LPM_err_count(),FM_raw,SEMICOLON,15,5)
