@@ -48,8 +48,6 @@ dim FM_raw as string * 80
 dim LPM_err_count(15) as long
 dim got_error_counts as boolean 
 
-public debug_scans as long
-
 '' LPM diagnostic analog data from DD[1..13] or LPM[37..49]
 public T_interior   : units T_interior   = degC ' 1: "interior temp [degC]"
 public T_laserdrvr  : units T_laserdrvr  = degC ' 2: "laser driver temp 0-80 degC"
@@ -160,12 +158,6 @@ sub get_LPM_state
     '' clear this flag so we can get the error and warning counts from FX[1..15]
     got_error_counts = False
 
-    '' FOR TESTING: spoof an alarm turning on (or off) every 3 scans:
-    debug_scans += 1
-    if debug_scans mod 3 = 0 then 
-        if LPM(23) = "0" then LPM(23) = "1" else LPM(23) = "0"
-    endif
-
     '' LPM error flags are from LPM[21..27] (also see DX[1..6])
     mask = 1
     for i = 1 to 6
@@ -186,7 +178,6 @@ sub get_LPM_state
     mask = 1
     for i = 1 to 8
         flag = LPM(27+i)
-        if flag = 1 then logmsg("DEBUG warnings, flag", i, "is 1")
         if flag = 1 and (LPM_warnings AND mask) = 0 then
             if NOT got_error_counts then get_error_counts()
             logmsg("WARNING:", LPM_warning(i), "( count:", LPM_err_count(i+6), ")")
