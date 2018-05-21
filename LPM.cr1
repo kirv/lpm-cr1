@@ -1,12 +1,8 @@
-'' LPM.cr1 -- CR1000 program for Laser Precipitation Monitor at Fairbanks ARM test site
-'' 20180518.71 Ken.Irving@alaska.edu
+'' LPM.cr1 for UAF/ARM by Ken.Irving@alaska.edu 20180521.52
 
 ConstTable
-    '' instrument make and model:
     const LPM_NAME  = "Laser Precipitation Monitor"
     const LPM_MODEL = "5.4110.11.100"
-
-    '' instrument operational settings:
     const LPM_ID = 0
     const LPM__COMMPORT = Com1      ' C1=Tx (db9F-pin3), C2=Rx (db9F-pin2)
     const LPM_DO1_PARAM = 17
@@ -14,10 +10,8 @@ ConstTable
     const LPM_DO1__SE = 2
     const LPM_DO2__SE = 3
     const LPM_0_PRECIP_HRS = 24
-    const MAX_TM5_RETRIES = 3
 endConstTable
 
-'' some useful ascii character codes:
 const ETX = chr(3)
 const CR = chr(13)
 const SEMICOLON = chr(59)
@@ -26,14 +20,9 @@ public battery      : units battery = volts
 public panelTemp    : units panelTemp = deg C
 public progSig as Long
 
-dim TM5_raw as string * 2233
-public TM5_checksum as boolean      ' true if TM5_raw checksum is good
-public TM5_bytes as long
-public TM5_retries as long
-public TM5_timer as long        : units TM5_timer = sec
-public LPM(524) as string
-alias LPM(5)   = LPM_code5m
-alias LPM(15)  = LPM_precipAmount
+dim telegram5 as string * 2233
+public tm5_checksum as long 
+dim LPM(524) as string
 
 public do_F(2) as float : units do_F = Hz   : alias do_F = do1_freq, do2_freq
 public metar1 as string * 5
@@ -118,9 +107,6 @@ DataTable(LPM_state,1,-1)
   sample(1,I_carriers,fp2)
   sample(1,LPM_errors,uint2)
   sample(1,LPM_warnings,uint2)
-  sample(1,TM5_bytes,uint2)
-  sample(1,TM5_retries,uint2)
-  sample(1,TM5_timer,uint2)
 EndTable
 
 sub get_error_counts ' called if needed by get_LPM_errors() and get_LPM_warnings()
@@ -192,31 +178,29 @@ sub get_LPM_state
 
 endsub
 
-DataTable(LPM,TM5_checksum,-1)
+DataTable(LPM,tm5_checksum,-1)
   dataInterval(0,60,Sec,10)
-  sample(1,TM5_raw,String)
+  sample(1,telegram5,String)
   sample(1,progSig,uint2)
 EndTable
     
-function check_TM5_raw as long
-    dim i as long
-    dim a as long
-    dim sum as long
-    if len(TM5_raw) <> 2233 then return False
-    if ascii(TM5_raw(1,1,1)) <> 2 then return False
-    if ascii(TM5_raw(1,1,2233)) <> 3 then return False
+function lpm_checksum(s as string * 2233) as long
+    dim length as long, i as long, a as long, sum as long
+    length = len(s)
+    if ascii(s(1,1,1)) <> 2 then return False
+    if ascii(s(1,1,length)) <> 3 then return False
     i = 0
     sum = 0
     do
         i += 1
-        a = ascii(TM5_raw(1,1,i))
-        if i = 2228 OR i = 2229 then
+        a = ascii(s(1,1,i))
+        if i = length-5 OR i = length-4 then
             '' convert checksum hex nibble "1" to 1, "A" to 10, etc.
             if a>=48 AND a<=57 then a=a-48 else if a>=65 AND a<=70 then a=a-55
-            if i = 2228 then a = a * 16
+            if i = length-5 then a = a * 16
         endif
         sum += a
-    loop until i = 2233
+    loop until i = length
     '' adding the checksum to the sum of bytes should result in 0x00 in last byte
     return sum << 24
 endFunction
@@ -339,24 +323,12 @@ beginProg
         panelTemp (panelTemp,_60Hz)
         battery (battery)
 
-        '' every minute, read data telegram 5 from the LPM, retry if necessary
-        timer(1,sec,2)
-        TM5_retries = 0
-        serialIn(TM5_raw,LPM__COMMPORT,1500,ETX,2233)
-        TM5_checksum = check_TM5_raw()
-        do while TM5_checksum = False
-            TM5_retries += 1
-            lpm_cmd("TR",5)
-            serialIn(TM5_raw,LPM__COMMPORT,300,ETX,2233)
-            TM5_checksum = check_TM5_raw()
-            if TM5_retries >= MAX_TM5_RETRIES then exitDo
-            delay(0,1,sec)
-        loop
-        TM5_timer = timer(1,sec,1)
-        TM5_bytes = len(TM5_raw)
+        '' every minute, read data telegram 5 from the LPM:
+        serialIn(telegram5,LPM__COMMPORT,1500,ETX,2233)
+        tm5_checksum = lpm_checksum(telegram5)
         callTable LPM
   
-        SplitStr (LPM(),TM5_raw,SEMICOLON,524,5)
+        SplitStr (LPM(),telegram5,SEMICOLON,524,5)
         LPM(1) = right(LPM(1),2)    ' clean <STX> from LPM ID code NN
           
         '' get LPM operating state: analog values, binary errors and warnings:
