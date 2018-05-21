@@ -198,9 +198,9 @@ DataTable(LPM,TM5_checksum,-1)
   sample(1,progSig,uint2)
 EndTable
     
-function check_TM5_raw as boolean
+function check_TM5_raw as long
     dim i as long
-    dim a as string * 1
+    dim a as long
     dim sum as long
     if len(TM5_raw) <> 2233 then return False
     if ascii(TM5_raw(1,1,1)) <> 2 then return False
@@ -218,8 +218,7 @@ function check_TM5_raw as boolean
         sum += a
     loop until i = 2233
     '' adding the checksum to the sum of bytes should result in 0x00 in last byte
-    if sum << 24 <> 0 then return False
-    return True
+    return sum << 24
 endFunction
 
 sub init_LPM_messages
