@@ -52,14 +52,14 @@ public I_housing    : units I_housing    = mA   ' 11: "heating housing current [
 public I_heads      : units I_heads      = mA   ' 12: "heating heads current [mA]"
 public I_carriers   : units I_carriers   = mA   ' 13: "heating carriers current [mA]"
 
+
+'' logmsg() puts up to 7 arguments into msg string, stores in table Messages:
 dim logger_time(9)
 dim msg as string * 80
-
 dataTable("Messages",1,100)
     sample(1,progSig,uint2)
     sample(1,msg,string)
 endTable
-
 sub logmsg(optional s as string * 80 = "MARK", _
     optional t as string * 40 = "", optional u as string * 40 = "", _
     optional v as string * 40 = "", optional w as string * 40 = "", _
@@ -185,22 +185,22 @@ DataTable(LPM,tm5_checksum,-1)
 EndTable
     
 function lpm_checksum(s as string * 2233) as long
-    dim length as long, i as long, a as long, sum as long
-    length = len(s)
+    dim end as long, i as long, a as long, sum as long
+    end = len(s)
     if ascii(s(1,1,1)) <> 2 then return False
-    if ascii(s(1,1,length)) <> 3 then return False
+    if ascii(s(1,1,end)) <> 3 then return False
     i = 0
     sum = 0
     do
         i += 1
         a = ascii(s(1,1,i))
-        if i = length-5 OR i = length-4 then
+        if i = end-5 OR i = end-4 then
             '' convert checksum hex nibble "1" to 1, "A" to 10, etc.
             if a>=48 AND a<=57 then a=a-48 else if a>=65 AND a<=70 then a=a-55
-            if i = length-5 then a = a * 16
+            if i = end-5 then a = a * 16
         endif
         sum += a
-    loop until i = length
+    loop until i = end
     '' adding the checksum to the sum of bytes should result in 0x00 in last byte
     return sum << 24
 endFunction
@@ -329,15 +329,13 @@ beginProg
         callTable LPM
   
         SplitStr (LPM(),telegram5,SEMICOLON,524,5)
-        LPM(1) = right(LPM(1),2)    ' clean <STX> from LPM ID code NN
+        LPM(1) = right(LPM(1),2)    ' remove <STX> from LPM ID code NN
           
-        '' get LPM operating state: analog values, binary errors and warnings:
         get_LPM_state()
         callTable LPM_state
 
         '' read LPM digital output channels, resolve metar codes
         periodAvg(do_F(), 2, mV250, LPM_DO1__SE, 0, 1, 50, 100, 1, 0)
-
         metar1 = freq_to_metar(LPM_DO1_PARAM, do1_freq)
         metar2 = freq_to_metar(LPM_DO2_PARAM, do2_freq)
 
