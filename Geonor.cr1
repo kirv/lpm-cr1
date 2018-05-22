@@ -26,8 +26,8 @@ ConstTable
     const HTR_SCAN_SEC = 2      ' control scan time, also minimum heater ON time
     const HTR_PERIOD_SEC = 30   ' duty cycle period for heater control
 
-    '' thermistors taped to each (of 3) Geonor vibrating wire transducer:
-    const GNR_THERM__SE = 4
+    '' a thermistor is taped to each Geonor vibrating wire transducer:
+    const GNR1_THERM__SE = 4    ' GNR2 & GNR3 thermistors use SE=5 & SE=6
     const GNR_THERM__EX = 1
     const GNR_THERM_REF_R = 5000
 
