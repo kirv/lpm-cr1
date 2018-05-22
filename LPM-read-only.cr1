@@ -146,22 +146,22 @@ DataTable(LPM,tm5_checksum=0,-1)
 EndTable
     
 function lpm_checksum(s as string * 2233) as long
-    dim end as long, i as long, a as long, sum as long
-    end = len(s)
+    dim last as long, i as long, a as long, sum as long
+    last = len(s)
     if ascii(s(1,1,1)) <> 2 then return False
-    if ascii(s(1,1,end)) <> 3 then return False
+    if ascii(s(1,1,last)) <> 3 then return False
     i = 0
     sum = 0
     do
         i += 1
         a = ascii(s(1,1,i))
-        if i = end-5 OR i = end-4 then
+        if i = last-5 OR i = last-4 then
             '' convert checksum hex nibble "1" to 1, "A" to 10, etc.
             if a>=48 AND a<=57 then a=a-48 else if a>=65 AND a<=70 then a=a-55
-            if i = end-5 then a = a * 16
+            if i = last-5 then a = a * 16
         endif
         sum += a
-    loop until i = end
+    loop until i = last
     '' adding the checksum to the sum of bytes should result in 0x00 in last byte
     return sum << 24
 endFunction
