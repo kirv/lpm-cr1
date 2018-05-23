@@ -155,6 +155,11 @@ DataTable(LPM,tm5_checksum=0,-1)
   sample(1,progSig,uint2)
 EndTable
     
+DataTable(bad_checksum,1,-1)
+  sample(1,progSig,uint2)
+  sample(1,telegram5,String)
+EndTable
+    
 function lpm_checksum(s as string * 2233) as long
     dim last as long, i as long, a as long, sum as long
     last = len(s)
@@ -319,6 +324,10 @@ beginProg
              '' LPM_precip_qty & " mm in " & get_lpm("PT") & " hrs")
             lpm_cmd("RA")
         endif
+
+        '' run a checksum test with altered input string:
+        telegram5 = replace(telegram5," ", "_"))
+        if lpm_checksum(telegram5) <> 0 then calltable(bad_checksum)
 
     NextScan
 EndProg
