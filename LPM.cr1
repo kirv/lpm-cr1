@@ -1,4 +1,4 @@
-'' LPM.cr1 for UAF/ARM by Ken.Irving@alaska.edu 20180521.52
+'' LPM.cr1 for UAF/ARM by Ken.Irving@alaska.edu 20180522.39
 
 ConstTable
     const LPM_NAME  = "Laser Precipitation Monitor"
@@ -27,6 +27,9 @@ dim LPM(524) as string
 public do_F(2) as float : units do_F = Hz   : alias do_F = do1_freq, do2_freq
 public metar1 as string * 5
 public metar2 as string * 5
+dim d17(13,2) as float
+dim d19(21,2) as float
+dim metar_code(90) as string * 5
 
 '' LPM error and warning flags:
 public LPM_errors as long
@@ -38,22 +41,14 @@ dim LPM_err_count(15) as long
 dim got_error_counts as boolean 
 
 '' LPM diagnostic analog data from DD[1..13] or LPM[37..49]
-public T_interior   : units T_interior   = degC ' 1: "interior temp [degC]"
-public T_laserdrvr  : units T_laserdrvr  = degC ' 2: "laser driver temp 0-80 degC"
-public I_laser      : units I_laser      = mA   ' 3: "laser current mean [1/100 mA]"
-public V_control    : units V_control    = mV   ' 4: "control voltage [mV] ref value"
-public V_optical    : units V_optical    = mV   ' 5: "optical control [mV]/control var"
-public V_sensor     : units V_sensor     = V    ' 6: "voltage supply [1/10V]"
-public I_laser_pane : units I_laser_pane = mA   ' 7: "laser pane heating current [mA]"
-public I_recvr_pane : units I_recvr_pane = mA   ' 8: "receiver pane heating current [mA]"
-public T_ambient    : units T_ambient    = degC ' 9: "ambient temp [degC]"
-public V_heating    : units V_heating    = V    ' 10: "voltage heating supply voltage[1/10V]"
-public I_housing    : units I_housing    = mA   ' 11: "heating housing current [mA]"
-public I_heads      : units I_heads      = mA   ' 12: "heating heads current [mA]"
-public I_carriers   : units I_carriers   = mA   ' 13: "heating carriers current [mA]"
-
+public LPM_state_vars(13) as float
+alias LPM_state_vars = T_interior__C, T_laserdrvr__C, I_laser__mA, _
+    V_control__mV, V_optical__mV, V_sensor__V, I_laser_pane__mA, _
+    I_recvr_pane__mA, T_ambient__C, V_heating__V, I_housing__mA, _
+    I_heads__mA, I_carriers__mA
 
 '' logmsg() puts up to 7 arguments into msg string, stores in table Messages:
+'' alternatively, put anything in msg and callTable(Messages)
 dim logger_time(9)
 dim msg as string * 80
 dataTable("Messages",1,100)
@@ -92,19 +87,7 @@ endFunction
 DataTable(LPM_state,1,-1)
   DataInterval(0,60,Sec,0)
   sample(1,progSig,uint2)
-  sample(1,T_interior,fp2)
-  sample(1,T_laserdrvr,fp2)
-  sample(1,I_laser,fp2)
-  sample(1,V_control,fp2)
-  sample(1,V_optical,fp2)
-  sample(1,V_sensor,fp2)
-  sample(1,I_laser_pane,fp2)
-  sample(1,I_recvr_pane,fp2)
-  sample(1,T_ambient,fp2)
-  sample(1,V_heating,fp2)
-  sample(1,I_housing,fp2)
-  sample(1,I_heads,fp2)
-  sample(1,I_carriers,fp2)
+  sample(13,LPM_state_vars,fp2)
   sample(1,LPM_errors,uint2)
   sample(1,LPM_warnings,uint2)
 EndTable
@@ -119,27 +102,15 @@ sub get_error_counts ' called if needed by get_LPM_errors() and get_LPM_warnings
 endsub
 
 sub get_LPM_state
-    dim i as long
-    dim mask as long
-    dim flag as long
+    dim i as long, mask as long, flag as long
 
     '' LPM analog diagnostic data from DD[1..13] or LPM[37..49]
-    T_interior = LPM(36+1)
-    T_laserdrvr = LPM(36+2)     ' "temp of laser driver 0-80 degC"
-    I_laser     = LPM(36+3)     ' "mean value laser current [1/100 mA]"
-    I_laser /= 100              ' (scaling has to be done after assignment)
-    V_control   = LPM(36+4)     ' "control voltage [mV] ref value: 4010+/-5"
-    V_optical   = LPM(36+5)     ' "optical control [mV] / control variable"
-    V_sensor    = LPM(36+6)     ' "voltage sensor supply [1/10V]"
-    V_sensor /= 10
-    I_laser_pane= LPM(36+7)     ' "current page heating laser head [mA]"
-    I_recvr_pane= LPM(36+8)     ' "current page heating receiver head [mA]"
-    T_ambient   = LPM(36+9)     ' "ambient temp [degC]"
-    V_heating   = LPM(36+10)    ' "voltage heating supply [1/10V]"
-    V_heating /= 10
-    I_housing   = LPM(36+11)    ' "current heating housing [mA]"
-    I_heads     = LPM(36+12)    ' "current heating heads [mA]"
-    I_carriers  = LPM(36+13)    ' "current heating carriers [mA]"
+    for i = 1 to 13
+        LPM_state_vars(i) = LPM(36+i)
+        if i = 3 then I_laser__mA /= 100
+        if i = 6 then V_sensor__V /= 10
+        if i = 10 then V_heating__V /= 10
+    next i
 
     '' clear this flag so we can get the error and warning counts from FX[1..15]
     got_error_counts = False
@@ -178,7 +149,7 @@ sub get_LPM_state
 
 endsub
 
-DataTable(LPM,tm5_checksum,-1)
+DataTable(LPM,tm5_checksum=0,-1)
   dataInterval(0,60,Sec,10)
   sample(1,telegram5,String)
   sample(1,progSig,uint2)
@@ -225,10 +196,6 @@ sub init_LPM_messages
     LPM_warning(8) = "control output laser power high"
     LPM_warning(9) = "not used"
 endSub
-
-dim d17(13,2) as float
-dim d19(21,2) as float
-dim metar_code(90) as string * 5
 
 sub init_synop_metar
     '' prep to transform D17 and D19 output frequency to METAR code string
@@ -287,7 +254,6 @@ endfunction
 
 beginProg
     progSig = status.ProgSignature
-
     serialOpen (LPM__COMMPORT,9600,0,300,4000)
 
     '' put instrument in config mode:
@@ -356,4 +322,3 @@ beginProg
 
     NextScan
 EndProg
-
