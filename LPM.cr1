@@ -326,7 +326,7 @@ beginProg
         endif
 
         '' run a checksum test with altered input string:
-        telegram5 = replace(telegram5," ", "_"))
+        telegram5 = replace(telegram5,";", "|"))
         if lpm_checksum(telegram5) <> 0 then calltable(bad_checksum)
 
     NextScan
