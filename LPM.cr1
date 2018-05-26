@@ -161,24 +161,19 @@ DataTable(bad_checksum,1,-1)
 EndTable
     
 function lpm_checksum(s as string * 2233) as long
-    dim last as long, i as long, a as long, sum as long
-    last = len(s)
-    if ascii(s(1,1,1)) <> 2 then return False
-    if ascii(s(1,1,last)) <> 3 then return False
-    i = 0
-    sum = 0
-    do
-        i += 1
-        a = ascii(s(1,1,i))
-        if i = last-5 OR i = last-4 then
-            '' convert checksum hex nibble "1" to 1, "A" to 10, etc.
-            if a>=48 AND a<=57 then a=a-48 else if a>=65 AND a<=70 then a=a-55
-            if i = last-5 then a = a * 16
-        endif
-        sum += a
-    loop until i = last
-    '' adding the checksum to the sum of bytes should result in 0x00 in last byte
-    return sum << 24
+    '' sum of non-checksum bytes plus checksum should result in 0x00 in last byte
+    dim N as long, H as long, L as long, S as long, i as long
+    N = len(s)
+    H = ascii(s(1,1,N-5))
+    L = ascii(s(1,1,N-4))
+    S = -H - L
+    if H>=48 AND H<=57 then H-=48 else if H>=65 AND H<=70 then H-=55
+    if L>=48 AND L<=57 then L-=48 else if L>=65 AND L<=70 then L-=55
+    S += H*16 + L
+    for i = 1 to N
+        S += ascii(s(1,1,i))
+    next i
+    return S << 24
 endFunction
 
 sub init_LPM_messages
