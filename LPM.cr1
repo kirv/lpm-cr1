@@ -1,27 +1,35 @@
-'' LPM.cr1 for UAF/ARM by Ken.Irving@alaska.edu 20180522.39
+'' LPM.cr1 for UAF/ARM by Ken.Irving@alaska.edu 20180529.55
 
 ConstTable
     const LPM_NAME  = "Laser Precipitation Monitor"
     const LPM_MODEL = "5.4110.11.100"
     const LPM_ID = 0
-    const LPM__COMMPORT = Com1      ' C1=Tx (db9F-pin3), C2=Rx (db9F-pin2)
+    const LPM__PORT = Com1      ' C1=Tx (db9F-pin3), C2=Rx (db9F-pin2)
     const LPM_DO1_PARAM = 17
     const LPM_DO2_PARAM = 19
     const LPM_DO1__SE = 2
     const LPM_DO2__SE = 3
     const LPM_0_PRECIP_HRS = 24
+    const LPM_TELEGRAM = 8
 endConstTable
 
+const STX = chr(2)
 const ETX = chr(3)
 const CR = chr(13)
-const SEMICOLON = chr(59)
+const SEMICOLON = ";"
+const QUESTION = "?"
+const BANG = "!"
 
 public battery      : units battery = volts 
 public panelTemp    : units panelTemp = deg C
 public progSig as Long
 
-dim telegram5 as string * 2233
-public tm5_checksum as long 
+public lpm_command as string * 10
+public lpm_results as string * 2233
+public lpm_err_msg as string * 60
+public lpm_checksum as long 
+
+dim telegram as string * 2233
 dim LPM(524) as string
 
 public do_F(2) as float : units do_F = Hz   : alias do_F = do1_freq, do2_freq
@@ -64,25 +72,87 @@ sub logmsg(optional s as string * 80 = "MARK", _
     calltable(Messages)
 endsub
 
-sub lpm_cmd(cmd as string, optional value as long = 99999)
-    dim s as string
-    '' send an extra CR to clear the output buffer:
-    serialOut (LPM__COMMPORT,CR,"",0,0)
-    if value = 99999 then
-        sprintf(s, "%02u%s%c", LPM_ID, cmd, CR)
-    else
-        sprintf(s, "%02u%s%05u%c", LPM_ID, cmd, value, CR)
-    endif
-    '' s is "xxCCR" or "xxCCnnnnnR", where xx=ID, CC=cmd, n=0-padded arg, R=<CR>
-    serialOut (LPM__COMMPORT,s,"",0,0)
-endsub
+function lpm_err_msgs(lpm_error_code as string) as string * 24
+    select case right(lpm_error_code,10)
+    case 0 : return "invalid parameter"         ' ci0
+    case 2 : return "unknown command"           ' ci2
+    case 4 : return "parameter out of range"    ' ci4
+    case 8 : return "config mode required"      ' ci8
+    case else : return QUESTION & lpm_error_code
+    endselect
+endfunction
 
-function get_lpm(cmd as string, optional value as long = 99999)
-    dim s as string * 80
-    lpm_cmd(cmd, value)
-    serialin(s,LPM__COMMPORT,300,CR,2233)
-    return s
+function lpm_calc_cksum(telegram as string * 2233) as long
+    '' sum of non-checksum bytes plus checksum should result in 0x00 in last byte
+    dim N as long, H as long, L as long, S as long, i as long
+    N = len(telegram)
+    H = ascii(telegram(1,1,N-5)) : L = ascii(telegram(1,1,N-4))
+    S = 0 - H - L
+    if H>=48 AND H<=57 then H-=48 else if H>=65 AND H<=70 then H-=55
+    if L>=48 AND L<=57 then L-=48 else if L>=65 AND L<=70 then L-=55
+    S += H*16 + L
+    for i = 1 to N : S += ascii(telegram(1,1,i)) : next i
+    lpm_checksum = S : return lpm_checksum
 endFunction
+
+function lpm_query(id as long, cmd as string, param as long) as string * 2233
+    '' NOTE: param = -1 omits parameter
+    dim value as long
+
+    select case param
+    case -1
+        sprintf(lpm_command, "%02d%s", id, uppercase(cmd))
+    case 0 to 99999
+        sprintf(lpm_command, "%02d%s%05d", id, uppercase(cmd), param)
+    case else
+        lpm_err_msg = "rejected: invalid parameter" : lpm_command="" : lpm_results=""
+        return QUESTION & QUESTION & lpm_err_msg
+    endselect
+
+    serialOut(LPM__PORT, CR & lpm_command & CR,"",0,0)
+    
+    select case uppercase(cmd)
+    case "TR"
+        serialIn(lpm_results,LPM__PORT,300,ETX,2233)
+    case "??"
+        '' need to see how this might go... multi-line 'help' output
+        serialIn(lpm_results,LPM__PORT,30,ETX,2233)
+    case else
+        serialin(lpm_results,LPM__PORT,300,CR,80)
+        lpm_results = mid(lpm_results, 1, len(lpm_results))
+    endselect
+
+    select case left(lpm_results,1)
+    case BANG
+        '' examples: "!00BR00005", "!00CI00002"
+        select case mid(lpm_results,4,2)
+        case "CI"
+            lpm_err_msg = lpm_err_msgs(lpm_results)
+            return QUESTION & lpm_err_msgs(lpm_results)
+        case uppercase(cmd)
+            '' command confirmed, so return numeric parameter
+            value = mid(lpm_results,6,5)
+            lpm_err_msg = ""
+            return value
+        case else
+            lpm_err_msg = "unexpected:" & lpm_results
+            return QUESTION & QUESTION & lpm_err_msg
+        endselect
+    case STX
+        '' framed telegram output with checksum
+        if lpm_calc_cksum(lpm_results) and &h0FF = 0 then
+            lpm_err_msg = ""
+        else
+            lpm_results(1,1,1) = QUESTION
+            lpm_err_msg = "telegram checksum failed"
+        endif
+        return lpm_results
+    case else
+        '' simple data output from DD, DX, FM, PT, DA, ZT
+        lpm_err_msg = ""
+        return lpm_results
+    endselect
+endfunction
 
 DataTable(LPM_state,1,-1)
   DataInterval(0,60,Sec,0)
@@ -94,10 +164,8 @@ EndTable
 
 sub get_error_counts ' called if needed by get_LPM_errors() and get_LPM_warnings()
     '' LPM error and warning counts are from FM[1..6] and FM[7..15]
- '' '' for now, comment out lpm_cmd() since LPM is read-only!
- '' lpm_cmd("FM")
- '' serialIn(FM_raw,LPM__COMMPORT,300,CR,80)
- '' SplitStr (LPM_err_count(),FM_raw,SEMICOLON,15,5)
+    FM_raw = lpm_query(LPM_ID,"FM",-1)
+    SplitStr (LPM_err_count(),FM_raw,SEMICOLON,15,5)
     got_error_counts = True
 endsub
 
@@ -149,33 +217,12 @@ sub get_LPM_state
 
 endsub
 
-DataTable(LPM,tm5_checksum=0,-1)
+DataTable(LPM,1,-1)
   dataInterval(0,60,Sec,10)
-  sample(1,telegram5,String)
   sample(1,progSig,uint2)
+  sample(1,telegram,String)
 EndTable
     
-DataTable(bad_checksum,1,-1)
-  sample(1,progSig,uint2)
-  sample(1,telegram5,String)
-EndTable
-    
-function lpm_checksum(s as string * 2233) as long
-    '' sum of non-checksum bytes plus checksum should result in 0x00 in last byte
-    dim N as long, H as long, L as long, S as long, i as long
-    N = len(s)
-    H = ascii(s(1,1,N-5))
-    L = ascii(s(1,1,N-4))
-    S = -H - L
-    if H>=48 AND H<=57 then H-=48 else if H>=65 AND H<=70 then H-=55
-    if L>=48 AND L<=57 then L-=48 else if L>=65 AND L<=70 then L-=55
-    S += H*16 + L
-    for i = 1 to N
-        S += ascii(s(1,1,i))
-    next i
-    return S << 24
-endFunction
-
 sub init_LPM_messages
     '' LPM error flags from LPM[21..27] or DX[1..6]
     LPM_error(1) = "static signal out of range"
@@ -254,33 +301,33 @@ endfunction
 
 beginProg
     progSig = status.ProgSignature
-    serialOpen (LPM__COMMPORT,9600,0,300,4000)
+    serialOpen (LPM__PORT,9600,0,300,4000)
 
     '' put instrument in config mode:
-    lpm_cmd("KY",1)
+    if lpm_query(LPM_ID,"KY",1) <> 1 then logmsg("config mode failed")
 
-    '' set baud rate to 9600, half-duplex:
-    lpm_cmd("BR",5)                        '' 5:9600, 6:19200, 9:115200
-    lpm_cmd("BD",1)                        '' 0:rs422, 1:rs485 (half duplex)
-    logmsg("LPM set to 9600, half duplex")
+    '' log baud rate and RS485 mode (should be 9600, half duplex)
+    logmsg("LPM baud rate, BR :", lpm_query(LPM_ID,"BR",-1), "(5=9600,6=19200,9=115200)")
+    logmsg("LPM comm mode, BD :", lpm_query(LPM_ID,"BD",-1), "(0=full-,1=half-duplex)")
+
+    '' configure automatic data telegram output and digital outputs:
+    lpm_query(LPM_ID,"TM",0)
+  ' lpm_query(LPM_ID,"D1",LPM_DO1_PARAM)
+  ' lpm_query(LPM_ID,"D2",LPM_DO2_PARAM)
+    
+    '' put instrument in normal command mode:
+    if lpm_query(LPM_ID,"KY",0) <> 0 then logmsg("WARNING: config mode failed to turn off")
 
     '' set the LPM clock from the logger at startup:
     realtime(logger_time) '' 1:year, 2:month, 3:day, 4:hour, 5:minute, 6:second
-    lpm_cmd("ZY", logger_time(1) mod 100)
-    lpm_cmd("ZN", logger_time(2))
-    lpm_cmd("ZD", logger_time(3))
-    lpm_cmd("ZH", logger_time(4))
-    lpm_cmd("ZM", logger_time(5))
-    lpm_cmd("ZS", logger_time(6))
-    logmsg("LPM","CLOCK SET:", get_lpm("ZT"), "runtime:", get_lpm("ZB"), "hrs")
-
-    '' configure automatic data telegram 5 output and digital outputs:
-    lpm_cmd("TM",5)
-  ' lpm_cmd("D1", 1)
-  ' lpm_cmd("D2", 19)
-    
-    '' put instrument in normal command mode:
-    lpm_cmd("KY", 0)
+    lpm_query(LPM_ID,"ZS", logger_time(6))
+    lpm_query(LPM_ID,"ZM", logger_time(5))
+    lpm_query(LPM_ID,"ZH", logger_time(4))
+    lpm_query(LPM_ID,"ZD", logger_time(3))
+    lpm_query(LPM_ID,"ZN", logger_time(2))
+    lpm_query(LPM_ID,"ZY", logger_time(1) mod 100)
+    logmsg("LPM clock set from logger:", lpm_query(LPM_ID,"ZT",-1))
+    logmsg("LPM runtime:", lpm_query(LPM_ID,"ZB",-1), "hrs")
 
     init_LPM_messages
     init_synop_metar()
@@ -289,12 +336,11 @@ beginProg
         panelTemp (panelTemp,_60Hz)
         battery (battery)
 
-        '' every minute, read data telegram 5 from the LPM:
-        serialIn(telegram5,LPM__COMMPORT,1500,ETX,2233)
-        tm5_checksum = lpm_checksum(telegram5)
+        '' every minute, read data from the LPM; "?" replaces STX if checksum fails
+        telegram = lpm_query(LPM_ID, "TR", LPM_TELEGRAM)
         callTable LPM
   
-        SplitStr (LPM(),telegram5,SEMICOLON,524,5)
+        SplitStr (LPM(),telegram,SEMICOLON,524,5)
         LPM(1) = right(LPM(1),2)    ' remove <STX> from LPM ID code NN
           
         get_LPM_state()
@@ -312,17 +358,13 @@ beginProg
 
         if timeIntoInterval(0,1,day) then
             '' emit message with several parameters, then zero precip total:
-            logmsg("LPM:" & get_lpm("ZT"), _
-                get_lpm("ZB") & " hrs", _
+            logmsg("LPM:" & lpm_query(LPM_ID,"ZT",-1), _
+                lpm_query(LPM_ID,"ZB",-1) & " hrs", _
                 "errors:" + LPM_errors, _
                 "warnings:" + LPM_warnings)
-             '' LPM_precip_qty & " mm in " & get_lpm("PT") & " hrs")
-            lpm_cmd("RA")
+             '' LPM_precip_qty & " mm in " & lpm_query(LPM_ID,"PT",-1) & " hrs")
+         '' lpm_query(LPM_ID,"RA",-1)
         endif
-
-        '' run a checksum test with altered input string:
-        telegram5 = replace(telegram5,";", "|"))
-        if lpm_checksum(telegram5) <> 0 then calltable(bad_checksum)
 
     NextScan
 EndProg
