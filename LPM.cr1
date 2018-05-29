@@ -311,12 +311,9 @@ beginProg
     logmsg("LPM comm mode, BD :", lpm_query(LPM_ID,"BD",-1), "(0=full-,1=half-duplex)")
 
     '' configure automatic data telegram output and digital outputs:
-    lpm_query(LPM_ID,"TM",0)
-  ' lpm_query(LPM_ID,"D1",LPM_DO1_PARAM)
-  ' lpm_query(LPM_ID,"D2",LPM_DO2_PARAM)
-    
-    '' put instrument in normal command mode:
-    if lpm_query(LPM_ID,"KY",0) <> 0 then logmsg("WARNING: config mode failed to turn off")
+    logmsg("LPM auto telegram output: TM :", lpm_query(LPM_ID,"TM",-1))
+    logmsg("LPM digital channel D1 :", lpm_query(LPM_ID,"D1",-1) ' LPM_D1_PARAM
+    logmsg("LPM digital channel D2 :", lpm_query(LPM_ID,"D2",-1) ' LPM_D2_PARAM
 
     '' set the LPM clock from the logger at startup:
     realtime(logger_time) '' 1:year, 2:month, 3:day, 4:hour, 5:minute, 6:second
@@ -328,6 +325,9 @@ beginProg
     lpm_query(LPM_ID,"ZY", logger_time(1) mod 100)
     logmsg("LPM clock set from logger:", lpm_query(LPM_ID,"ZT",-1))
     logmsg("LPM runtime:", lpm_query(LPM_ID,"ZB",-1), "hrs")
+
+    '' put instrument in normal command mode:
+    if lpm_query(LPM_ID,"KY",0) <> 0 then logmsg("WARNING: config mode failed to turn off")
 
     init_LPM_messages
     init_synop_metar()
@@ -363,7 +363,7 @@ beginProg
                 "errors:" + LPM_errors, _
                 "warnings:" + LPM_warnings)
              '' LPM_precip_qty & " mm in " & lpm_query(LPM_ID,"PT",-1) & " hrs")
-         '' lpm_query(LPM_ID,"RA",-1)
+         '' lpm_query(LPM_ID,"RA")
         endif
 
     NextScan
