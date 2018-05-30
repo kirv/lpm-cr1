@@ -1,4 +1,4 @@
-'' LPM.cr1 for UAF/ARM by Ken.Irving@alaska.edu 20180529.90
+'' LPM.cr1 for UAF/ARM by Ken.Irving@alaska.edu 20180530.07
 
 ConstTable
     const LPM_NAME  = "Laser Precipitation Monitor"
@@ -12,7 +12,8 @@ ConstTable
     const LPM_0_PRECIP_HRS = 24
     const LPM_TELEGRAM = 8
 
-    const REMARKS = "try 1-sec delay for telegram query"
+    const REMARKS = "force telegram query checksum failures, stop after 15 scans"
+
 endConstTable
 
 const STX = chr(2)
@@ -22,14 +23,18 @@ const SEMICOLON = ";"
 const QUESTION = "?"
 const BANG = "!"
 
+'' for TESTING
+public forcedigit as long
+
 public battery      : units battery = volts 
 public panelTemp    : units panelTemp = deg C
 public progSig as Long
 
 public lpm_command as string * 10
 public lpm_results as string * 2233
-public lpm_err_msg as string * 60
+public lpm_err_msg as string * 80
 public lpm_checksum as long 
+public telegram_query_tries as long
 
 dim telegram as string * 2233
 dim LPM(524) as string
@@ -132,20 +137,22 @@ function lpm_query(id as long, cmd as string, param as long) as string * 2233
         endselect
     case STX
         '' framed telegram output with checksum
+
+        '' TESTING: change expected 0 digit: 
+        sprintf(forcedigit, "%d", logger_time(5) mod 3)
+        lpm_results = left(lpm_results,4) & forcedigit & mid(lpm_results,6,2233)
+
         lpm_checksum = lpm_calc_cksum(lpm_results)
-        if lpm_checksum and &h0FF = 0 then
-            sprintf(msg,"DEBUG: %s, length: %d, checksum ok: %X", _
-                    lpm_command, len(lpm_results), lpm_checksum)
-            calltable Messages
+        if (lpm_checksum and &h0FF) = 0 then
             lpm_err_msg = ""
+            return lpm_results
         else
-            lpm_results(1,1,1) = QUESTION
-            sprintf(msg,"DEBUG: %s, length: %d, checksum bad: %X", _
+            lpm_results = QUESTION & mid(lpm_results,2,2233)
+            sprintf(msg,"DEBUG: %s, length: %d, checksum bad: 0x%X", _
                     lpm_command, len(lpm_results), lpm_checksum)
             calltable Messages
             lpm_err_msg = "telegram checksum failed"
         endif
-        return lpm_results
     case else
         '' simple data output from DD, DX, FM, PT, DA, ZT
         lpm_err_msg = ""
@@ -159,6 +166,7 @@ DataTable(LPM_state,1,-1)
   sample(13,LPM_state_vars,fp2)
   sample(1,LPM_errors,uint2)
   sample(1,LPM_warnings,uint2)
+  sample(1,telegram_query_tries,uint2)
 EndTable
 
 dim lpm_error_msgs(6) as string * 40 = { _     '' LPM error flags are in DX[1..6]
@@ -304,7 +312,7 @@ endfunction
 
 beginProg
     progSig = status.ProgSignature
-    if REMARKS <> "" then logmsg(REMARKS)
+    if REMARKS <> "" then logmsg("REMARKS:",REMARKS)
     
     '' set logger port to match the LPM through the MD485 rs232-to-rs485 device
     serialOpen (LPM__PORT,9600,0,300,4000)
@@ -337,14 +345,23 @@ beginProg
 
     init_synop_metar()
 
-    Scan (60,sec,0,0)
+    '' FOR TESTING, STOP AFTER 15 SCANS
+    Scan (60,sec,0,15)
         panelTemp (panelTemp,_60Hz)
         battery (battery)
 
-        '' every minute, read data from the LPM; "?" replaces STX if checksum fails
-        '' delay is needed due to synchronized logger and LPM clocks
-        delay(0,1,sec)
-        telegram = lpm_query(LPM_ID, "TR", LPM_TELEGRAM)
+        '' TESTING
+        realtime(logger_time) '' 1:year, 2:month, 3:day, 4:hour, 5:minute, 6:second
+
+        '' every minute, read data telegram from the LPM
+        '' retry query if LPM returns "!TR00001", which means: telegram not available
+        '' NOTE: STX has been replaced by "?" if the checksum failed!
+        telegram_query_tries = 0
+        do
+            delay(0,1,sec)
+            telegram = lpm_query(LPM_ID, "TR", LPM_TELEGRAM)
+            telegram_query_tries += 1
+        loop until telegram <> 1 or telegram_query_tries > 3
         callTable LPM
   
         SplitStr (LPM(),telegram,SEMICOLON,524,5)
