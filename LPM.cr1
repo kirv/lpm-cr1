@@ -11,20 +11,17 @@ ConstTable
     const LPM_D2__SE = 3
     const LPM_0_PRECIP_HRS = 24
     const LPM_TELEGRAM = 8
-
-    const REMARKS = "force telegram query checksum failures, stop after 15 scans"
-
+    const STOP_AFTER_N_SCANS = 10
+    const REMARKS = "handle ?? command; force checksum failures; stop after n scans"
 endConstTable
 
 const STX = chr(2)
 const ETX = chr(3)
+const LF = chr(10)
 const CR = chr(13)
 const SEMICOLON = ";"
 const QUESTION = "?"
 const BANG = "!"
-
-'' for TESTING
-public forcedigit as long
 
 public battery      : units battery = volts 
 public panelTemp    : units panelTemp = deg C
@@ -89,6 +86,7 @@ endFunction
 function lpm_query(id as long, cmd as string, param as long) as string * 2233
     '' NOTE: param = -1 omits parameter
     dim value as long
+    dim f as long
 
     select case param
     case -1
@@ -106,8 +104,7 @@ function lpm_query(id as long, cmd as string, param as long) as string * 2233
     case "TR"
         serialIn(lpm_results,LPM__PORT,300,ETX,2233)
     case "??"
-        '' need to see how this might go... multi-line 'help' output
-        serialIn(lpm_results,LPM__PORT,30,ETX,2233)
+        serialIn(lpm_results,LPM__PORT,30,LF,2233)
     case else
         serialin(lpm_results,LPM__PORT,300,CR,80)
         lpm_results = mid(lpm_results, 1, len(lpm_results))
@@ -138,9 +135,9 @@ function lpm_query(id as long, cmd as string, param as long) as string * 2233
     case STX
         '' framed telegram output with checksum
 
-        '' TESTING: change expected 0 digit: 
-        sprintf(forcedigit, "%d", logger_time(5) mod 3)
-        lpm_results = left(lpm_results,4) & forcedigit & mid(lpm_results,6,2233)
+        '' TESTING: force 0 digit of serial number to 'minute mod 3' to foil telegram cksum:
+        sprintf(lpm_results, "%s%d%s", _
+                left(lpm_results,4), logger_time(5) mod 3, mid(lpm_results,6,2233))
 
         lpm_checksum = lpm_calc_cksum(lpm_results)
         if (lpm_checksum and &h0FF) = 0 then
@@ -152,6 +149,17 @@ function lpm_query(id as long, cmd as string, param as long) as string * 2233
                     lpm_command, len(lpm_results), lpm_checksum)
             calltable Messages
             lpm_err_msg = "telegram checksum failed"
+        endif
+    case "U"
+        f = fileopen("USR:LPM-HELP.TXT","w",0)
+        if f = 0 then
+            logmsg("unable to save '??' command output to USR:LPM-HELP.TXT")
+            lpm_error = "unable to open USR:LPM-HELP.TXT to write to"
+        else
+            value = filewrite(f, lpm_results, 0)
+            if fileclose(f) <> 0 then logmsg("failed to close file")
+            logmsg("USR:LPM-HELP.TXT written with",value,"bytes")
+            lpm_error = ""
         endif
     case else
         '' simple data output from DD, DX, FM, PT, DA, ZT
@@ -345,14 +353,10 @@ beginProg
 
     init_synop_metar()
 
-    '' FOR TESTING, STOP AFTER 15 SCANS
-    Scan (60,sec,0,15)
+    Scan (60,sec,0,STOP_AFTER_N_SCANS)
         panelTemp (panelTemp,_60Hz)
         battery (battery)
-
-        '' TESTING
         realtime(logger_time) '' 1:year, 2:month, 3:day, 4:hour, 5:minute, 6:second
-
         '' every minute, read data telegram from the LPM
         '' retry query if LPM returns "!TR00001", which means: telegram not available
         '' NOTE: STX has been replaced by "?" if the checksum failed!
@@ -367,9 +371,6 @@ beginProg
         SplitStr (LPM(),telegram,SEMICOLON,524,5)
         LPM(1) = right(LPM(1),2)    ' remove <STX> from LPM ID code NN
           
-        get_LPM_state()
-        callTable LPM_state
-
         '' read LPM digital output channels, resolve metar codes
         periodAvg(do_F(), 2, mV250, LPM_D1__SE, 0, 1, 50, 100, 1, 0)
         metar1 = freq_to_metar(LPM_D1_PARAM, d1_freq)
@@ -380,6 +381,11 @@ beginProg
             logmsg("freq =", d1_freq, ", D17 METAR =", metar1, ", D19 METAR =", metar2)
         endif
 
+        get_LPM_state()
+        callTable LPM_state
+
+        lpm_query(LPM_ID,"??",-1)
+
         if timeIntoInterval(0,1,day) then
             '' emit message with several parameters, then zero precip total:
             logmsg("LPM:" & lpm_query(LPM_ID,"ZT",-1), _
@@ -389,6 +395,5 @@ beginProg
              '' LPM_precip_qty & " mm in " & lpm_query(LPM_ID,"PT",-1) & " hrs")
          '' lpm_query(LPM_ID,"RA")
         endif
-
     NextScan
 EndProg
