@@ -1,16 +1,18 @@
-'' LPM.cr1 for UAF/ARM by Ken.Irving@alaska.edu 20180529.55
+'' LPM.cr1 for UAF/ARM by Ken.Irving@alaska.edu 20180529.90
 
 ConstTable
     const LPM_NAME  = "Laser Precipitation Monitor"
     const LPM_MODEL = "5.4110.11.100"
     const LPM_ID = 0
     const LPM__PORT = Com1      ' C1=Tx (db9F-pin3), C2=Rx (db9F-pin2)
-    const LPM_DO1_PARAM = 17
-    const LPM_DO2_PARAM = 19
-    const LPM_DO1__SE = 2
-    const LPM_DO2__SE = 3
+    const LPM_D1_PARAM = 13
+    const LPM_D2_PARAM = 19
+    const LPM_D1__SE = 2
+    const LPM_D2__SE = 3
     const LPM_0_PRECIP_HRS = 24
     const LPM_TELEGRAM = 8
+
+    const REMARKS = "trying to debug TR8 failures..."
 endConstTable
 
 const STX = chr(2)
@@ -32,7 +34,7 @@ public lpm_checksum as long
 dim telegram as string * 2233
 dim LPM(524) as string
 
-public do_F(2) as float : units do_F = Hz   : alias do_F = do1_freq, do2_freq
+public do_F(2) as float : units do_F = Hz   : alias do_F = d1_freq, d2_freq
 public metar1 as string * 5
 public metar2 as string * 5
 dim d17(13,2) as float
@@ -56,10 +58,7 @@ alias LPM_state_vars = T_interior__C, T_laserdrvr__C, I_laser__mA, _
 '' alternatively, put anything in msg and callTable(Messages)
 dim logger_time(9)
 dim msg as string * 80
-dataTable("Messages",1,100)
-    sample(1,progSig,uint2)
-    sample(1,msg,string)
-endTable
+dataTable("Messages",1,100) : sample(1,progSig,uint2) : sample(1,msg,string) : endTable
 sub logmsg(optional s as string * 80 = "MARK", _
     optional t as string * 40 = "", optional u as string * 40 = "", _
     optional v as string * 40 = "", optional w as string * 40 = "", _
@@ -68,18 +67,6 @@ sub logmsg(optional s as string * 80 = "MARK", _
     msg = trim(msg)
     calltable(Messages)
 endsub
-
-'' the following array and constants are used to effect an associative array:
-const CI00000 = 1
-const CI00002 = 2
-const CI00004 = 3
-const CI00008 = 4
-dim lpm_query_error_msgs(4) as string * 40 = { _
-    "invalid parameter", _         ' CI00000
-    "unknown command", _           ' CI00002
-    "parameter out of range", _    ' CI00004
-    "config mode required" _       ' CI00008
-}
 
 function lpm_calc_cksum(telegram as string * 2233) as long
     '' sum of non-checksum bytes plus checksum should result in 0x00 in last byte
@@ -91,7 +78,7 @@ function lpm_calc_cksum(telegram as string * 2233) as long
     if L>=48 AND L<=57 then L-=48 else if L>=65 AND L<=70 then L-=55
     S += H*16 + L
     for i = 1 to N : S += ascii(telegram(1,1,i)) : next i
-    lpm_checksum = S : return lpm_checksum
+    return S
 endFunction
 
 function lpm_query(id as long, cmd as string, param as long) as string * 2233
@@ -126,11 +113,12 @@ function lpm_query(id as long, cmd as string, param as long) as string * 2233
         '' examples: "!00BR00005", "!00CI00002"
         select case mid(lpm_results,4,2)
         case "CI"
+            lpm_err_msg = lpm_results
             select case right(lpm_results,1)
-            case 0  : lpm_err_msg = lpm_query_error_msgs(CI00000)
-            case 2  : lpm_err_msg = lpm_query_error_msgs(CI00002)
-            case 4  : lpm_err_msg = lpm_query_error_msgs(CI00004)
-            case 8  : lpm_err_msg = lpm_query_error_msgs(CI00008)
+            case 0  : lpm_err_msg &= ": invalid parameter"      '' !00CI00000
+            case 2  : lpm_err_msg &= ": unknown command"        '' !00CI00002
+            case 4  : lpm_err_msg &= ": parameter out of range" '' !00CI00004
+            case 8  : lpm_err_msg &= ": config mode required"   '' !00CI00008
             endselect
             return QUESTION & lpm_err_msg
         case uppercase(cmd)
@@ -144,10 +132,17 @@ function lpm_query(id as long, cmd as string, param as long) as string * 2233
         endselect
     case STX
         '' framed telegram output with checksum
-        if lpm_calc_cksum(lpm_results) and &h0FF = 0 then
+        lpm_checksum = lpm_calc_cksum(lpm_results)
+        if lpm_checksum and &h0FF = 0 then
+            sprintf(msg,"DEBUG: %s, length: %d, checksum ok: %X", _
+                    lpm_command, len(lpm_results), lpm_checksum)
+            calltable Messages
             lpm_err_msg = ""
         else
             lpm_results(1,1,1) = QUESTION
+            sprintf(msg,"DEBUG: %s, length: %d, checksum bad: %X", _
+                    lpm_command, len(lpm_results), lpm_checksum)
+            calltable Messages
             lpm_err_msg = "telegram checksum failed"
         endif
         return lpm_results
@@ -309,19 +304,22 @@ endfunction
 
 beginProg
     progSig = status.ProgSignature
+    if REMARKS <> "" then logmsg(REMARKS)
+    
+    '' set logger port to match the LPM through the MD485 rs232-to-rs485 device
     serialOpen (LPM__PORT,9600,0,300,4000)
 
     '' put instrument in config mode:
-    if lpm_query(LPM_ID,"KY",1) <> 1 then logmsg("config mode failed")
+    if lpm_query(LPM_ID,"KY",1) <> 1 then logmsg("CONFIG MODE FAILED")
 
-    '' log baud rate and RS485 mode (should be 9600, half duplex)
+    '' log LPM baud rate and interface mode (should be 9600, half duplex)
     logmsg("LPM baud rate, BR :", lpm_query(LPM_ID,"BR",-1), "(5=9600,6=19200,9=115200)")
     logmsg("LPM comm mode, BD :", lpm_query(LPM_ID,"BD",-1), "(0=full-,1=half-duplex)")
 
     '' configure automatic data telegram output and digital outputs:
     logmsg("LPM auto telegram output: TM :", lpm_query(LPM_ID,"TM",-1))
-    logmsg("LPM digital channel D1 :", lpm_query(LPM_ID,"D1",-1) ' LPM_D1_PARAM
-    logmsg("LPM digital channel D2 :", lpm_query(LPM_ID,"D2",-1) ' LPM_D2_PARAM
+    logmsg("LPM digital channel D1 :", lpm_query(LPM_ID,"D1",LPM_D1_PARAM)
+    logmsg("LPM digital channel D2 :", lpm_query(LPM_ID,"D2",LPM_D2_PARAM)
 
     '' set the LPM clock from the logger at startup:
     realtime(logger_time) '' 1:year, 2:month, 3:day, 4:hour, 5:minute, 6:second
@@ -335,7 +333,7 @@ beginProg
     logmsg("LPM runtime:", lpm_query(LPM_ID,"ZB",-1), "hrs")
 
     '' put instrument in normal command mode:
-    if lpm_query(LPM_ID,"KY",0) <> 0 then logmsg("WARNING: config mode failed to turn off")
+    if lpm_query(LPM_ID,"KY",0) <> 0 then logmsg("WARNING: CONFIG MODE FAILED TO TURN OFF")
 
     init_synop_metar()
 
@@ -354,13 +352,13 @@ beginProg
         callTable LPM_state
 
         '' read LPM digital output channels, resolve metar codes
-        periodAvg(do_F(), 2, mV250, LPM_DO1__SE, 0, 1, 50, 100, 1, 0)
-        metar1 = freq_to_metar(LPM_DO1_PARAM, do1_freq)
-        metar2 = freq_to_metar(LPM_DO2_PARAM, do2_freq)
+        periodAvg(do_F(), 2, mV250, LPM_D1__SE, 0, 1, 50, 100, 1, 0)
+        metar1 = freq_to_metar(LPM_D1_PARAM, d1_freq)
+        metar2 = freq_to_metar(LPM_D2_PARAM, d2_freq)
 
         '' FOR TESTING, log a message with frequency and METAR codes:
         if metar1 <> "?????" OR metar2 <> "?????" then
-            logmsg("freq =", do1_freq, ", D17 METAR =", metar1, ", D19 METAR =", metar2)
+            logmsg("freq =", d1_freq, ", D17 METAR =", metar1, ", D19 METAR =", metar2)
         endif
 
         if timeIntoInterval(0,1,day) then
