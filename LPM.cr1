@@ -1,4 +1,4 @@
-'' LPM.cr1 for UAF/ARM by Ken.Irving@alaska.edu 20180530.07
+'' LPM.cr1 for UAF/ARM by Ken.Irving@alaska.edu 20180530.57
 
 ConstTable
     const LPM_NAME  = "Laser Precipitation Monitor"
@@ -11,8 +11,8 @@ ConstTable
     const LPM_D2__SE = 3
     const LPM_0_PRECIP_HRS = 24
     const LPM_TELEGRAM = 8
-    const STOP_AFTER_N_SCANS = 5
-    const REMARKS = "test TR5 query, stop after 5 scans, add d1 and d2_freq to state table"
+    const STOP_AFTER_N_SCANS = 3
+    const REMARKS = "rename LPM_errors to LPM_error_bits, also LPM_warning_bits"
 endConstTable
 
 const STX = chr(2)
@@ -44,8 +44,8 @@ dim d19(21,2) as float
 dim metar_code(90) as string * 5
 
 '' LPM error and warning flags:
-public LPM_errors as long
-public LPM_warnings as long
+public LPM_error_bits as long
+public LPM_warning_bits as long
 dim LPM_error(6) as string * 40
 dim LPM_warning(9) as string * 40
 
@@ -160,8 +160,8 @@ DataTable(LPM_state,1,-1)
     DataInterval(0,60,Sec,0)
     sample(1,progSig,uint2)
     sample(13,LPM_state_vars,fp2)
-    sample(1,LPM_errors,uint2)
-    sample(1,LPM_warnings,uint2)
+    sample(1,LPM_error_bits,uint2)
+    sample(1,LPM_warning_bits,uint2)
     sample(2,do_F(),fp2)
     sample(1,telegram_query_tries,uint2)
 EndTable
@@ -215,12 +215,12 @@ sub get_LPM_state
     for i = 1 to 6
         msg = ""
         flag = dx(i)
-        if flag = 1 and (LPM_errors AND mask) = 0 then
-            LPM_errors = LPM_errors OR mask 
+        if flag = 1 and (LPM_error_bits AND mask) = 0 then
+            LPM_error_bits = LPM_error_bits OR mask 
             sprintf(msg, "error %d: %s, %d times", lpm_error_msgs(i), fm(i))
         endif
-        if flag = 0 and (LPM_errors AND mask) > 0 then
-            LPM_errors = LPM_errors XOR mask 
+        if flag = 0 and (LPM_error_bits AND mask) > 0 then
+            LPM_error_bits = LPM_error_bits XOR mask 
             sprintf(msg, "error %d turned off: %s", lpm_error_msgs(i))
         endif
         if msg <> "" then logmsg(msg)
@@ -232,12 +232,12 @@ sub get_LPM_state
     for i = 1 to 8
         msg = ""
         flag = dx(6+i)
-        if flag = 1 and (LPM_warnings AND mask) = 0 then
-            LPM_warnings = LPM_warnings OR mask 
+        if flag = 1 and (LPM_warning_bits AND mask) = 0 then
+            LPM_warning_bits = LPM_warning_bits OR mask 
             sprintf(msg, "warning %d: %s, %d times", 6+i, lpm_warning_msgs(i), fm(6+i))
         endif
-        if flag = 0 and (LPM_warnings AND mask) > 0 then
-            LPM_warnings = LPM_warnings XOR mask 
+        if flag = 0 and (LPM_warning_bits AND mask) > 0 then
+            LPM_warning_bits = LPM_warning_bits XOR mask 
             sprintf(msg, "warning %d turned off: %s", lpm_warning_msgs(i))
         endif
         if msg <> "" then logmsg(msg)
@@ -377,8 +377,8 @@ beginProg
             '' emit message with several parameters, then zero precip total:
             logmsg("LPM:" & lpm_query(LPM_ID,"ZT",-1), _
                 lpm_query(LPM_ID,"ZB",-1) & " hrs", _
-                "errors:" + LPM_errors, _
-                "warnings:" + LPM_warnings)
+                "errors:" + LPM_error_bits, _
+                "warnings:" + LPM_warning_bits)
              '' LPM_precip_qty & " mm in " & lpm_query(LPM_ID,"PT",-1) & " hrs")
          '' lpm_query(LPM_ID,"RA")
         endif
