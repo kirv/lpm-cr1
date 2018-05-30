@@ -44,11 +44,8 @@ public LPM_errors as long
 public LPM_warnings as long
 dim LPM_error(6) as string * 40
 dim LPM_warning(9) as string * 40
-dim FM_raw as string * 80
-dim LPM_err_count(15) as long
-dim got_error_counts as boolean 
 
-'' LPM diagnostic analog data from DD[1..13] or LPM[37..49]
+'' LPM diagnostic analog data from DD[1..13]
 public LPM_state_vars(13) as float
 alias LPM_state_vars = T_interior__C, T_laserdrvr__C, I_laser__mA, _
     V_control__mV, V_optical__mV, V_sensor__V, I_laser_pane__mA, _
@@ -72,15 +69,17 @@ sub logmsg(optional s as string * 80 = "MARK", _
     calltable(Messages)
 endsub
 
-function lpm_err_msgs(lpm_error_code as string) as string * 24
-    select case right(lpm_error_code,10)
-    case 0 : return "invalid parameter"         ' ci0
-    case 2 : return "unknown command"           ' ci2
-    case 4 : return "parameter out of range"    ' ci4
-    case 8 : return "config mode required"      ' ci8
-    case else : return QUESTION & lpm_error_code
-    endselect
-endfunction
+'' the following array and constants are used to effect an associative array:
+const CI00000 = 1
+const CI00002 = 2
+const CI00004 = 3
+const CI00008 = 4
+dim lpm_query_error_msgs(4) as string * 40 = { _
+    "invalid parameter", _         ' CI00000
+    "unknown command", _           ' CI00002
+    "parameter out of range", _    ' CI00004
+    "config mode required" _       ' CI00008
+}
 
 function lpm_calc_cksum(telegram as string * 2233) as long
     '' sum of non-checksum bytes plus checksum should result in 0x00 in last byte
@@ -127,8 +126,13 @@ function lpm_query(id as long, cmd as string, param as long) as string * 2233
         '' examples: "!00BR00005", "!00CI00002"
         select case mid(lpm_results,4,2)
         case "CI"
-            lpm_err_msg = lpm_err_msgs(lpm_results)
-            return QUESTION & lpm_err_msgs(lpm_results)
+            select case right(lpm_results,1)
+            case 0  : lpm_err_msg = lpm_query_error_msgs(CI00000)
+            case 2  : lpm_err_msg = lpm_query_error_msgs(CI00002)
+            case 4  : lpm_err_msg = lpm_query_error_msgs(CI00004)
+            case 8  : lpm_err_msg = lpm_query_error_msgs(CI00008)
+            endselect
+            return QUESTION & lpm_err_msg
         case uppercase(cmd)
             '' command confirmed, so return numeric parameter
             value = mid(lpm_results,6,5)
@@ -162,56 +166,81 @@ DataTable(LPM_state,1,-1)
   sample(1,LPM_warnings,uint2)
 EndTable
 
-sub get_error_counts ' called if needed by get_LPM_errors() and get_LPM_warnings()
-    '' LPM error and warning counts are from FM[1..6] and FM[7..15]
-    FM_raw = lpm_query(LPM_ID,"FM",-1)
-    SplitStr (LPM_err_count(),FM_raw,SEMICOLON,15,5)
-    got_error_counts = True
-endsub
+dim lpm_error_msgs(6) as string * 40 = { _     '' LPM error flags are in DX[1..6]
+    "static signal out of range", _
+    "laser temp (analog) too high", _
+    "laser temp (digital) too high", _
+    "laser current (analog) too high", _
+    "laser current (digital) too high", _
+    "sensor supply out of range" _
+}
+
+dim lpm_warning_msgs(9) as string * 40 = { _   '' LPM warning flags are in DX[7..15]
+    "current: pane heating laser head", _
+    "current: pane heating receiver head", _
+    "temperature sensor", _
+    "heating supply out of allowed range", _
+    "current: heating housing", _
+    "current: heating heads", _
+    "current: heating carriers", _
+    "control output laser power high", _
+    "not used" _
+}
 
 sub get_LPM_state
-    dim i as long, mask as long, flag as long
+    dim i as long
+    dim mask as long
+    dim flag as long
+    dim dd(13) as long
+    dim dx(15) as long
+    dim fm(15) as long
+    dim got_counts as boolean
+    dim msg as string * 60
 
-    '' LPM analog diagnostic data from DD[1..13] or LPM[37..49]
+    '' state vars (DD), errors and warnings (DX), and counts (FM)
+    splitStr (dd(),lpm_query(LPM_ID,"DD",-1),SEMICOLON,13,5)
+    splitStr (dx(),lpm_query(LPM_ID,"DX",-1),SEMICOLON,15,5)
+    splitStr (fm(),lpm_query(LPM_ID,"FM",-1),SEMICOLON,15,5)
+
+    '' LPM analog diagnostic data from DD[1..13]
     for i = 1 to 13
-        LPM_state_vars(i) = LPM(36+i)
+        LPM_state_vars(i) = dd(i)
         if i = 3 then I_laser__mA /= 100
         if i = 6 then V_sensor__V /= 10
         if i = 10 then V_heating__V /= 10
     next i
 
-    '' clear this flag so we can get the error and warning counts from FX[1..15]
-    got_error_counts = False
-
-    '' LPM error flags are from LPM[21..27] (also see DX[1..6])
+    '' LPM error flags are in DX[1..6], counts are in FM[1..6]
     mask = 1
     for i = 1 to 6
-        flag = LPM(20+i)
+        msg = ""
+        flag = dx(i)
         if flag = 1 and (LPM_errors AND mask) = 0 then
-            if NOT got_error_counts then get_error_counts()
-            logmsg("ERROR:", LPM_error(i), "( count:", LPM_err_count(i), ")")
             LPM_errors = LPM_errors OR mask 
+            sprintf(msg, "error %d: %s, %d times", lpm_error_msgs(i), fm(i))
         endif
         if flag = 0 and (LPM_errors AND mask) > 0 then
-            logmsg("error off:", LPM_error(i))
             LPM_errors = LPM_errors XOR mask 
+            sprintf(msg, "error %d turned off: %s", lpm_error_msgs(i))
         endif
+        if msg <> "" then logmsg(msg)
         mask *= 2
     next i
 
-    '' LPM warning flags are from LPM[28..36] (also see DX[7..15])
+    '' LPM warning flags are in DX[7..15]), counts are in FM[7..15]
     mask = 1
     for i = 1 to 8
-        flag = LPM(27+i)
+        msg = ""
+        flag = dx(6+i)
         if flag = 1 and (LPM_warnings AND mask) = 0 then
-            if NOT got_error_counts then get_error_counts()
-            logmsg("WARNING:", LPM_warning(i), "( count:", LPM_err_count(i+6), ")")
             LPM_warnings = LPM_warnings OR mask 
+            sprintf(msg, "warning %d: %s, %d times", 6+i, lpm_warning_msgs(i), fm(6+i))
         endif
         if flag = 0 and (LPM_warnings AND mask) > 0 then
-            logmsg("warning off:", LPM_warning(i))
             LPM_warnings = LPM_warnings XOR mask 
+            sprintf(msg, "warning %d turned off: %s", lpm_warning_msgs(i))
         endif
+        if msg <> "" then logmsg(msg)
         mask *= 2
     next i
 
@@ -223,27 +252,6 @@ DataTable(LPM,1,-1)
   sample(1,telegram,String)
 EndTable
     
-sub init_LPM_messages
-    '' LPM error flags from LPM[21..27] or DX[1..6]
-    LPM_error(1) = "static signal out of range"
-    LPM_error(2) = "laser temp (analog) too high"
-    LPM_error(3) = "laser temp (digital) too high"
-    LPM_error(4) = "laser current (analog) too high"
-    LPM_error(5) = "laser current (digital) too high"
-    LPM_error(6) = "sensor supply out of range"
-
-    '' LPM warning flags from LPM[28..36] or DX[7..15]
-    LPM_warning(1) = "current: pane heating laser head"
-    LPM_warning(2) = "current: pane heating receiver head"
-    LPM_warning(3) = "temperature sensor"
-    LPM_warning(4) = "heating supply out of allowed range"
-    LPM_warning(5) = "current: heating housing"
-    LPM_warning(6) = "current: heating heads"
-    LPM_warning(7) = "current: heating carriers"
-    LPM_warning(8) = "control output laser power high"
-    LPM_warning(9) = "not used"
-endSub
-
 sub init_synop_metar
     '' prep to transform D17 and D19 output frequency to METAR code string
     '' arrays for D17 (Table 4) and D19 (Table 5) relate frequency to SYNOP code
@@ -329,7 +337,6 @@ beginProg
     '' put instrument in normal command mode:
     if lpm_query(LPM_ID,"KY",0) <> 0 then logmsg("WARNING: config mode failed to turn off")
 
-    init_LPM_messages
     init_synop_metar()
 
     Scan (60,sec,0,0)
