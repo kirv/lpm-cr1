@@ -10,9 +10,9 @@ ConstTable
     const LPM_D1__SE = 2
     const LPM_D2__SE = 3
     const LPM_0_PRECIP_HRS = 24
-    const LPM_TELEGRAM = 8
-    const STOP_AFTER_N_SCANS = 3
-    const REMARKS = "rename LPM_errors to LPM_error_bits, also LPM_warning_bits"
+    const LPM_TELEGRAM = 0
+    const STOP_AFTER_N_SCANS = 1
+    const REMARKS = "heater test #1"
 endConstTable
 
 const STX = chr(2)
@@ -46,8 +46,6 @@ dim metar_code(90) as string * 5
 '' LPM error and warning flags:
 public LPM_error_bits as long
 public LPM_warning_bits as long
-dim LPM_error(6) as string * 40
-dim LPM_warning(9) as string * 40
 
 '' LPM diagnostic analog data from DD[1..13]
 public LPM_state_vars(13) as float
@@ -147,7 +145,7 @@ function lpm_query(id as long, cmd as string, param as long) as string * 2233
         endif
     case "U"
         '' LPM help output from "??" command starts with "User commands:"
-        lpm_error = ""
+        lpm_err_msg = ""
         return lpm_results
     case else
         '' simple data output from DD, DX, FM, PT, DA, ZT
@@ -345,7 +343,7 @@ beginProg
     Scan (60,sec,0,STOP_AFTER_N_SCANS)
         panelTemp (panelTemp,_60Hz)
         battery (battery)
-        realtime(logger_time) '' 1:year, 2:month, 3:day, 4:hour, 5:minute, 6:second
+
         '' every minute, read data telegram from the LPM
         '' retry query if LPM returns "!TR00001", which means: telegram not available
         '' NOTE: STX has been replaced by "?" if the checksum failed!
