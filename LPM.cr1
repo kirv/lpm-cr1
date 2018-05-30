@@ -12,7 +12,7 @@ ConstTable
     const LPM_0_PRECIP_HRS = 24
     const LPM_TELEGRAM = 8
 
-    const REMARKS = "trying to debug TR8 failures..."
+    const REMARKS = "try 1-sec delay for telegram query"
 endConstTable
 
 const STX = chr(2)
@@ -342,6 +342,8 @@ beginProg
         battery (battery)
 
         '' every minute, read data from the LPM; "?" replaces STX if checksum fails
+        '' delay is needed due to synchronized logger and LPM clocks
+        delay(0,1,sec)
         telegram = lpm_query(LPM_ID, "TR", LPM_TELEGRAM)
         callTable LPM
   
