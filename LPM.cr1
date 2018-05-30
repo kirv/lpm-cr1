@@ -12,7 +12,7 @@ ConstTable
     const LPM_0_PRECIP_HRS = 24
     const LPM_TELEGRAM = 8
     const STOP_AFTER_N_SCANS = 10
-    const REMARKS = "4th try at handling ?? command"
+    const REMARKS = "5th try at handling ?? (LPM help) command"
 endConstTable
 
 const STX = chr(2)
@@ -89,7 +89,6 @@ endFunction
 function lpm_query(id as long, cmd as string, param as long) as string * 2233
     '' NOTE: param = -1 omits parameter
     dim value as long
-    dim f as long
 
     select case param
     case -1
@@ -379,17 +378,17 @@ beginProg
         '' TESTING LPM help command, "??"
         if lpm_query(LPM_ID,"??",-1) <> "" then
             fh = fileopen("USR:LPM-HELP.TXT","w",0)
-            if f = 0 then
+            if fh = 0 then
                 bytes = len(lpm_results)
-                lpm_error = "failed to open USR:LPM-HELP.TXT for writing "
-                lpm_error += len(lpm_results) & " bytes"
-                logmsg("LPM command",cmd, ":", lpm_error)
-                lpm_results = ""
+                sprintf(lpm_error, "unable to write %d bytes to USR:LPM-HELP.TXT", _
+                        len(lpm_results))
+                logmsg("LPM ?? cmd :", lpm_error)
+            else
+                bytes = filewrite(fh, lpm_results, 0)
+                logmsg("USR:LPM-HELP.TXT written with",bytes,"bytes")
+                if fileclose(fh) <> 0 then logmsg("failed to close file")
+                lpm_error = ""
             endif
-            bytes = filewrite(f, lpm_results, 0)
-            logmsg("USR:LPM-HELP.TXT written with",bytes,"bytes")
-            if fileclose(f) <> 0 then logmsg("failed to close file")
-            lpm_error = ""
         endif
 
         if timeIntoInterval(0,1,day) then
