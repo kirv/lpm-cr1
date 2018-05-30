@@ -11,8 +11,8 @@ ConstTable
     const LPM_D2__SE = 3
     const LPM_0_PRECIP_HRS = 24
     const LPM_TELEGRAM = 8
-    const STOP_AFTER_N_SCANS = 10
-    const REMARKS = "5th try at handling ?? (LPM help) command"
+    const STOP_AFTER_N_SCANS = 5
+    const REMARKS = "test TR5 query, stop after 5 scans, add d1 and d2_freq to state table"
 endConstTable
 
 const STX = chr(2)
@@ -35,9 +35,6 @@ public telegram_query_tries as long
 
 dim telegram as string * 2233
 dim LPM(524) as string
-
-dim fh as long
-dim bytes as long
 
 public do_F(2) as float : units do_F = Hz   : alias do_F = d1_freq, d2_freq
 public metar1 as string * 5
@@ -160,12 +157,13 @@ function lpm_query(id as long, cmd as string, param as long) as string * 2233
 endfunction
 
 DataTable(LPM_state,1,-1)
-  DataInterval(0,60,Sec,0)
-  sample(1,progSig,uint2)
-  sample(13,LPM_state_vars,fp2)
-  sample(1,LPM_errors,uint2)
-  sample(1,LPM_warnings,uint2)
-  sample(1,telegram_query_tries,uint2)
+    DataInterval(0,60,Sec,0)
+    sample(1,progSig,uint2)
+    sample(13,LPM_state_vars,fp2)
+    sample(1,LPM_errors,uint2)
+    sample(1,LPM_warnings,uint2)
+    sample(2,do_F(),fp2)
+    sample(1,telegram_query_tries,uint2)
 EndTable
 
 dim lpm_error_msgs(6) as string * 40 = { _     '' LPM error flags are in DX[1..6]
@@ -374,22 +372,6 @@ beginProg
 
         get_LPM_state()
         callTable LPM_state
-
-        '' TESTING LPM help command, "??"
-        if lpm_query(LPM_ID,"??",-1) <> "" then
-            fh = fileopen("USR:LPM-HELP.TXT","w",0)
-            if fh = 0 then
-                bytes = len(lpm_results)
-                sprintf(lpm_error, "unable to write %d bytes to USR:LPM-HELP.TXT", _
-                        len(lpm_results))
-                logmsg("LPM ?? cmd :", lpm_error)
-            else
-                bytes = filewrite(fh, lpm_results, 0)
-                logmsg("USR:LPM-HELP.TXT written with",bytes,"bytes")
-                if fileclose(fh) <> 0 then logmsg("failed to close file")
-                lpm_error = ""
-            endif
-        endif
 
         if timeIntoInterval(0,1,day) then
             '' emit message with several parameters, then zero precip total:
