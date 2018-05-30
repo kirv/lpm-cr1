@@ -12,7 +12,7 @@ ConstTable
     const LPM_0_PRECIP_HRS = 24
     const LPM_TELEGRAM = 8
     const STOP_AFTER_N_SCANS = 10
-    const REMARKS = "handle ?? command; force checksum failures; stop after n scans"
+    const REMARKS = "4th try at handling ?? command"
 endConstTable
 
 const STX = chr(2)
@@ -35,6 +35,9 @@ public telegram_query_tries as long
 
 dim telegram as string * 2233
 dim LPM(524) as string
+
+dim fh as long
+dim bytes as long
 
 public do_F(2) as float : units do_F = Hz   : alias do_F = d1_freq, d2_freq
 public metar1 as string * 5
@@ -105,6 +108,7 @@ function lpm_query(id as long, cmd as string, param as long) as string * 2233
         serialIn(lpm_results,LPM__PORT,300,ETX,2233)
     case "??"
         serialIn(lpm_results,LPM__PORT,30,LF,2233)
+        '' output begins with "User commands", so look for "U" below
     case else
         serialin(lpm_results,LPM__PORT,300,CR,80)
         lpm_results = mid(lpm_results, 1, len(lpm_results))
@@ -134,11 +138,6 @@ function lpm_query(id as long, cmd as string, param as long) as string * 2233
         endselect
     case STX
         '' framed telegram output with checksum
-
-        '' TESTING: force 0 digit of serial number to 'minute mod 3' to foil telegram cksum:
-        sprintf(lpm_results, "%s%d%s", _
-                left(lpm_results,4), logger_time(5) mod 3, mid(lpm_results,6,2233))
-
         lpm_checksum = lpm_calc_cksum(lpm_results)
         if (lpm_checksum and &h0FF) = 0 then
             lpm_err_msg = ""
@@ -151,16 +150,9 @@ function lpm_query(id as long, cmd as string, param as long) as string * 2233
             lpm_err_msg = "telegram checksum failed"
         endif
     case "U"
-        f = fileopen("USR:LPM-HELP.TXT","w",0)
-        if f = 0 then
-            logmsg("unable to save '??' command output to USR:LPM-HELP.TXT")
-            lpm_error = "unable to open USR:LPM-HELP.TXT to write to"
-        else
-            value = filewrite(f, lpm_results, 0)
-            if fileclose(f) <> 0 then logmsg("failed to close file")
-            logmsg("USR:LPM-HELP.TXT written with",value,"bytes")
-            lpm_error = ""
-        endif
+        '' LPM help output from "??" command starts with "User commands:"
+        lpm_error = ""
+        return lpm_results
     case else
         '' simple data output from DD, DX, FM, PT, DA, ZT
         lpm_err_msg = ""
@@ -384,7 +376,21 @@ beginProg
         get_LPM_state()
         callTable LPM_state
 
-        lpm_query(LPM_ID,"??",-1)
+        '' TESTING LPM help command, "??"
+        if lpm_query(LPM_ID,"??",-1) <> "" then
+            fh = fileopen("USR:LPM-HELP.TXT","w",0)
+            if f = 0 then
+                bytes = len(lpm_results)
+                lpm_error = "failed to open USR:LPM-HELP.TXT for writing "
+                lpm_error += len(lpm_results) & " bytes"
+                logmsg("LPM command",cmd, ":", lpm_error)
+                lpm_results = ""
+            endif
+            bytes = filewrite(f, lpm_results, 0)
+            logmsg("USR:LPM-HELP.TXT written with",bytes,"bytes")
+            if fileclose(f) <> 0 then logmsg("failed to close file")
+            lpm_error = ""
+        endif
 
         if timeIntoInterval(0,1,day) then
             '' emit message with several parameters, then zero precip total:
