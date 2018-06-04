@@ -10,9 +10,9 @@ ConstTable
     const LPM_D1__SE = 2
     const LPM_D2__SE = 3
     const LPM_0_PRECIP_HRS = 24
-    const LPM_TELEGRAM = 0
-    const STOP_AFTER_N_SCANS = 1
-    const REMARKS = "heater test #1"
+    const LPM_TELEGRAM = 8
+    const STOP_AFTER_N_SCANS = -1
+    const REMARKS = "telegram 8"
 endConstTable
 
 const STX = chr(2)
@@ -224,7 +224,7 @@ sub get_LPM_flags
         if flag = 0 and (LPM_error_bits AND mask) > 0 then
             LPM_error_bits = LPM_error_bits XOR mask 
             sprintf(msg, "ERROR %d TURNED OFF: %s (count:%d)", _
-                    i, lpm_error_msgs(i)), fm(i))
+                    i, lpm_error_msgs(i), fm(i))
         endif
         if msg <> "" then logmsg(msg)
         mask *= 2
@@ -243,7 +243,7 @@ sub get_LPM_flags
         if flag = 0 and (LPM_warning_bits AND mask) > 0 then
             LPM_warning_bits = LPM_warning_bits XOR mask 
             sprintf(msg, "WARNING %d TURNED OFF: %s (count:%d)", _
-                    6+i, lpm_warning_msgs(i)), fm(6+i))
+                    6+i, lpm_warning_msgs(i), fm(6+i))
         endif
         if msg <> "" then logmsg(msg)
         mask *= 2
@@ -319,7 +319,7 @@ beginProg
     serialOpen (LPM__PORT,9600,0,300,4000)
 
     '' put instrument in config mode:
-    if lpm_query(LPM_ID,"KY",1) <> 1 then logmsg("CONFIG MODE FAILED")
+    if lpm_query(LPM_ID,"KY",1) <> "1" then logmsg("CONFIG MODE FAILED")
 
     '' log LPM baud rate and interface mode (should be 9600, half duplex)
     logmsg("LPM baud rate, BR :", lpm_query(LPM_ID,"BR",-1), "(5=9600,6=19200,9=115200)")
@@ -342,7 +342,7 @@ beginProg
     logmsg("LPM runtime:", lpm_query(LPM_ID,"ZB",-1), "hrs")
 
     '' put instrument in normal command mode:
-    if lpm_query(LPM_ID,"KY",0) <> 0 then logmsg("WARNING: CONFIG MODE FAILED TO TURN OFF")
+    if lpm_query(LPM_ID,"KY",0) <> "0" then logmsg("WARNING: CONFIG MODE FAILED TO TURN OFF")
 
     init_synop_metar()
 
