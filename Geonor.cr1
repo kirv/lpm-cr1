@@ -1,4 +1,4 @@
-'' Geonor.cr1 for UAF/ARM by Ken.Irving@alaska.edu 20180604.87
+'' Geonor.cr1 for UAF/ARM by Ken.Irving@alaska.edu 20180606.68
 
 ConstTable
 
@@ -27,7 +27,7 @@ ConstTable
 
     '' a thermistor is taped to each Geonor vibrating wire transducer:
     const GNR1_THERM__SE = 4    ' GNR2 & GNR3 thermistors use the next two SE channels
-    const GNR_THERM__EX = 1     ' ... all thermistors use the same excitation channel
+    const GNR_THERMS__EX = 1    ' ... all thermistors use the same excitation channel
     const GNR_THERM_REF_R = 5000
 
     '' Steinhart & Hart coefficients for YSI 44004 thermistors, 2252 Ohms @ 25C:
@@ -76,35 +76,6 @@ dim Kw(3,3) as float = { _
 }
 dim Kt(3) as float = { THERM_A, THERM_B, THERM_C }  '' Kt(1), Kt(2), Kt(3)
 
-sub init_gnr_therm_calib_Kt()
-    log("Geonor wire xdcr thermistor constants follow:"
-    Kt(1) = THERM_A     : Kt(2) = THERM_B   : Kt(3) = THERM_C 
-    sprintf(msg, "  GNR xdcrs T: A=%.*g B=%.*g C=%.*g", 8,THERM_A,8,THERM_B,4,THERM_C)
-    calltable(Messages)
-endSub
-
-dim Kw(3,3) as float
-sub init_gnr_wire_calib_Kw()
-    log("Geonor wire transducer constants follow:")
-    Kw(1,1) = GNR1_A    : Kw(1,2) = GNR1_B  : Kw(1,3) = GNR1_F0
-    sprintf(msg, "  GNR1: SN=%d F0=%.*g A=%.*g B=%.*g",1,GNR1_SN,GNR1_F0,6,GNR1_A,6,GNR1_B)
-    calltable(Messages)
-    Kw(2,1) = GNR2_A    : Kw(2,2) = GNR2_B  : Kw(2,3) = GNR2_F0
-    sprintf(msg, "  GNR2: SN=%d F0=%.*g A=%.*g B=%.*g",2,GNR2_SN,GNR2_F0,6,GNR2_A,6,GNR2_B)
-    calltable(Messages)
-    Kw(3,1) = GNR3_A    : Kw(3,2) = GNR3_B  : Kw(3,3) = GNR3_F0
-    sprintf(msg, "  GNR3: SN=%d F0=%.*g A=%.*g B=%.*g",3,GNR3_SN,GNR3_F0,6,GNR3_A,6,GNR3_B)
-    calltable(Messages)
-endSub
-
-dim Kt(3) as float
-sub init_gnr_therm_calib_Kt()
-    log("Geonor wire xdcr thermistor constants follow:"
-    Kt(1) = THERM_A     : Kt(2) = THERM_B   : Kt(3) = THERM_C 
-    sprintf(msg, "  GNR xdcrs T: A=%.*g B=%.*g C=%.*g", 8,THERM_A,8,THERM_B,4,THERM_C)
-    calltable(Messages)
-endSub
-
 '' store msg string in Messages table via log() or set msg var & call
 dim msg as string * 80
 dataTable("Messages",1,100)
@@ -120,14 +91,19 @@ sub log(optional s as string * 80 = "MARK", _
     calltable(Messages)
 endsub
 
-DataTable(Geonor_raw,1,-1)
+DataTable(Geonor_wires_freq,1,-1)
     DataInterval(0,10,sec,0)
     Sample(1,progSig,uint2)
     sample(3,gnr_F,ieee4)
+EndTable
+
+DataTable(Geonor_therms_R,1,-1)
+    DataInterval(0,10,sec,0)
+    Sample(1,progSig,uint2)
     sample (3,gnr_R,ieee4)
 EndTable
 
-DataTable(Geonor_data,1,-1)
+DataTable(Geonor_derived_data,1,-1)
     DataInterval(0,60,sec,10)
     Sample(1,progSig,uint2)
     sample (3,gnr_level,FP2)
@@ -135,9 +111,8 @@ DataTable(Geonor_data,1,-1)
     average(1,gnr_htr_state,fp2,false)
 EndTable
 
-function read_Geonor_RTD()
-    dim x
-    dim T
+function read_Geonor_orifice_temp()
+    dim x, T
     BrHalf (x,1,mV250,GNR_RTD__SE,GNR_RTD__EX,1,250,0,0,250,1.0,0)
     prt(T,1,x/(1-x),1,0)
     return T
@@ -177,25 +152,34 @@ endfunction
 
 BeginProg
     progSig = status.ProgSignature
+    log()
+
     gnr_htr_period = HTR_PERIOD_SEC
 
-    init_gnr_wire_calib_Kw()
-    init_gnr_therm_calib_Kt()
+    log("Geonor wire transducer constants follow:")
+    Kw(1,1) = GNR1_A    : Kw(1,2) = GNR1_B  : Kw(1,3) = GNR1_F0
+    sprintf(msg,"GNR1: A=%.12g, B=%.12g, F0=%.12g, SN=%d",Kw(1,1),Kw(1,2),Kw(1,3),GNR1_SN)
+    calltable(Messages)
+    sprintf(msg,"GNR2: A=%.12g, B=%.12g, F0=%.12g, SN=%d",Kw(2,1),Kw(2,2),Kw(2,3),GNR2_SN)
+    calltable(Messages)
+    sprintf(msg,"GNR3: A=%.12g, B=%.12g, F0=%.12g, SN=%d",Kw(3,1),Kw(3,2),Kw(3,3),GNR3_SN)
+    calltable(Messages)
+    sprintf(msg, "THERMS: A=%.12g B=%.12g C=%.12g", Kt(1), Kt(2), Kt(3))
+    calltable(Messages)
 
     Scan (10,sec,0,0)
         '' measure vibrating wire cycles since last scan, save as frequency
         pulseCount(g1_F,1,GNR1__PP,0,1,1.0,0)
         pulseCount(g2_F,1,GNR2__PP,0,1,1.0,0)
         pulseCount(g3_F,1,GNR3__PP,0,1,1.0,0)
+        calltable(Geonor_wires_freq)
         
         '' read Geonor wire transducer thermistors:
-        BrHalf (X(),3,mV2500,GNR_THERM__SE,GNR_THERM__EX,3,2500,0,0,250,1.0,0)
+        BrHalf (X(),3,mV2500,GNR1_THERM__SE,GNR_THERMS__EX,3,2500,0,0,250,1.0,0)
         For i=1 To 3
             gnr_R(i) = GNR_THERM_REF_R*X(i)/(1-X(i))
         Next i
-
-        '' log the raw wire frequency and thermistor resistance measurements:
-        callTable Geonor_raw
+        calltable(Geonor_therms_R)
 
         '' update running averages for processing and logging in 60-second scan
         avgRun(gnr_Favg, 3, gnr_F(), 6)
@@ -204,10 +188,9 @@ BeginProg
 
     SlowSequence
     Scan(HTR_SCAN_SEC,sec,0,0)
-        gnr_orifice_T = read_Geonor_RTD()
+        gnr_orifice_T = read_Geonor_orifice_temp()
         gnr_htr_on_ratio = gnr_htr_strategy(AT, RH, gnr_orifice_T)
         gnr_htr_state = htr_relay_control(gnr_htr_on_ratio, gnr_htr_period)
-        callTable(Geonor_heater)
     NextScan
 
     SlowSequence
@@ -223,6 +206,6 @@ BeginProg
             gnr_T(i) = calc_therm_T(gnr_Ravg(i), Kt(1), Kt(2), Kt(3))
         next i
 
-        callTable Geonor_data
+        callTable(Geonor_derived_data)
     NextScan
 EndProg
