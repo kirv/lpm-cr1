@@ -1,10 +1,32 @@
 #!/bin/bash
 
-site="$1" && shift
+main() {
+    site="$1" && shift
+    local -a chunks=(
+        constants
+        globals
+        datatables
+        functions
+        subs
+        programs
+    )
+    for chunk in "${chunks[@]}"; do 
+        $chunk "$site" "$@"
+    done
+}
 
-constants $site "$@"
-globals $site "$@"
-datatables $site "$@"
-subs $site "$@"
-programs $site "$@"
+main "$@"
+
+exit 0
+
+NAME
+    build
+
+DESCRIPTION
+    build invokes a series of 'chunk' handlers to generate a program from
+    separate components.  Each component might have some or all of the
+    chunks.
+
+SYNOPSIS
+    build sitename
 
