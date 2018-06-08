@@ -1,0 +1,241 @@
+#!/bin/bash
+
+# programs: compose component program chunks into final program 
+
+shopt -s nocasematch nullglob
+error() { printf "%s\n" "$@"; exit 1; } 
+
+ob=.
+test -n "$1" && ob="$1"
+
+## resolve search directories
+resolve_search_paths() {
+    # if target (^ or .^) resolves as a directory, it's a prototype:
+    test -d "$1" || {
+        # otherwise, if it exists as a link it's a thinobject type:
+        test -L "$1" && return 0
+        return 1
+        }
+    search_paths+=("$1")
+    # recurse to follow $1/^ or $1/.^ links:
+    resolve_search_paths $1/^ || resolve_search_paths $1/.^ || return 1
+    }
+declare -a search_paths
+resolve_search_paths $ob
+
+resolve_attr() {
+    for attr in "${search_paths[@]}"; do
+        attr+=/$1
+        test -e $attr && return 
+    done
+    return 1
+    }
+
+resolve_attr @order || error "no @order file found"
+order=$attr
+
+resolve_symvar() {
+    for attr in "${search_paths[@]}"; do
+        attr+=/$1
+        test -L $attr && test ! -e $attr && return 
+    done
+    return 1
+    }
+
+# store program 'init' code in this array:
+declare -a init
+init=
+
+# store each scan time value in the scans array:
+declare -a scans
+scans=()
+
+# store each scan data in the s associative array;
+# - s[N] stores the number of lines stored for scan time N
+# - s[N.M] stores line M of scan time N
+declare -A s
+s=()
+
+declare -i n scan
+
+# track where datatables are in each scan block, keep the last one
+declare -A datatables
+
+# store patterns for regex matching
+declare -A pat
+pat[beginprog]="^ *beginprog"
+pat[endprog]="^ *endprog"
+pat[scan]="^ *scan\("
+pat[nextscan]="^ *nextscan"
+pat[calltable]="^ *calltable"
+
+for component in $(<$order); do
+    resolve_attr "$component" || continue
+
+    for file in $attr/@prog:*; do
+
+      # printf "DEBUG: %s\n" "$file"
+
+        [[ "${file: -4}" == init ]] && {
+            # accumulate @prog:init code into init array:
+            while IFS= read -r line; do
+                if [[ "$line" == beginprog ]]; then
+                    init+=("    ' for $component:")
+                elif [[ "$line" == endprog ]]; then
+                    init+=("    ")
+                else
+                    init+=("$line")
+                fi
+            done < "$file"
+            continue
+            }
+
+        test "${file##*:}" -gt 0 2>/dev/null || {
+            # note that this would be the place to handle other scan rates,
+            # e.g., like @prog:50ns, @prog:5m, etc., if desired...
+            error "invalid interval ${file##*:} in $file"
+            }
+
+        scan=${file##*:}
+
+        ((scan+0==scan)) || error "this test is probably not necessary..."
+
+
+      # printf "DEBUG: %d\t%s\n" $scan "$file"
+
+        # s[scan] is the number of lines already stored
+        n=${s[$scan]}
+
+        ((n==0)) && scans+=($scan)
+
+      # printf "DEBUG: %d\t%d\t%s\n" $scan $n "$file"
+
+        n+=1
+        s[$scan.$n]="        ' $component:"
+
+        while IFS= read -r line; do
+
+          # printf "$line\n"
+
+            [[ "$line" =~ ${pat[beginprog]} ]] && continue
+            [[ "$line" =~ ${pat[endprog]} ]] && continue
+            [[ "$line" =~ ${pat[scan]} ]] && continue
+            [[ "$line" =~ ${pat[nextscan]} ]] && {
+                n+=1
+                s[$scan.$n]="    "
+                s[$scan]=$n
+                continue
+                }
+
+            # accumulate entries for the final table:
+            n+=1
+            s[$scan.$n]="$line"
+            s[$scan]=$n
+
+        done < $file
+
+    done
+
+done
+
+# check the number of scan intervals to output to the program:
+((${#scans[@]}>4)) && error "too many scan intervals: ${#scans[@]}"
+
+printf "\nbeginProg\n"
+
+# first print out the pre-scan or 'init' code:
+# printf "%s\n" "${init[@]}"
+for line in "${init[@]}"; do
+    printf "%s\n" "$line"
+done
+
+filter_table_calls() {
+    thiscall=$1
+    remark="no info"
+  # printf "%s' DEBUG\n" "${s[$thiscall]}" && return
+    # extract table name: 
+    table="${line##*calltable?}"
+    table="${table%% *}"
+  # printf "DEBUG scan %d line %d\t<%s>\n" $scan $n "$table"
+
+    # store last call, then register this call as the last one:
+    lastcall=${datatable[$table]}
+    datatable[$table]="$thiscall"
+
+    # nothing to do if table was not called before...
+    [[ "$lastcall" ]] || {
+        remark="first call: $thiscall"
+        return
+        }
+
+    # table was called previously... was it in this same scan?
+
+    [[ ${lastcall%%.*} == $scan ]] && {
+      # # yes, so delete the last one, or at least comment it out:
+      # s[$lastcall]="''''${s[$lastcall]}"
+        # yes: but just append comment for now
+        remark="same scan: $thiscall, $lastcall"
+        return
+        }
+
+  # # no, other call was in a faster scan, so just add a comment:
+  # s[$thiscall]="${s[$thiscall]} ' lastcall:$lastcall"
+
+    # no, other call was in a faster scan, so just add a comment:
+    remark="previous scan: $thiscall, $lastcall"
+    }
+
+
+declare -a scan_order
+scan_order=( $(printf "%d\n" ${scans[@]} | sort -n) )
+
+first_scan=
+resolve_symvar primary-scan && {
+    first_scan=$(symvar $attr)
+    declare -i n
+    n=0
+    for scan in "${scan_order[@]}"; do
+        test $scan = $first_scan && unset "scan_order[$n]"
+        n+=1
+    done
+    }
+
+# output the scan intervals shortest to longest:
+declare -i slowseq
+for scan in $first_scan "${scan_order[@]}"; do
+  # printf "DEBUG  %d: %s\n" "$scan" "${s[scan]}"
+
+    ((slowseq>0)) && printf "    slowSequence\n"
+
+    printf "    scan(%d,sec,0,0)\n" $scan
+    
+  # for ((n=1; n<=${s[$scan]}; n+=1)); do
+  #     line="${s[$scan.$n]}"
+  #     printf "%s\n" "$line"
+  # done
+
+  # for ((n=1; n<=${s[$scan]}; n+=1)); do
+  #     line="${s[$scan.$n]}"
+  #     [[ "$line" =~ ${pat[calltable]} ]] && filter_table_calls $scan.$n
+  #     printf "%s\n" "$line"
+  # done
+
+  # printf "DEBUG:\t<%s>\n" "${s[@]}"
+    remark=
+    for (( n=1; n<=${s[$scan]}; n+=1 )); do
+        line="${s[$scan.$n]}"
+        if [[ "$line" =~ ${pat[calltable]} ]]; then
+          # filter_table_calls $scan.$n
+          # printf "%s\n" "$line ' $remark"
+            printf "%s\n" "$line"
+        else
+            printf "%s\n" "$line"
+        fi
+    done
+
+    printf "    nextScan\n"
+    printf "\n"
+    slowseq+=1
+done
+    
+printf "endProg\n"

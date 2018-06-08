@@ -1,0 +1,10 @@
+#!/bin/bash
+
+site="$1" && shift
+
+constants $site "$@"
+globals $site "$@"
+datatables $site "$@"
+subs $site "$@"
+programs $site "$@"
+
