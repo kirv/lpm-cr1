@@ -1,0 +1,5 @@
+    Scan(HTR_SCAN_SEC,sec,0,0)
+        gnr_orifice_T = read_Geonor_orifice_temp()
+        gnr_htr_on_ratio = gnr_htr_strategy(AT, RH, gnr_orifice_T)
+        gnr_htr_state = htr_relay_control(gnr_htr_on_ratio, gnr_htr_period)
+    NextScan

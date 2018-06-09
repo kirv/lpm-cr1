@@ -1,0 +1,27 @@
+public battery      : units battery = volts 
+public panelTemp    : units panelTemp = deg C
+public progSig as Long
+
+public lpm_command as string * 10
+public lpm_results as string * 2233
+public lpm_err_msg as string * 80
+public lpm_checksum as long 
+public telegram_query_tries as long
+dim telegram as string * 2233
+dim LPM(524) as string
+
+public do_F(2) as float : units do_F = Hz   : alias do_F = d1_freq, d2_freq
+public metar1 as string * 5
+public metar2 as string * 5
+dim d17(13,2) as float
+dim d19(21,2) as float
+dim metar_code(90) as string * 5
+
+'' LPM error and warning flags from DX' and FM, LPM diagnostic analog data from DD[1..13]
+public LPM_error_bits as long
+public LPM_warning_bits as long
+public LPM_state_vars(13) as float
+alias LPM_state_vars = T_interior__C, T_laserdrvr__C, I_laser__mA, _
+    V_control__mV, V_optical__mV, V_sensor__V, I_laser_pane__mA, _
+    I_recvr_pane__mA, T_ambient__C, V_heating__V, I_housing__mA, _
+    I_heads__mA, I_carriers__mA

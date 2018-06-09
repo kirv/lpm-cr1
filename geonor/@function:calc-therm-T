@@ -1,0 +1,5 @@
+function calc_therm_T(R, A, B, C)
+    dim T
+    T = (1/(A + B*ln(R) + C*ln(R)^3)) - 273.15
+    return T
+endFunction

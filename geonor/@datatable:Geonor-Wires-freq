@@ -1,0 +1,5 @@
+DataTable(Geonor_wires_freq,1,-1)
+    DataInterval(0,10,sec,0)
+    Sample(1,progSig,uint2)
+    sample(3,gnr_F,ieee4)
+EndTable

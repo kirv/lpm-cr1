@@ -1,0 +1,5 @@
+function calc_wire_depth(freq, A, B, F0)
+    dim level
+    level = 10*(A*(freq-F0) + B*(freq-F0)^2)
+    return level
+endfunction

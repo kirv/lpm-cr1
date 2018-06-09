@@ -1,0 +1,14 @@
+    Scan(60,sec,0,0)
+        panelTemp(panelTemp,_60Hz)
+        battery(battery)
+
+        for i=1 to 3
+            '' calculate fluid level in bucket from pulseCount() frequency
+            gnr_level(i) = calc_wire_depth(gnr_Favg(i), Kw(i,1), Kw(i,2), Kw(i,3))
+
+            '' calculate wire thermistor temps from averaged resistance:
+            gnr_T(i) = calc_therm_T(gnr_Ravg(i), Kt(1), Kt(2), Kt(3))
+        next i
+
+        callTable(Geonor_derived_data)
+    NextScan

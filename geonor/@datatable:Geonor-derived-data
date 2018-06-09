@@ -1,0 +1,7 @@
+DataTable(Geonor_derived_data,1,-1)
+    DataInterval(0,60,sec,10)
+    Sample(1,progSig,uint2)
+    sample (3,gnr_level,FP2)
+    average(1,gnr_orifice_T,fp2,false)
+    average(1,gnr_htr_state,fp2,false)
+EndTable

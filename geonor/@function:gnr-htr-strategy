@@ -1,0 +1,5 @@
+function gnr_htr_strategy(AT, RH, orifice_T) as float
+    '' TODO: DEFINE SOME SORT OF STRATEGY FOR CONTROLLING ORIFICE HEATER 
+    '' OUTPUT RATIO SHOULD BE >=0 AND <=1
+    return 0
+endfunction

@@ -1,0 +1,12 @@
+function htr_relay_control(ratio as float, period as long) as boolean
+    dim elapsed as float
+    dim ontime as float
+    dim state as boolean
+    elapsed = timer(HTR_SCAN_SEC,sec,4)                 '' read timer
+    if elapsed = 0 then timer(HTR_SCAN_SEC,sec,0)       '' start timer if not running
+    ontime = ratio * period
+    if ontime < HTR_SCAN_SEC then ontime = 0
+    if elapsed > period then timer(HTR_SCAN_SEC,sec,2)  '' restart timer
+    if ontime < elapsed and ontime > 0 then state = 1 else state = 0
+    portSet(HTR_RELAY__P,state)
+endfunction

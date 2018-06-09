@@ -1,0 +1,13 @@
+function freq_to_metar(param as long, f as float) as string * 5
+    dim i as long
+    if param = 17 
+        for i=1 to 13
+            if abs(d17(i,1)-f) < 1 then return metar_code(d17(i,2))
+        next i
+    else if param = 19 
+        for i=1 to 21
+            if abs(d19(i,1)-f) < 1 then return metar_code(d19(i,2))
+        next i
+    endif
+    return "?????"
+endfunction

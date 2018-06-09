@@ -1,0 +1,42 @@
+    Scan (60,sec,0,STOP_AFTER_N_SCANS)
+        panelTemp (panelTemp,_60Hz)
+        battery (battery)
+
+        '' every minute, read data telegram from the LPM
+        '' retry query if LPM returns "!TR00001", which means: telegram not available
+        '' NOTE: STX has been replaced by "?" if the checksum failed!
+        telegram_query_tries = 0
+        do
+            delay(0,1,sec)
+            telegram = lpm_query(LPM_ID, "TR", LPM_TELEGRAM)
+            telegram_query_tries += 1
+        loop until telegram <> 1 or telegram_query_tries > 3
+        callTable LPM
+  
+        SplitStr (LPM(),telegram,SEMICOLON,524,5)
+        LPM(1) = right(LPM(1),2)    ' remove <STX> from LPM ID code NN
+          
+        '' read LPM digital output channels, resolve metar codes
+        periodAvg(do_F(), 2, mV250, LPM_D1__SE, 0, 1, 50, 100, 1, 0)
+        metar1 = freq_to_metar(LPM_D1_PARAM, d1_freq)
+        metar2 = freq_to_metar(LPM_D2_PARAM, d2_freq)
+
+        '' FOR TESTING, log a message with frequency and METAR codes:
+        if metar1 <> "?????" OR metar2 <> "?????" then
+            logmsg("freq =", d1_freq, ", D17 METAR =", metar1, ", D19 METAR =", metar2)
+        endif
+
+        get_LPM_diagnostics()
+        get_LPM_flags()
+        callTable LPM_state
+
+        if timeIntoInterval(0,1,day) then
+            '' emit message with several parameters, then zero precip total:
+            logmsg("LPM:" & lpm_query(LPM_ID,"ZT",-1), _
+                lpm_query(LPM_ID,"ZB",-1) & " hrs", _
+                "errors:" + LPM_error_bits, _
+                "warnings:" + LPM_warning_bits)
+             '' LPM_precip_qty & " mm in " & lpm_query(LPM_ID,"PT",-1) & " hrs")
+         '' lpm_query(LPM_ID,"RA")
+        endif
+    NextScan

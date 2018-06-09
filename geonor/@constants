@@ -1,0 +1,36 @@
+ConstTable
+
+    '' Geonor nameplate data:
+    const GEONOR_NAME  = "Geonor Precipitation Gauge"
+    const GEONOR_MODEL = "T-200B3 - 600mm"
+    
+    ' Geonor transducer serial numbers, pulse input channels:
+    const GNR1_SN = 62417 : const GNR1__PP = 1
+    const GNR2_SN = 62517 : const GNR2__PP = 2
+    const GNR3_SN = 62617 : const GNR3__PP = 18
+    
+    ' Geonor transducer calibration constants:
+    const GNR1_F0 = 1050.4 : const GNR1_A = 0.0164316 : const GNR1_B = 0.00000921903
+    const GNR2_F0 = 1055.3 : const GNR2_A = 0.0165625 : const GNR2_B = 0.00000917252
+    const GNR3_F0 = 1066.0 : const GNR3_A = 0.0165758 : const GNR3_B = 0.00000916086
+    
+    '' Geonor orifice RTD, Minco S665PFY40B, 1000 Ohms at 0C
+    const GNR_RTD__SE = 7 
+    const GNR_RTD__EX = 2
+    const GNR_RTD_R0 = 1000 ' Ohms
+
+    const HTR_RELAY__P = 1      ' control port wired to solid state relay
+    const HTR_SCAN_SEC = 2      ' control scan time, also minimum heater ON time
+    const HTR_PERIOD_SEC = 30   ' duty cycle period for heater control
+
+    '' a thermistor is taped to each Geonor vibrating wire transducer:
+    const GNR1_THERM__SE = 4    ' GNR2 & GNR3 thermistors use the next two SE channels
+    const GNR_THERMS__EX = 1    ' ... all thermistors use the same excitation channel
+    const GNR_THERM_REF_R = 5000
+
+    '' Steinhart & Hart coefficients for YSI 44004 thermistors, 2252 Ohms @ 25C:
+    const THERM_A = 0.0014654354
+    const THERM_B = 0.0002386780
+    const THERM_C = 0.0000001000
+
+EndConstTable
