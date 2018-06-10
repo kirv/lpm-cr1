@@ -1,0 +1,27 @@
+#!/usr/local/bin/bash
+
+arr=(A B C)
+printf "\t(%s)\t" "${arr[@]}"; printf "\n"
+
+shopt -s nullglob
+echo unset arr[1]
+unset arr[1]
+printf "\t(%s)\t" "${arr[@]}"; printf "\n"
+
+arr=(A B C)
+shopt -s nullglob
+echo unset "arr[1]"
+unset "arr[1]"
+printf "\t(%s)\t" "${arr[@]}"; printf "\n"
+
+arr=(A B C)
+shopt -u nullglob
+echo unset arr[1]
+unset arr[1]
+printf "\t(%s)\t" "${arr[@]}"; printf "\n"
+
+# output is as follows:
+#    (A)     (B)     (C) 
+#    (A)     (B)     (C) 
+#    (A)     (C) 
+

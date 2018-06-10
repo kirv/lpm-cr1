@@ -1,0 +1,29 @@
+#!/usr/local/bin/bash
+
+# create a 'deployment set' of fulltext and stripped cr1 files under deploy/ as:
+#    deploy/DATE/fulltext/TAGNAME-DATE-SIG1-SIG2.cr1
+#    deploy/DATE/stripped/TAGNAME-DATE.cr1
+# where SIG1 is the fulltext signature, SIG2 the stripped file signature
+
+error() { printf "%s\n" "$@"; exit 1; }
+
+synopsis="deploy SITE ..."
+
+test -d deploy || error "deploy/ directory not found"
+
+sites=($*)
+test -n "$sites" || error "SYNOPSIS: $synopsis"
+
+dir=$(date +%d%b%Y$t)
+mkdir -p deploy/$dir/{fulltext,stripped} || error "failed to create deploy/$dir directories"
+
+for s in "${sites[@]}"; do
+    echo $s
+    fulltext=$(build-cr1-file -v -d deploy/$dir/fulltext $s)
+    sf=deploy/$dir/stripped/${fulltext##*/}
+    sf=${sf%-*}
+    strip $fulltext > $sf.cr1
+    stripped_sig=$(csi-signature < $sf.cr1)
+    mv $fulltext ${fulltext%.cr1}-$stripped_sig.cr1
+done
+

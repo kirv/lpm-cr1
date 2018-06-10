@@ -1,0 +1,12 @@
+#!/usr/local/bin/bash
+
+for n in {1..4}; do 
+    echo das$n-hydro.cr1
+    build hydro | sed "s/290/29$n/" > hydro-stations/das$n-hydro.cr1
+done
+
+for n in {5..8}; do 
+    echo dam$n-hydro.cr1
+    build met | sed "s/290/29$n/" > met-stations/dam$n-met.cr1
+done
+

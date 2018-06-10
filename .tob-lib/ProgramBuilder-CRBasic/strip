@@ -1,0 +1,79 @@
+#/usr/local!/usr/bin/awk -f
+
+/^\r$/ { # remove blanks lines
+  # printf "BLNK:"
+    next
+    }
+
+/^ *\r$/ { # remove blanks lines with spaces
+  # printf "EMTY:"
+    next
+    }
+
+/^ *'.*$/ { # remove comments
+  # printf "RMRK:", $0
+    next
+    }
+
+/^ *'.*$/ { # remove comments
+  # printf "RMRK:", $0
+    next
+    }
+
+{ # output whatever's left
+
+    # strip spaces after commas
+    gsub(/, */, ",")
+
+    # strip spaces around operators
+    gsub(/ *= */, "=")
+    gsub(/ *\+ */, "+")
+    gsub(/ *- */, "-")
+    gsub(/ *> */, ">")
+    gsub(/ *< */, "<")
+    gsub(/ *\/ */, "/")
+  # gsub(/ *\* */, "*")
+    gsub(/  /, " ")
+  # gsub(/  /, " ")
+
+    if (pvars) {
+        if ($1 != "public") {
+            gsub(/, */, ",", pvars)
+            printf("%s\r\n", pvars)
+            pvars = ""
+            }
+        else {
+            $1 = ""
+            sub(/\r$/, "")
+            pvars = pvars "," $0
+            next
+            }
+        }
+    if ($1 == "public") {
+        sub(/\r$/, "")
+        pvars = $0
+        next
+        }
+
+    if (dvars) {
+        if ($1 != "dim") {
+            gsub(/, */, ",", dvars)
+            printf("%s\r\n", dvars)
+            dvars = ""
+            }
+        else {
+            $1 = ""
+            sub(/\r$/, "")
+            dvars = dvars "," $0
+            next
+            }
+        }
+    if ($1 == "dim") {
+        sub(/\r$/, "")
+        dvars = $0
+        next
+        }
+
+    print
+    }
+

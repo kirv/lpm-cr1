@@ -1,0 +1,4 @@
+#/usr/local!/usr/bin/awk -f
+{
+    printf("%s\r\n",$0)
+}

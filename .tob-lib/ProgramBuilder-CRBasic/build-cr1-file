@@ -1,0 +1,43 @@
+#!/usr/local/bin/bash
+
+error() { printf "%s\n" "$@"; exit 1; }
+
+synopsis="build-cr1-file [-t|-m] [-v] [-d dir] [-n]"
+
+t=""
+dir=.
+while test -n "$1"; do
+    case $1 in
+        -t)     t=-%I%P;;
+        -m)     t=-%H%M;;
+        -h)     echo $synopsis; exit 0;;
+        -d)     dir=$PWD/$2 && shift;;
+        -v)     verbose=1;;
+        -n)     nosig=1;;
+        -*)     error "unknown option: $1";;
+        *)      break;;
+    esac
+    shift
+done
+
+cd "${1-.}/" || error "failed to cd to object"
+
+test -d $dir || error "output directory $dir not found"
+
+tagname=$(symvar tagname) || error "no tagname defined in object"
+
+name=$(date +"$tagname-%d%b%Y$t")
+
+test -e $dir/.tmp.cr1 && rm $dir/.tmp.cr1
+
+sig=$(build . | awk '{printf("%s\r\n",$0)}' | tee $dir/.tmp.cr1 | csi-signature)
+
+if test -n "$nosig"; then
+    mv -f $dir/.tmp.cr1 $dir/$name.cr1
+    test -n "$verbose" && echo $dir/$name.cr1
+else
+    mv -f $dir/.tmp.cr1 $dir/$name-$sig.cr1
+    test -n "$verbose" && echo $dir/$name-$sig.cr1
+fi
+
+
