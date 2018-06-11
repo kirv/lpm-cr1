@@ -1,14 +1,7 @@
 #!/usr/local/bin/bash
 
 error() { printf "%s\n"; exit 1; } 
-shopt -s nocasematch nullglob
 
-declare site
-site="$1" && shift
-[[ -n $site ]] || site=.
-[[ -e $site ]] || error "$site not found"
-
-## resolve search directories
 resolve_search_paths() {
     # if target (^ or .^) resolves as a directory, it's a prototype:
     test -d "$1" || {
@@ -20,8 +13,6 @@ resolve_search_paths() {
     # recurse to follow $1/^ or $1/.^ links:
     resolve_search_paths $1/^ || resolve_search_paths $1/.^ || return 1
     }
-declare -a search_paths
-resolve_search_paths $site
 
 resolve_attr() {
     for attr in "${search_paths[@]}"; do
@@ -31,29 +22,43 @@ resolve_attr() {
     return 1
     }
 
-resolve_attr @order || error "no @order file found"
-order=$attr
+main() {
 
-declare -a components=("$@")
+    shopt -s nocasematch nullglob
+    
+    declare site
+    site="$1" && shift
+    [[ -n $site ]] || site=.
+    [[ -e $site ]] || error "$site not found"
 
+    declare -a search_paths
+    resolve_search_paths $site
 
-(( ${#components[@]} == 0 )) && {
-    # if no components are given on command line, look for @order file
+    resolve_attr @order || error "no @order file found"
+    order=$attr
+    
+    declare -a components=("$@")
+    
+    
+    (( ${#components[@]} == 0 )) && {
+        # if no components are given on command line, look for @order file
+    
+    }
 
+    declare -a chunks
+    chunks=(
+        constants
+        globals
+        datatables
+        functions
+        subs
+        programs
+    )
+    
+    for chunk in "${chunks[@]}"; do  
+        echo $chunk $site "$@"
+    done
 }
 
-
-declare -a chunks
-chunks=(
-    constants
-    globals
-    datatables
-    functions
-    subs
-    programs
-)
-
-for chunk in "${chunks[@]}"; do  
-    echo $chunk $site "$@"
-done
+main "$@"
 
