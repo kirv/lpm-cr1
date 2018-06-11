@@ -35,7 +35,6 @@ resolve_attr @order || error "no @order file found"
 order=$attr
 
 for component in $(<$order); do
-for component in "$@"; do
     resolve_attr "$component" || continue
     for function in $attr/@function:*; do
         name=${function##*:}

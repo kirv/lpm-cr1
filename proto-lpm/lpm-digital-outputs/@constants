@@ -1,0 +1,6 @@
+ConstTable
+    const LPM_D1_PARAM = 13
+    const LPM_D2_PARAM = 19
+    const LPM_D1__SE = 2
+    const LPM_D2__SE = 3
+endConstTable
