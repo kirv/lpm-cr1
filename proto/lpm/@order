@@ -1,8 +1,0 @@
-@constants
-@globals
-@datatable:LPM
-@datatable:LPM-state
-@function:lpm-calc-cksum
-@function:lpm-query
-@prog:60
-@prog:init

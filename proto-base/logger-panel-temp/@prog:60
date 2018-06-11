@@ -1,0 +1,5 @@
+beginProg
+    scan(60,Sec,0,0)
+        panelTemp(panelTemp,250)
+    nextScan
+endProg

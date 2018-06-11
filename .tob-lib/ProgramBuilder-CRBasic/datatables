@@ -2,9 +2,8 @@
 
 # datatables: compose datatables for final program 
 
-shopt -s nocasematch nullglob
-
 error() { printf "%s\n"; exit 1; } 
+shopt -s nocasematch nullglob
 
 ob=.
 test -n "$1" && ob="$1"

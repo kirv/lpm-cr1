@@ -1,6 +1,6 @@
 #!/usr/local/bin/bash
 
-# subs: compose subroutines for final program 
+# functions: compose functions for final program 
 
 error() { printf "%s\n"; exit 1; } 
 shopt -s nocasematch nullglob
@@ -35,12 +35,13 @@ resolve_attr @order || error "no @order file found"
 order=$attr
 
 for component in $(<$order); do
+for component in "$@"; do
     resolve_attr "$component" || continue
-    for sub in $attr/@sub:*; do
-        name=${sub##*:}
+    for function in $attr/@function:*; do
+        name=${function##*:}
         printf "\n"
         printf "' %s:%s()\n" "$component" "$name"
-        cat $sub
+        cat $function
     done
 done
 
