@@ -2,5 +2,6 @@ battery
 logger-panel-temp
 logmsg
 lpm-base
+lpm-telegram
 lpm-state
 lpm-flags
