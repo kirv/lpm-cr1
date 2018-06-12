@@ -1,10 +1,4 @@
     Scan (10,sec,0,0)
-        '' measure vibrating wire cycles since last scan, save as frequency
-        pulseCount(g1_F,1,GNR1__PP,0,1,1.0,0)
-        pulseCount(g2_F,1,GNR2__PP,0,1,1.0,0)
-        pulseCount(g3_F,1,GNR3__PP,0,1,1.0,0)
-        calltable(Geonor_wires_freq)
-        
         '' read Geonor wire transducer thermistors:
         BrHalf (X(),3,mV2500,GNR1_THERM__SE,GNR_THERMS__EX,3,2500,0,0,250,1.0,0)
         For i=1 To 3
@@ -13,6 +7,5 @@
         calltable(Geonor_therms_R)
 
         '' update running averages for processing and logging in 60-second scan
-        avgRun(gnr_Favg, 3, gnr_F(), 6)
         avgRun(gnr_Ravg, 3, gnr_R(), 6)
     NextScan

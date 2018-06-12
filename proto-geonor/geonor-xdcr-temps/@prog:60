@@ -1,0 +1,8 @@
+    Scan(60,sec,0,0)
+        for i=1 to 3
+            '' calculate wire thermistor temps from averaged resistance:
+            gnr_T(i) = calc_therm_T(gnr_Ravg(i), Kt(1), Kt(2), Kt(3))
+        next i
+
+        callTable(Geonor_derived_data)
+    NextScan

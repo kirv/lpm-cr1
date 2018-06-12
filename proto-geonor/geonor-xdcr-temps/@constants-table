@@ -1,0 +1,9 @@
+'' a thermistor is taped to each Geonor vibrating wire transducer:
+const GNR1_THERM__SE = 4    ' GNR2 & GNR3 thermistors use the next two SE channels
+const GNR_THERMS__EX = 1    ' ... all thermistors use the same excitation channel
+const GNR_THERM_REF_R = 5000
+
+'' Steinhart & Hart coefficients for YSI 44004 thermistors, 2252 Ohms @ 25C:
+const THERM_A = 0.0014654354
+const THERM_B = 0.0002386780
+const THERM_C = 0.0000001000

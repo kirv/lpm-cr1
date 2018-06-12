@@ -1,5 +1,3 @@
-beginProg
     scan(60,Sec,0,0)
         battery(battery)
     nextScan
-endProg

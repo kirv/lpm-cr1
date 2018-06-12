@@ -1,6 +1,11 @@
 battery
 logger-panel-temp
 logmsg
+
+geonor-base
+geonor-orifice-heater
+geonor-xdcr-temps
+
 lpm-base
 lpm-telegram
 lpm-state
