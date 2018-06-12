@@ -1,0 +1,4 @@
+    Scan (60,sec,1,-1)
+        get_LPM_flags()
+        callTable LPM_state
+    NextScan
