@@ -1,6 +1,6 @@
 #!/usr/local/bin/bash
 
-# constants: compose constants for final program 
+# constants-table: compose constants in the constTable for final program 
 
 error() { printf "%s\n"; exit 1; } 
 
@@ -82,11 +82,10 @@ done
 const=()
 
 for component in $(<$order); do
-    resolve_attr $component/@constants || continue
+    resolve_attr $component/@constants-table || continue
     id=
     while read line; do
       # printf "\t%s\n" "$line"
-
         test -n "${#replace[@]}" && macro_replace "${line%=*}" "${line#*=}"
 
         test -z "$id" && const+=("" "' $component:") && id=1
@@ -94,6 +93,9 @@ for component in $(<$order); do
     done < $attr
 done
 
-printf "%s\n" "${const[@]}"
+printf "\n"
+printf "constTable\n"
+printf "    %s\n" "${const[@]}"
+printf "endConstTable\n"
 printf "\n"
 
