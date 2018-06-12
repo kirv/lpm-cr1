@@ -1,0 +1,3 @@
+ConstTable
+    const LPM_TELEGRAM = 8
+endConstTable

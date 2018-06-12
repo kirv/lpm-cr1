@@ -1,4 +1,5 @@
-lpm-query
+lpm-base
+lpm-telegram
 lpm-state
 lpm-flags
-lpm-digital-outputs
+#lpm-digital-outputs

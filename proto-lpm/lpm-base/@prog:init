@@ -1,0 +1,26 @@
+    '' set logger port to match the LPM through the MD485 rs232-to-rs485 device
+    serialOpen (LPM__PORT,9600,0,300,4000)
+
+    '' put instrument in config mode:
+    if lpm_query(LPM_ID,"KY",1) <> "1" then log("CONFIG MODE FAILED")
+
+    '' log LPM baud rate and interface mode (should be 9600, half duplex)
+    log("LPM baud rate, BR :", lpm_query(LPM_ID,"BR",-1), "(5=9600,6=19200,9=115200)")
+    log("LPM comm mode, BD :", lpm_query(LPM_ID,"BD",-1), "(0=full-,1=half-duplex)")
+
+    '' turn off automatic data telegram output
+    log("LPM auto telegram output: TM :", lpm_query(LPM_ID,"TM",0))
+
+    '' set the LPM clock from the logger at startup:
+    realtime(logger_time) '' 1:year, 2:month, 3:day, 4:hour, 5:minute, 6:second
+    lpm_query(LPM_ID,"ZS", logger_time(6))
+    lpm_query(LPM_ID,"ZM", logger_time(5))
+    lpm_query(LPM_ID,"ZH", logger_time(4))
+    lpm_query(LPM_ID,"ZD", logger_time(3))
+    lpm_query(LPM_ID,"ZN", logger_time(2))
+    lpm_query(LPM_ID,"ZY", logger_time(1) mod 100)
+    log("LPM clock set from logger:", lpm_query(LPM_ID,"ZT",-1))
+    log("LPM runtime:", lpm_query(LPM_ID,"ZB",-1), "hrs")
+
+    '' put instrument in normal command mode:
+    if lpm_query(LPM_ID,"KY",0) <> "0" then log("WARNING: CONFIG MODE FAILED TO TURN OFF")
