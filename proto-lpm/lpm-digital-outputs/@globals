@@ -1,15 +1,3 @@
-public battery      : units battery = volts 
-public panelTemp    : units panelTemp = deg C
-public progSig as Long
-
-public lpm_command as string * 10
-public lpm_results as string * 2233
-public lpm_err_msg as string * 80
-public lpm_checksum as long 
-public telegram_query_tries as long
-dim telegram as string * 2233
-dim LPM(524) as string
-
 public do_F(2) as float : units do_F = Hz   : alias do_F = d1_freq, d2_freq
 public metar1 as string * 5
 public metar2 as string * 5
