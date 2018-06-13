@@ -89,7 +89,8 @@ for component in $(<$order); do
 
         test -n "${#replace[@]}" && macro_replace "${line%=*}" "${line#*=}"
 
-        test -z "$id" && const+=("" "' $component:") && id=1
+        [[ -z "$BUILD_OMIT_ID" && -z "$id" ]] && const+=("" "' $component:") && id=1
+
         const+=("$line")
     done < $attr
 done

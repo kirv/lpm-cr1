@@ -1,8 +1,19 @@
 #!/usr/local/bin/bash
 
+error() { printf "%s\n" "$@"; exit 1; }
+
 main() {
     local site
     local -a chunks
+
+    export BUILD_OMIT_ID=
+    while [[ ${1:1:1} == "-" ]]; do
+        case "$1" in
+        --omit-id | --omit-ids) export BUILD_OMIT_ID=1 ;;
+        *)                      error "unknown option: $1" ;;
+        esac
+        shift
+    done
 
     site="$1" && shift
 

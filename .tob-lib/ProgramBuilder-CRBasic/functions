@@ -39,7 +39,8 @@ for component in $(<$order); do
     for function in $attr/@function:*; do
         name=${function##*:}
         printf "\n"
-        printf "' %s:%s()\n" "$component" "$name"
+        [[ -z "$BUILD_OMIT_ID" ]] && 
+            printf "' %s:%s()\n" "$component" "$name"
         cat $function
     done
 done

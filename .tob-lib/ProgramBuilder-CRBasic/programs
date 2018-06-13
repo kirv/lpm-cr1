@@ -65,7 +65,7 @@ declare -A datatables
 declare -A pat
 pat[beginprog]="^ *beginprog"
 pat[endprog]="^ *endprog"
-pat[scan]="^ *scan\("
+pat[scan]="^ *scan *\("
 pat[nextscan]="^ *nextscan"
 pat[calltable]="^ *calltable"
 
@@ -76,15 +76,19 @@ for component in $(<$order); do
 
       # printf "DEBUG: %s\n" "$file"
 
-        [[ "${file: -4}" == init ]] && {
+        [[ ${file##*/} == @prog:init ]] && {
             # accumulate @prog:init code into init array:
             while IFS= read -r line; do
-                if [[ "$line" == beginprog ]]; then
-                    init+=("    ' for $component:")
-                elif [[ "$line" == endprog ]]; then
+                # replace 'beginProg' and 'endProg' lines with blank lines,
+                # otherwise, store the line as it is
+                if [[ "$line" =~ ${pat[beginprog]} ]]; then
+                    [[ -n $BUILD_OMIT_ID ]] || init+=("    ' for $component:")
+                elif [[ "$line" =~ ${pat[endprog]} ]]; then
                     init+=("    ")
                 else
                     init+=("$line")
+                    # this would be a place to look for 'calltable ...',
+                    # instead of doing it later at the output stage ...
                 fi
             done < "$file"
             continue
@@ -110,8 +114,10 @@ for component in $(<$order); do
 
       # printf "DEBUG: %d\t%d\t%s\n" $scan $n "$file"
 
-        n+=1
-        s[$scan.$n]="        ' $component:"
+        [[ -n $BUILD_OMIT_ID ]] || { 
+            n+=1
+            s[$scan.$n]="        ' $component:"
+        }
 
         while IFS= read -r line; do
 
