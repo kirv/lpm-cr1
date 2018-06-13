@@ -1,3 +1,4 @@
+beginProg
     Scan (60,sec,1,-1)
         '' read LPM digital output channels, resolve metar codes
         periodAvg(do_F(), 2, mV250, LPM_D1__SE, 0, 1, 50, 100, 1, 0)
@@ -9,3 +10,4 @@
             logmsg("freq =", d1_freq, ", D17 METAR =", metar1, ", D19 METAR =", metar2)
         endif
     NextScan
+endProg

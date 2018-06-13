@@ -1,3 +1,4 @@
+beginProg
     Scan (60,sec,1,-1)
         '' every minute, read data telegram from the LPM
         '' retry query if LPM returns "!TR00001", which means: telegram not available
@@ -12,3 +13,4 @@
         SplitStr (LPM(),telegram,SEMICOLON,524,5)
         LPM(1) = right(LPM(1),2)    ' remove <STX> from LPM ID code NN
     NextScan
+endProg

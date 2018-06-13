@@ -1,4 +1,5 @@
-    Scan (10,sec,0,0)
+beginProg
+    scan (10,sec,0,0)
         '' measure vibrating wire cycles since last scan, save as frequency
         pulseCount(g1_F,1,GNR1__PP,0,1,1.0,0)
         pulseCount(g2_F,1,GNR2__PP,0,1,1.0,0)
@@ -7,4 +8,5 @@
 
         '' update running averages for processing and logging in 60-second scan
         avgRun(gnr_Favg, 3, gnr_F(), 6)
-    NextScan
+    nextScan
+beginProg

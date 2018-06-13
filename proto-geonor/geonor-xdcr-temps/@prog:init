@@ -1,3 +1,5 @@
+beginProg
     log("Geonor wire transducer thermistor Steinhart & Hart constants follow:")
     sprintf(msg, "THERMS: A=%.12g B=%.12g C=%.12g", Kt(1), Kt(2), Kt(3))
     calltable(Messages)
+endProg

@@ -1,4 +1,6 @@
+beginProg
     Scan (60,sec,1,-1)
         get_LPM_diagnostics()
         callTable LPM_state
     NextScan
+endProg
