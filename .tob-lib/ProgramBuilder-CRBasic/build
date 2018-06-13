@@ -6,10 +6,10 @@ main() {
     local site
     local -a chunks
 
-    export BUILD_OMIT_ID=
+    export BUILD_SHOW_ID=
     while [[ ${1:1:1} == "-" ]]; do
         case "$1" in
-        --omit-id | --omit-ids) export BUILD_OMIT_ID=1 ;;
+        --show-id | --show-ids) export BUILD_SHOW_ID=1 ;;
         *)                      error "unknown option: $1" ;;
         esac
         shift

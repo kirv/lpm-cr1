@@ -1,7 +1,5 @@
 
 constTable
-    
-    ' geonor-base:
     '' Geonor nameplate data:
     const GEONOR_NAME  = "Geonor Precipitation Gauge"
     const GEONOR_MODEL = "T-200B3 - 600mm"
@@ -15,8 +13,6 @@ constTable
     const GNR1_F0 = 1050.4 : const GNR1_A = 0.0164316 : const GNR1_B = 0.00000921903
     const GNR2_F0 = 1055.3 : const GNR2_A = 0.0165625 : const GNR2_B = 0.00000917252
     const GNR3_F0 = 1066.0 : const GNR3_A = 0.0165758 : const GNR3_B = 0.00000916086
-    
-    ' geonor-orifice-heater:
     '' Geonor orifice RTD, Minco S665PFY40B, 1000 Ohms at 0C
     const GNR_RTD__SE = 7
     const GNR_RTD__EX = 2
@@ -25,8 +21,6 @@ constTable
     const HTR_RELAY__P = 1      ' control port wired to solid state relay
     const HTR_SCAN_SEC = 2      ' control scan time, also minimum heater ON time
     const HTR_PERIOD_SEC = 30   ' duty cycle period for heater control
-    
-    ' geonor-xdcr-temps:
     '' a thermistor is taped to each Geonor vibrating wire transducer:
     const GNR1_THERM__SE = 4    ' GNR2 & GNR3 thermistors use the next two SE channels
     const GNR_THERMS__EX = 1    ' ... all thermistors use the same excitation channel
@@ -36,21 +30,15 @@ constTable
     const THERM_A = 0.0014654354
     const THERM_B = 0.0002386780
     const THERM_C = 0.0000001000
-    
-    ' lpm-base:
     const LPM_NAME  = "Laser Precipitation Monitor"
     const LPM_MODEL = "5.4110.11.100"
     const LPM_ID = 0
     const LPM__PORT = Com1      ' C1=Tx (db9F-pin3), C2=Rx (db9F-pin2)
     
-    
-    ' lpm-telegram:
     const LPM_TELEGRAM = 8
     
 endConstTable
 
-
-' lpm-base:
 const STX = chr(2)
 const ETX = chr(3)
 const LF = chr(10)
@@ -59,16 +47,12 @@ const SEMICOLON = ";"
 const QUESTION = "?"
 const BANG = "!"
 
-' battery:
 public battery : units battery = Volts
 
-' logger-panel-temp:
 public panelTemp : units panelTemp = degC
 
-' logmsg:
 dim msg as string * 80
 
-' geonor-base:
 '' measured Geonor variables; f:frequency from pulseCount():
 public gnr_F(3)     : units gnr_F = Hz     : alias gnr_F = g1_F, g2_F, g3_F
 public gnr_Favg(3)
@@ -84,14 +68,12 @@ GNR2_A, GNR2_B, GNR2_F0, _  '' Kw(2,1), Kw(2,2), Kw(2,3)
 GNR3_A, GNR3_B, GNR3_F0 _   '' Kw(3,1), Kw(3,2), Kw(3,3)
 }
 
-' geonor-orifice-heater:
 '' Geonor orifice RTD and heater
 public gnr_orifice_T        : units gnr_orifice_T = deg C
 public gnr_htr_period       : units gnr_htr_period = sec    '' 100% duty cycle time
 public gnr_htr_on_ratio ' heater control setpoint, ratio of ON/OFF times
 public gnr_htr_state as boolean
 
-' geonor-xdcr-temps:
 '' a thermistor is taped to each vibrating wire transducer:
 public gnr_R(3)     : units gnr_R = Ohms  : alias gnr_R = g1_R, g2_R, g3_R
 public gnr_Ravg(3)
@@ -100,18 +82,15 @@ dim Kt(3) as float = { THERM_A, THERM_B, THERM_C }  '' Kt(1), Kt(2), Kt(3)
 dim X(3)
 dim i
 
-' lpm-base:
 public lpm_command as string * 10
 public lpm_results as string * 2233
 public lpm_err_msg as string * 80
 public lpm_checksum as long 
 
-' lpm-telegram:
 public telegram_query_tries as long
 dim telegram as string * 2233
 dim LPM(524) as string
 
-' lpm-state:
 '' LPM diagnostic analog data from DD[1..13]
 public LPM_state_vars(13) as float
 alias LPM_state_vars = T_interior__C, T_laserdrvr__C, I_laser__mA, _
@@ -119,7 +98,6 @@ V_control__mV, V_optical__mV, V_sensor__V, I_laser_pane__mA, _
 I_recvr_pane__mA, T_ambient__C, V_heating__V, I_housing__mA, _
 I_heads__mA, I_carriers__mA
 
-' lpm-flags:
 dim lpm_error_msgs(6) as string * 40 = { _     '' LPM error flags are in DX[1..6]
 "static signal out of range", _
 "laser temp (analog) too high", _
@@ -142,20 +120,17 @@ dim lpm_warning_msgs(9) as string * 40 = { _   '' LPM warning flags are in DX'[7
 }
 
 
-' Diag: battery logger-panel-temp 
 DataTable(Diag,1,-1)
     average(1,battery,fp2,0)
     average(1,panelTemp,fp2,0)
 endTable
 
-' Messages: logmsg 
 dataTable("Messages",1,100)
     sample(1,progSig,uint2)
     sample(1,msg,string)
     endTable
 endTable
 
-' Geonor-Therms: geonor-base geonor-xdcr-temps 
 DataTable(Geonor_therms_R,1,-1)
     DataInterval(0,10,sec,0)
     Sample(1,progSig,uint2)
@@ -166,7 +141,6 @@ DataTable(Geonor_therms_R,1,-1)
     EndTable
 endTable
 
-' Geonor-Wires-freq: geonor-base 
 DataTable(Geonor_wires_freq,1,-1)
     DataInterval(0,10,sec,0)
     Sample(1,progSig,uint2)
@@ -174,7 +148,6 @@ DataTable(Geonor_wires_freq,1,-1)
     EndTable
 endTable
 
-' Geonor-derived-data: geonor-base 
 DataTable(Geonor_derived_data,1,-1)
     DataInterval(0,60,sec,10)
     Sample(1,progSig,uint2)
@@ -184,7 +157,6 @@ DataTable(Geonor_derived_data,1,-1)
     EndTable
 endTable
 
-' LPM: lpm-base lpm-telegram 
 DataTable(LPM,1,-1)
     dataInterval(0,60,Sec,10)
     sample(1,progSig,uint2)
@@ -195,7 +167,6 @@ DataTable(LPM,1,-1)
     EndTable
 endTable
 
-' LPM-state: lpm-state 
 DataTable(LPM_state,1,-1)
     DataInterval(0,60,Sec,0)
     sample(1,progSig,uint2)
@@ -203,21 +174,18 @@ DataTable(LPM_state,1,-1)
     EndTable
 endTable
 
-' geonor-base:calc-wire-depth()
 function calc_wire_depth(freq, A, B, F0)
     dim level
     level = 10*(A*(freq-F0) + B*(freq-F0)^2)
     return level
 endfunction
 
-' geonor-orifice-heater:gnr-htr-strategy()
 function gnr_htr_strategy(AT, RH, orifice_T) as float
     '' TODO: DEFINE SOME SORT OF STRATEGY FOR CONTROLLING ORIFICE HEATER 
     '' OUTPUT RATIO SHOULD BE >=0 AND <=1
     return 0
 endfunction
 
-' geonor-orifice-heater:htr-relay-control()
 function htr_relay_control(ratio as float, period as long) as boolean
     dim elapsed as float
     dim ontime as float
@@ -231,7 +199,6 @@ function htr_relay_control(ratio as float, period as long) as boolean
     portSet(HTR_RELAY__P,state)
 endfunction
 
-' geonor-orifice-heater:read-Geonor-orifice-temp()
 function read_Geonor_orifice_temp()
     dim x, T
     BrHalf (x,1,mV250,GNR_RTD__SE,GNR_RTD__EX,1,250,0,0,250,1.0,0)
@@ -239,14 +206,12 @@ function read_Geonor_orifice_temp()
     return T
 endFunction
 
-' geonor-xdcr-temps:calc-therm-T()
 function calc_therm_T(R, A, B, C)
     dim T
     T = (1/(A + B*ln(R) + C*ln(R)^3)) - 273.15
     return T
 endFunction
 
-' lpm-base:lpm-calc-cksum()
 function lpm_calc_cksum(telegram as string * 2233) as long
     '' sum of non-checksum bytes plus checksum should result in 0x00 in last byte
     dim N as long, H as long, L as long, S as long, i as long
@@ -260,7 +225,6 @@ function lpm_calc_cksum(telegram as string * 2233) as long
     return S
 endFunction
 
-' lpm-base:lpm-query()
 function lpm_query(id as long, cmd as string, param as long) as string * 2233
     '' NOTE: param = -1 omits parameter
     dim value as long
@@ -334,7 +298,6 @@ function lpm_query(id as long, cmd as string, param as long) as string * 2233
     endselect
 endfunction
 
-' logmsg:log()
 sub log(optional s as string * 80 = "MARK", _
     optional t as string * 40 = "", optional u as string * 40 = "", _
     optional v as string * 40 = "", optional w as string * 40 = "", _
@@ -344,7 +307,6 @@ sub log(optional s as string * 80 = "MARK", _
     calltable(Messages)
 endsub
 
-' lpm-state:get-LPM-diagnostics()
 sub get_LPM_diagnostics
     dim i as long
     dim dd(13) as long
@@ -358,7 +320,6 @@ sub get_LPM_diagnostics
     next i
 endsub
 
-' lpm-flags:lpm-get-flags()
 sub get_LPM_flags
     dim i as long
     dim mask as long
@@ -414,18 +375,22 @@ endsub
 beginProg
 
     log()
+    
     log("Geonor wire transducer constants follow:")
     Kw(1,1) = GNR1_A    : Kw(1,2) = GNR1_B  : Kw(1,3) = GNR1_F0
     sprintf(msg,"GNR1: A=%.12g, B=%.12g, F0=%.12g, SN=%d",Kw(1,1),Kw(1,2),Kw(1,3),GNR1_SN)
-    calltable(Messages)
+    log(msg)
     sprintf(msg,"GNR2: A=%.12g, B=%.12g, F0=%.12g, SN=%d",Kw(2,1),Kw(2,2),Kw(2,3),GNR2_SN)
-    calltable(Messages)
+    log(msg)
     sprintf(msg,"GNR3: A=%.12g, B=%.12g, F0=%.12g, SN=%d",Kw(3,1),Kw(3,2),Kw(3,3),GNR3_SN)
-    calltable(Messages)
+    log(msg)
+    
     gnr_htr_period = HTR_PERIOD_SEC
+    
     log("Geonor wire transducer thermistor Steinhart & Hart constants follow:")
     sprintf(msg, "THERMS: A=%.12g B=%.12g C=%.12g", Kt(1), Kt(2), Kt(3))
-    calltable(Messages)
+    log(msg)
+    
     '' set logger port to match the LPM through the MD485 rs232-to-rs485 device
     serialOpen (LPM__PORT,9600,0,300,4000)
 
@@ -452,6 +417,7 @@ beginProg
 
     '' put instrument in normal command mode:
     if lpm_query(LPM_ID,"KY",0) <> "0" then log("WARNING: CONFIG MODE FAILED TO TURN OFF")
+    
     scan(5,sec,0,0)
         ' geonor-orifice-heater:
         gnr_orifice_T = read_Geonor_orifice_temp()

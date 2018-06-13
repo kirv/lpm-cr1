@@ -82,7 +82,7 @@ done
 
 for table in "${tables[@]}"; do
     printf "\n"
-    [[ -z "$BUILD_OMIT_ID" ]] && 
+    [[ -n "$BUILD_SHOW_ID" ]] && 
         printf "' %s: %s\n" "$table" "${t[$table.USEDBY]}"
     printf "%s\n" "${t[$table.1]}"
     for ((n=2; n<=${t[$table]}; n+=1)); do

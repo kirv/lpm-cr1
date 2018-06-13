@@ -39,7 +39,7 @@ for component in $(<$order); do
     for sub in $attr/@sub:*; do
         name=${sub##*:}
         printf "\n"
-        [[ -z "$BUILD_OMIT_ID" ]] && 
+        [[ -n "$BUILD_SHOW_ID" ]] && 
             printf "' %s:%s()\n" "$component" "$name"
         cat $sub
     done

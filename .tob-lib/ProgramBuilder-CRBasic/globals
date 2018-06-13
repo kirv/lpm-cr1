@@ -48,7 +48,7 @@ shopt -s nocasematch
 for component in $(<$order); do
     resolve_attr $component/@globals || continue
     
-    [[ -z "$BUILD_OMIT_ID" ]] && printf "' %s:\n" "$component"
+    [[ -n "$BUILD_SHOW_ID" ]] && printf "' %s:\n" "$component"
 
     while read line; do
         printf "%s\n" "$line"
