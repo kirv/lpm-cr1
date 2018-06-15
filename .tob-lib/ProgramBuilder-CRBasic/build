@@ -4,20 +4,7 @@ error() { printf "%s\n" "$@"; exit 1; }
 
 main() {
     local site
-    local -a chunks
-
-    export BUILD_SHOW_ID=
-    while [[ ${1:1:1} == "-" ]]; do
-        case "$1" in
-        --show-id | --show-ids) export BUILD_SHOW_ID=1 ;;
-        *)                      error "unknown option: $1" ;;
-        esac
-        shift
-    done
-
-    site="$1" && shift
-
-    chunks=(
+    local -a chunks=(
         constants-table
         constants
         globals
@@ -26,7 +13,20 @@ main() {
         subs
         programs
     )
-    
+
+    export BUILD_SHOW_ID=
+    while [[ ${1:1:1} == "-" ]]; do
+        case "$1" in
+        --show-id | --show-ids) export BUILD_SHOW_ID=1 ;;
+        --chunk | --chunks)     chunks=($2); shift ;;
+        --help)                 awk '/^NAME/,/EOF/{print}' $0; exit ;; 
+        *)                      error "unknown option: $1" ;;
+        esac
+        shift
+    done
+
+    site="$1" && shift
+
     for chunk in "${chunks[@]}"; do  
         $chunk $site "$@"
     done
@@ -34,3 +34,13 @@ main() {
 
 main "$@"
 
+exit
+
+NAME
+    ProgramBuilder-CRBasic.build
+
+SYNOPSIS
+    build [--help] [--show-id] [--chunk CHUNK1...] BUILDER-OBJECT
+
+AUTHOR
+    ken.irving@alaska.edu 2011-2018
