@@ -1,6 +1,7 @@
 #!/usr/local/bin/bash
 
-error() { printf "%s\n" "$@"; exit 1; }
+warn() { printf "%s\n" "$@" >&2; }
+error() { printf "%s\n" "$@" >&2; exit 1; }
 
 main() {
     local site
@@ -15,11 +16,12 @@ main() {
     )
 
     export BUILD_SHOW_ID=
-    while [[ ${1:1:1} == "-" ]]; do
+    while [[ ${1:0:1} == "-" ]]; do
         case "$1" in
         --show-id | --show-ids) export BUILD_SHOW_ID=1 ;;
         --chunk | --chunks)     chunks=($2); shift ;;
         --help)                 awk '/^NAME/,/EOF/{print}' $0; exit ;; 
+        -h)                     awk '/^SYNOPSIS/{getline;print}' $0; exit ;; 
         *)                      error "unknown option: $1" ;;
         esac
         shift
@@ -40,7 +42,7 @@ NAME
     ProgramBuilder-CRBasic.build
 
 SYNOPSIS
-    build [--help] [--show-id] [--chunk CHUNK1...] BUILDER-OBJECT
+    build [--help] [--show-id] [--chunk CHUNK1[" CHUNK2"...]] BUILDER-OBJECT
 
 AUTHOR
     ken.irving@alaska.edu 2011-2018
