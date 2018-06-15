@@ -2,7 +2,9 @@
 
 # datatables: compose datatables for final program 
 
-error() { printf "%s\n"; exit 1; } 
+warn() { printf "%s\n" "$@" 1&>2; }
+error() { warn "$@"; exit 1; } 
+
 shopt -s nocasematch nullglob
 
 ob=.
@@ -42,6 +44,11 @@ t=()
 
 declare -i n init
 
+# store patterns for regex matching
+declare -A pat
+pat[endtable]="^ *endtable"
+pat[data]="^data"
+
 for component in $(<$order); do
     resolve_attr "$component" || continue
 
@@ -65,10 +72,11 @@ for component in $(<$order); do
           # printf "\t%s\n" "$entry"
 
             # cull all endTable statements:
-            [[ "$entry" == endtable ]] && continue
+            [[ "$entry" =~ ${pat[endtable]} ]] && continue
 
             # cull all data* statements after the first:
-            (( ! init )) && [[ "${entry:0:4}" == data ]] && continue
+          # (( ! init )) && [[ "${entry:0:4}" == data ]] && continue
+            (( ! init )) && [[ "$entry" =~ ${pat[data]} ]] && continue
 
             # accumulate entries for the final table:
             n+=1

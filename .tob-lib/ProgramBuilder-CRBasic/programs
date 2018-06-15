@@ -114,7 +114,7 @@ for component in $(<$order); do
 
       # printf "DEBUG: %d\t%d\t%s\n" $scan $n "$file"
 
-        [[ -n $BUILD_OMIT_ID ]] || { 
+        [[ -n $BUILD_SHOW_ID ]] && {
             n+=1
             s[$scan.$n]="        ' $component:"
         }

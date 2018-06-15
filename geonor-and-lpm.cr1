@@ -128,24 +128,20 @@ endTable
 dataTable("Messages",1,100)
     sample(1,progSig,uint2)
     sample(1,msg,string)
-    endTable
 endTable
 
 DataTable(Geonor_therms_R,1,-1)
     DataInterval(0,10,sec,0)
     Sample(1,progSig,uint2)
     sample (3,gnr_R,ieee4)
-    EndTable
     Sample(1,progSig,uint2)
     sample (3,gnr_R,ieee4)
-    EndTable
 endTable
 
 DataTable(Geonor_wires_freq,1,-1)
     DataInterval(0,10,sec,0)
     Sample(1,progSig,uint2)
     sample(3,gnr_F,ieee4)
-    EndTable
 endTable
 
 DataTable(Geonor_derived_data,1,-1)
@@ -154,24 +150,20 @@ DataTable(Geonor_derived_data,1,-1)
     sample (3,gnr_level,FP2)
     average(1,gnr_orifice_T,fp2,false)
     average(1,gnr_htr_state,fp2,false)
-    EndTable
 endTable
 
 DataTable(LPM,1,-1)
     dataInterval(0,60,Sec,10)
     sample(1,progSig,uint2)
     sample(1,telegram,String)
-    EndTable
     sample(1,progSig,uint2)
     sample(1,telegram,String)
-    EndTable
 endTable
 
 DataTable(LPM_state,1,-1)
     DataInterval(0,60,Sec,0)
     sample(1,progSig,uint2)
     sample(13,LPM_state_vars,fp2)
-    EndTable
 endTable
 
 function calc_wire_depth(freq, A, B, F0)
@@ -419,7 +411,6 @@ beginProg
     if lpm_query(LPM_ID,"KY",0) <> "0" then log("WARNING: CONFIG MODE FAILED TO TURN OFF")
     
     scan(5,sec,0,0)
-        ' geonor-orifice-heater:
         gnr_orifice_T = read_Geonor_orifice_temp()
         gnr_htr_on_ratio = gnr_htr_strategy(AT, RH, gnr_orifice_T)
         gnr_htr_state = htr_relay_control(gnr_htr_on_ratio, gnr_htr_period)
@@ -428,7 +419,6 @@ beginProg
 
     slowSequence
     scan(10,sec,0,0)
-        ' geonor-base:
         '' measure vibrating wire cycles since last scan, save as frequency
         pulseCount(g1_F,1,GNR1__PP,0,1,1.0,0)
         pulseCount(g2_F,1,GNR2__PP,0,1,1.0,0)
@@ -438,7 +428,6 @@ beginProg
         '' update running averages for processing and logging in 60-second scan
         avgRun(gnr_Favg, 3, gnr_F(), 6)
     
-        ' geonor-xdcr-temps:
         '' read Geonor wire transducer thermistors:
         BrHalf (X(),3,mV2500,GNR1_THERM__SE,GNR_THERMS__EX,3,2500,0,0,250,1.0,0)
         For i=1 To 3
@@ -453,13 +442,10 @@ beginProg
 
     slowSequence
     scan(60,sec,0,0)
-        ' battery:
         battery(battery)
     
-        ' logger-panel-temp:
         panelTemp(panelTemp,250)
     
-        ' geonor-base:
         for i=1 to 3
             '' calculate fluid level in bucket from pulseCount() frequency
             gnr_level(i) = calc_wire_depth(gnr_Favg(i), Kw(i,1), Kw(i,2), Kw(i,3))
@@ -467,7 +453,6 @@ beginProg
 
         callTable(Geonor_derived_data)
     
-        ' geonor-xdcr-temps:
         for i=1 to 3
             '' calculate wire thermistor temps from averaged resistance:
             gnr_T(i) = calc_therm_T(gnr_Ravg(i), Kt(1), Kt(2), Kt(3))
@@ -475,7 +460,6 @@ beginProg
 
         callTable(Geonor_derived_data)
     
-        ' lpm-base:
         if timeIntoInterval(0,1,day) then
             '' emit message with several parameters, then zero precip total:
             log("LPM:" & lpm_query(LPM_ID,"ZT",-1), _
@@ -486,7 +470,6 @@ beginProg
          '' lpm_query(LPM_ID,"RA")
         endif
     
-        ' lpm-telegram:
         '' every minute, read data telegram from the LPM
         '' retry query if LPM returns "!TR00001", which means: telegram not available
         '' NOTE: STX has been replaced by "?" if the checksum failed!
@@ -500,11 +483,9 @@ beginProg
         SplitStr (LPM(),telegram,SEMICOLON,524,5)
         LPM(1) = right(LPM(1),2)    ' remove <STX> from LPM ID code NN
     
-        ' lpm-state:
         get_LPM_diagnostics()
         callTable LPM_state
     
-        ' lpm-flags:
         get_LPM_flags()
         callTable LPM_state
     
