@@ -1,7 +1,7 @@
 #!/usr/local/bin/bash
 
 warn() { printf "%s\n" "$@" >&2; }
-error() { printf "%s\n" "$@" >&2; exit 1; }
+error() { warn "$@"; exit 1; }
 
 main() {
     local site
@@ -16,10 +16,14 @@ main() {
     )
 
     export BUILD_SHOW_ID=
+
+    local save_output
+    local -a sig
     while [[ ${1:0:1} == "-" ]]; do
         case "$1" in
         --show-id | --show-ids) export BUILD_SHOW_ID=1 ;;
         --chunk | --chunks)     chunks=($2); shift ;;
+        --save)                 save_output=1 ;;
         --help)                 awk '/^NAME/,/EOF/{print}' $0; exit ;; 
         -h)                     awk '/^SYNOPSIS/{getline;print}' $0; exit ;; 
         *)                      error "unknown option: $1" ;;
@@ -29,20 +33,86 @@ main() {
 
     site="$1" && shift
 
+    ((save_output)) && {
+        exec 1> $site/v/prog.cr1 ||
+            error "$site/v/ container does not exist; HINT: mkdir $site/v to use --save"
+    }
+
     for chunk in "${chunks[@]}"; do  
         $chunk $site "$@"
-    done
+    done | awk '{sub(/\r/,""); printf("%s\r\n", $0)}'
+
+    ((save_output)) && {
+        exec 1>&-
+        sig=($(csi-signature $site/v/prog.cr1))
+        if [[ -e $site/v/psig-$sig.cr1 ]] &&
+            diff -q $site/v/prog.cr1 $site/v/psig-$sig.cr1 >/dev/null
+        then
+            rm $site/v/prog.cr1
+            ln -sf psig-$sig.cr1 $site/v/latest.cr1
+            error "$site/v/psig-$sig.cr1 already exists"
+        else
+            mv $site/v/prog.cr1 $site/v/psig-$sig.cr1 && 
+                ln -sf psig-$sig.cr1 $site/v/latest.cr1 ||
+                    error "unable to save $site/v/psig-$sig.cr1"
+        fi
+    }
+    
 }
 
 main "$@"
 
-exit
+: << MANPAGE
 
 NAME
     ProgramBuilder-CRBasic.build
 
 SYNOPSIS
-    build [--help] [--show-id] [--chunk CHUNK1[" CHUNK2"...]] BUILDER-OBJECT
+    build [-h] [--help] [--show-id] [--chunk CHUNK[" CHUNK"...]] BUILDER-OBJECT
+
+OPTIONS
+    -h
+        Show synopsis and exit.   
+
+    --help
+        Show manpage and exit.
+
+    --show-id
+        Include a comment line identifying each component in the output.
+
+    --chunk CHUNK
+    --chunk "CHUNK1 CHUNK2 ..."
+        Run only the named chunk handlers
+
+    --save
+        Save output as v/psig-<PSIG>.cr1, and set symlink v/latest.cr1 to point to
+        it.  Output directory v must exist (e.g., created manually).
+        
+DESCRIPTION
+    Runs one or more 'chunk' handlers in order, where each handler composes code
+    for its type contained in all 'components' inside the builder-object.  A builder-
+    object looks like:
+    
+        ^ -> ProgramBuilder-CRBasic     -- thinobject type identifier
+        component1/
+            @constants
+            @constants-table
+            @globals
+            @function:function_name
+            @prog:60
+            ...
+        component2/
+        ...
+
+    The ^ symlink can alternatively point to a 'prototype object' which in turn has
+    a ^ symlink identifying it as a ProgramBuilder-CRBasic object.  A thinobject type
+    link does not resolve as a directory directly, but through a path provided by the 
+    system.
+
+    A thinobject type contains executable methods such as the program-builder 'chunk' 
+    handlers, and can also contain other attributes.  A prototype object contains
+    attributes but does not contain executable methods.
 
 AUTHOR
     ken.irving@alaska.edu 2011-2018
+MANPAGE
