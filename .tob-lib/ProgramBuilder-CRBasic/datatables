@@ -57,7 +57,6 @@ for component in $(<$order); do
       # printf "'    %20s\t%s\n" "$table" "$dt"
 
         n=${t[$table]}
-
         if (( n == 0 )); then
             init=1
             tables+=($table)
@@ -74,13 +73,12 @@ for component in $(<$order); do
             # cull all endTable statements:
             [[ "$entry" =~ ${pat[endtable]} ]] && continue
 
-            # cull all data* statements after the first:
-          # (( ! init )) && [[ "${entry:0:4}" == data ]] && continue
-            (( ! init )) && [[ "$entry" =~ ${pat[data]} ]] && continue
+            # cull all datatable and datainterval statements after the first:
+            (( init == 0 )) && [[ "$entry" =~ ${pat[data]} ]] && continue
 
-            # accumulate entries for the final table:
+            # accumulate entries for the final table, but strip leading spaces:
             n+=1
-            t[$table.$n]="$entry"
+            t[$table.$n]="${entry## *}"
             t[$table]=$n
 
         done < $dt
