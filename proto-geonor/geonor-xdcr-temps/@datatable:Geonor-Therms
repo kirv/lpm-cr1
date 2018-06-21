@@ -1,5 +1,0 @@
-DataTable(Geonor_therms_R,1,-1)
-    DataInterval(0,10,sec,0)
-    Sample(1,progSig,uint2)
-    sample (3,gnr_R,ieee4)
-EndTable

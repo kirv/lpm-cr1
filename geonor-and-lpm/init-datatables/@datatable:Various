@@ -1,0 +1,5 @@
+DataTable(Various,1,-1)
+    DataInterval(0,60,Sec,0)
+    tableFile("CRD:Various-",64,-1,0,1,Day,0,0)
+    sample(1,progSig,uint2)
+EndTable

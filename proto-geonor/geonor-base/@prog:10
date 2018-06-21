@@ -4,7 +4,6 @@ beginProg
         pulseCount(g1_F,1,GNR1__PP,0,1,1.0,0)
         pulseCount(g2_F,1,GNR2__PP,0,1,1.0,0)
         pulseCount(g3_F,1,GNR3__PP,0,1,1.0,0)
-        calltable(Geonor_wires_freq)
 
         '' update running averages for processing and logging in 60-second scan
         avgRun(gnr_Favg, 3, gnr_F(), 6)

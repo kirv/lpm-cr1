@@ -1,3 +1,5 @@
+public LPM_flags(2) as long : alias LPM_flags = lpm_error_bits, lpm_warning_bits
+
 dim lpm_error_msgs(6) as string * 40 = { _     '' LPM error flags are in DX[1..6]
     "static signal out of range", _
     "laser temp (analog) too high", _

@@ -1,12 +1,17 @@
+init-datatables
 battery
 logger-panel-temp
 logmsg
 
 geonor-base
-geonor-orifice-heater
 geonor-xdcr-temps
+geonor-orifice-heater
 
 lpm-base
 lpm-telegram
 lpm-state
 lpm-flags
+
+air-hmp45c
+
+call-datatables

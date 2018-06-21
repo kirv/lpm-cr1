@@ -1,0 +1,7 @@
+beginProg
+    scan(10,Sec,0,0)
+        voltSe(at,1,mV2500,AT__SE,1,0,250,.1,-40)
+        voltSe(rh,1,mV2500,RH__SE,1,0,250,.1,0)
+        dewPoint(dp,at,rh)
+    nextScan
+endProg

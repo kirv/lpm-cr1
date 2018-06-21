@@ -1,5 +1,0 @@
-DataTable(LPM_state,1,-1)
-    DataInterval(0,60,Sec,0)
-    sample(1,progSig,uint2)
-    sample(13,LPM_state_vars,fp2)
-EndTable

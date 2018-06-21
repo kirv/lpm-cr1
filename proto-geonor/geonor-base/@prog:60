@@ -4,7 +4,5 @@ beginProg
             '' calculate fluid level in bucket from pulseCount() frequency
             gnr_level(i) = calc_wire_depth(gnr_Favg(i), Kw(i,1), Kw(i,2), Kw(i,3))
         next i
-
-        callTable(Geonor_derived_data)
     NextScan
 endProg

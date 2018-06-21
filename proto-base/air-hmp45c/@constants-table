@@ -1,0 +1,9 @@
+const AT__SE = 1
+const RH__SE = 2
+
+'' hmp45c wiring:
+''      YEL - AT signal
+''      BLU - RH signal
+''      WHT - signal reference 
+''      RED - power
+''      BLK - power ground

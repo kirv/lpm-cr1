@@ -1,0 +1,4 @@
+dataTable("Messages",1,100)
+    tableFile("CRD:Messages-",64,-1,0,1,Day,0,0)
+    sample(1,progSig,uint2)
+endTable

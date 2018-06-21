@@ -1,0 +1,5 @@
+DataTable(Geonor,1,-1)
+    DataInterval(0,10,sec,0)
+    tableFile("CRD:Geonor-",64,-1,0,1,Day,0,0)
+    sample(1,progSig,uint2)
+EndTable

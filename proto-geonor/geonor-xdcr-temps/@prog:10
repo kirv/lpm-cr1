@@ -5,8 +5,6 @@ beginProg
         For i=1 To 3
             gnr_R(i) = GNR_THERM_REF_R*X(i)/(1-X(i))
         Next i
-        calltable(Geonor_therms_R)
-
         '' update running averages for processing and logging in 60-second scan
         avgRun(gnr_Ravg, 3, gnr_R(), 6)
     nextScan
