@@ -1,0 +1,6 @@
+hmp45c wiring:
+    YEL - AT signal
+    BLU - RH signal
+    WHT - signal reference 
+    RED - power
+    BLK - power ground
