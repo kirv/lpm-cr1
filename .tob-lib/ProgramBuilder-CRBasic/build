@@ -32,6 +32,7 @@ main() {
     done
 
     site="$1" && shift
+    [[ -n $site ]] || site=.
 
     ((save_output)) && {
         exec 1> $site/v/prog.cr1 ||
