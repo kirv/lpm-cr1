@@ -1,0 +1,8 @@
+A thermistor is taped to each Geonor vibrating wire transducer body to investigate
+possibly implementing temperature correction.  Resistance values are logged in the
+Geonor table every 10 seconds.
+
+Averaged resistance values are converted to temperatures and logged every 60 seconds
+in the Geonor table.
+
+Thermistor conversion coefficients are logged to the Messages table on startup.

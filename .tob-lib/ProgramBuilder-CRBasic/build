@@ -13,6 +13,7 @@ main() {
         functions
         subs
         programs
+        after-notes
     )
 
     export BUILD_SHOW_ID=

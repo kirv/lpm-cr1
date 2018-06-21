@@ -41,8 +41,8 @@ for component in $(<$order); do
     for notes in $attr/@after-notes; do
         [[ -e $notes ]] || continue
         printf "\n"
-        [[ -n "$BUILD_SHOW_ID" ]] && 
-            printf "' %s:%s()\n" "$component" notes
+        printf "' ***** %s *****\n" "$attr"
+        printf "' \n"
         awk '{print "X ", $0}' $notes | sed "s/^X/'/"
     done
 done

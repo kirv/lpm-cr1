@@ -2,7 +2,7 @@
 
 # datatables: compose datatables for final program 
 
-warn() { printf "%s\n" "$@" 1&>2; }
+warn() { printf "%s\n" "$@" >&2; }
 error() { warn "$@"; exit 1; } 
 
 shopt -s nocasematch nullglob

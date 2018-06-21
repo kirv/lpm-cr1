@@ -1,0 +1,10 @@
+Geonor vibrating wire transducers are connected through a signal
+conditioner to pulse or control ports on the CR1000.  The frequency
+of each wire is measured by pulse counts every 10 seconds and logged
+to the Geonor datatable.
+
+Calibration constants for the wire transducers  are defined in
+constants, and are recorded to the Messages datatable on startup.
+
+Frequencies are averaged every 60 seconds and the values converted to a depth value for each
+wire, and logged to the Various datatable.
