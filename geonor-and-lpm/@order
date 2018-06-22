@@ -1,3 +1,4 @@
+program-signature
 init-datatables
 battery
 logger-panel-temp
@@ -11,6 +12,7 @@ lpm-base
 lpm-telegram
 lpm-state
 lpm-flags
+lpm-reset-precip-total
 
 air-hmp45c
 

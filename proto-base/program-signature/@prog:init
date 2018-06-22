@@ -1,0 +1,3 @@
+beginProg
+    progSig = status.ProgSignature
+endProg

@@ -1,0 +1,6 @@
+Each CR1000 program has a unique signature value created as a hash of all the text
+in the program.  This is stored in the progSig variable, and is output as a field
+in all datatables so that each record can be linked to a speific program.  Note that
+the program signature is also stored in the datatable header when it is retrieved
+from the datalogger; however, the header program signature value only necessarily 
+applies to the latest data records, and may not apply to older records.

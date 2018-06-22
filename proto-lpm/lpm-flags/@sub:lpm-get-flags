@@ -26,7 +26,7 @@ sub get_LPM_flags
             sprintf(msg, "ERROR %d TURNED OFF: %s (count:%d)", _
                     i, lpm_error_msgs(i), fm(i))
         endif
-        if msg <> "" then logmsg(msg)
+        if msg <> "" then log(msg)
         mask *= 2
     next i
 
@@ -45,7 +45,7 @@ sub get_LPM_flags
             sprintf(msg, "WARNING %d TURNED OFF: %s (count:%d)", _
                     6+i, lpm_warning_msgs(i), fm(6+i))
         endif
-        if msg <> "" then logmsg(msg)
+        if msg <> "" then log(msg)
         mask *= 2
     next i
 endsub

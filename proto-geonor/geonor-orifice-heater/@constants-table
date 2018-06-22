@@ -4,5 +4,5 @@ const GNR_RTD__EX = 2
 const GNR_RTD_R0 = 1000 ' Ohms
 
 const HTR_RELAY__P = 1      ' control port wired to solid state relay
-const HTR_SCAN_SEC = 2      ' control scan time, also minimum heater ON time
-const HTR_PERIOD_SEC = 30   ' duty cycle period for heater control
+const HTR_SCAN_SEC = 10     ' control scan time, also minimum heater ON time
+const HTR_PERIOD_SEC = 120  ' duty cycle period for heater control

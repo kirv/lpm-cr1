@@ -13,3 +13,9 @@ baud and half-duplex (rs485) mode.  Wiring:
     LPM terminal 5 (T-) -to-  MD485 A (GRN wire)
     LPM terminal 6 (T+) -to-  MD485 B (BRN wire)
     LPM terminal 9 (G)  -to-  MD485 G (YEL wire)
+
+As the CR1000 program starts: the LPM is placed in config mode
+(KY:1); LPM comm parameters are queried and logged to the Messages
+table;  automatic telegram output is disabled (TM:0); the LPM clock
+is set from the logger clock (ZS, ..., ZY); and the LPM is placed
+back in normal mode (KY:0).
