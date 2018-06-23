@@ -16,11 +16,11 @@ resolve_search_paths() {
         # otherwise, if it exists as a link it's a thinobject type:
         test -L "$1" && return 0
         return 1
-        }
+    }
     search_paths+=("$1")
     # recurse to follow $1/^ or $1/.^ links:
     resolve_search_paths $1/^ || resolve_search_paths $1/.^ || return 1
-    }
+}
 declare -a search_paths
 resolve_search_paths $ob
 
@@ -30,10 +30,18 @@ resolve_attr() {
         test -e $attr && return 
     done
     return 1
-    }
+}
 
 resolve_attr @order || error "no @order file found"
 order=$attr
+
+resolve_symvar() {
+    for attr in "${search_paths[@]}"; do
+        attr+=/$1
+        test -L $attr && test ! -e $attr && return 
+    done
+    return 1
+}
 
 # store each scan value in the scans array:
 declare scan
@@ -84,7 +92,7 @@ for component in $(<$order); do
                 s[$scan.$n]="    "
                 s[$scan]=$n
                 continue
-                }
+            }
 
             # accumulate entries for the final table:
             n+=1
@@ -112,9 +120,17 @@ printf "\nbeginProg\n"
     printf "\n"
 }
 
+declare -a scan_order
+
+if resolve_symvar scan-order; then
+    scan_order=( $(symvar $attr) )
+else    
+    scan_order=( ${scans[*]} )
+fi
+
 # output each scan, but skip init (which could be out of order)
 declare -i slowseq
-for scan in "${scans[@]}"; do
+for scan in "${scan_order[@]}"; do
     [[ $scan == init ]] && continue
   # printf "DEBUG  %s: %s\n" "$scan" "${s[scan]}"
 
