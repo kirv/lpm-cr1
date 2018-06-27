@@ -8,5 +8,5 @@ function htr_relay_control(ratio as float, period as long) as boolean
     if ontime < HTR_SCAN_SEC then ontime = 0
     if elapsed > period then timer(HTR_SCAN_SEC,sec,2)  '' restart timer
     if ontime < elapsed and ontime > 0 then state = 1 else state = 0
-    portSet(HTR_RELAY__P,state)
+    portSet(HTR_RELAY__CP,state)
 endfunction
