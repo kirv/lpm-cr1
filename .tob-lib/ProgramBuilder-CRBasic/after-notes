@@ -5,7 +5,7 @@
 error() { printf "%s\n"; exit 1; } 
 shopt -s nocasematch nullglob
 
-[[ -n $BUILD_NO_NOTES ]] && return
+[[ -n $BUILD_NO_NOTES ]] && exit
 
 ob=.
 test -n "$1" && ob="$1"

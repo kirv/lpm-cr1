@@ -1,0 +1,5 @@
+beginProg
+    Scan(60,sec,0,0)
+        calltable Various
+    NextScan
+endProg
