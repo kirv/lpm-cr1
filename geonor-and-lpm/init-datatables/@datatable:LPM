@@ -1,5 +1,5 @@
 DataTable(LPM,1,-1)
   dataInterval(0,60,Sec,10)
-  tableFile("CRD:LPM-",64,-1,0,1,Day,0,0)
+  tableFile("CRD:LPM-",8,-1,0,1,Day,0,0)
   sample(1,progSig,uint2)
 EndTable
