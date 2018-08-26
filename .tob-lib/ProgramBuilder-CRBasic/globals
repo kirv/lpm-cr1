@@ -2,8 +2,8 @@
 
 # globals: compose global variables, aliases, units for final program 
 
-error() { printf "%s\n"; exit 1; } 
-
+warn() { printf "%s\n" "$@" >&2; } 
+error() { warn "$@"; exit 1; } 
 
 ob=.
 test -n "$1" && ob="$1"
@@ -34,6 +34,14 @@ resolve_attr() {
 resolve_attr @order || error "no @order file found"
 order=$attr
 
+resolve_symvar() {
+    for attr in "${search_paths[@]}"; do
+        attr+=/$1
+        test -L $attr && test ! -e $attr && return 
+    done
+    return 1
+}
+
 # scan and read any alias symvars:
 declare -A aliases
 for symvar in $ob/alias:*; do
@@ -43,14 +51,61 @@ for symvar in $ob/alias:*; do
     aliases[$alias]="$(symvar $symvar)"
 done
 
+reduce_params() { ## reduce {{TAG,VAL}} to just params[TAG] or VAL
+    warn "LINE: $line << START"
+    # given string "$line", look for '{{' TAG ':' VAL '}}
+    local buf="$line"
+    local tag val
+
+    warn "... parse up to first {{..."
+    line="${buf%%{{*}"
+    buf="${buf#*{{}"
+    warn "LINE: $line" " BUF: $buf"
+
+    [[ ${#line} == ${#buf} ]] && return 1
+
+    warn "... isolate TAG"
+    tag="${buf%%:*}"
+    buf="${buf#*:}"
+    warn "LINE: $line" " BUF: $buf" "TAG: $tag"
+
+    warn "... isolate VAL"
+    val="${buf%%\}\}*}"
+    buf="${buf#*\}\}}"
+    warn "LINE: $line" " BUF: $buf" "TAG: $tag" "VAL: $val"
+
+    warn "... try to replace VAL if in assoc. array"
+    if [[ -n ${params[$tag]} ]]; then
+        line+="${params[$tag]}$buf"
+    else
+        line+="$val$buf"
+    fi
+    
+    # recurse until no more expansion remain
+    reduce_params "$line" || return 0
+}
+
 shopt -s nocasematch
 
+declare globals_list
 for component in $(<$order); do
     resolve_attr $component/@globals || continue
-    
+    globals_list="$attr"
+
+    declare -A params
+    if resolve_symvar ${component}:; then
+        for param in $(symvar $attr); do
+            params[${param%:*}]=${param#*:}
+        done
+    fi
+    for p in "${!params[@]}"; do
+        printf "    %s = %s\n" "$p" "${params[$p]}"
+    done
+
     [[ -n "$BUILD_SHOW_ID" ]] && printf "' %s:\n" "$component"
 
     while read line; do
+        reduce_params "$line"
         printf "%s\n" "$line"
         # add alias statement if a matching public variable is seen:
         line="${line## }"
@@ -64,7 +119,6 @@ for component in $(<$order); do
             printf "%salias %s = %s\n" "$padding" $var "${aliases[$var]}"
         done
     
-    done < $attr
+    done < $globals_list
     printf "\n"
 done
-
