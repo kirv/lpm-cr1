@@ -51,34 +51,19 @@ for symvar in $ob/alias:*; do
     aliases[$alias]="$(symvar $symvar)"
 done
 
-reduce_params() { ## reduce {{TAG,VAL}} to just params[TAG] or VAL
-    warn "LINE: $line << START"
-    # given string "$line", look for '{{' TAG ':' VAL '}}
-    local buf="$line"
-    local tag val
-
-    warn "... parse up to first {{..."
+reduce_params() {
+    ## in global var line, reduce {{TAG,VAL}} to params[TAG] or VAL
+    local buf="$line" tag val
     line="${buf%%{{*}"
     buf="${buf#*{{}"
-    warn "LINE: $line" " BUF: $buf"
-
     ## return FALSE if no parameter substituion is needed
     [[ ${#line} == ${#buf} ]] && return 1
-
-    warn "... isolate TAG"
     tag="${buf%%:*}"
     buf="${buf#*:}"
-    warn "LINE: $line" " BUF: $buf" "TAG: $tag"
-
-    warn "... isolate VAL"
     val="${buf%%\}\}*}"
     buf="${buf#*\}\}}"
-    warn "LINE: $line" " BUF: $buf" "TAG: $tag" "VAL: $val"
-
-    warn "... replace VAL if in assoc. array, else use default VAL"
     line+="${params[$tag]-$val}$buf"
-    
-    # recurse until no more expansion remain
+    # recurse until no more expansion remain:
     reduce_params "$line" || return 0
 }
 
@@ -95,9 +80,6 @@ for component in $(<$order); do
             params[${param%:*}]=${param#*:}
         done
     fi
-    for p in "${!params[@]}"; do
-        printf "    %s = %s\n" "$p" "${params[$p]}"
-    done
 
     [[ -n "$BUILD_SHOW_ID" ]] && printf "' %s:\n" "$component"
 

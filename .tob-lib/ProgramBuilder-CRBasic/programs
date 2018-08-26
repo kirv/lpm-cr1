@@ -43,6 +43,22 @@ resolve_symvar() {
     return 1
 }
 
+reduce_params() {
+    ## in global var line, reduce {{TAG,VAL}} to params[TAG] or VAL
+    local buf="$line" tag val
+    line="${buf%%{{*}"
+    buf="${buf#*{{}"
+    ## return FALSE if no parameter substituion is needed
+    [[ ${#line} == ${#buf} ]] && return 1
+    tag="${buf%%:*}"
+    buf="${buf#*:}"
+    val="${buf%%\}\}*}"
+    buf="${buf#*\}\}}"
+    line+="${params[$tag]-$val}$buf"
+    # recurse until no more expansion remain:
+    reduce_params "$line" || return 0
+}
+
 # store each scan value in the scans array:
 declare scan
 declare -a scans
@@ -64,10 +80,19 @@ pat[scan]="^ *scan *\("
 pat[nextscan]="^ *nextscan"
 pat[calltable]="^ *calltable"
 
+declare component_object
 for component in $(<$order); do
     resolve_attr "$component" || continue
+    component_object="$attr"
 
-    for file in $attr/@prog:*; do
+    declare -A params
+    if resolve_symvar ${component}:; then
+        for param in $(symvar $attr); do
+            params[${param%:*}]=${param#*:}
+        done
+    fi
+
+    for file in $component_object/@prog:*; do
         scan="${file#*/@prog:}"
 
         # s[scan] is the number of lines already stored
@@ -81,6 +106,7 @@ for component in $(<$order); do
         }
 
         while IFS= read -r line; do
+          reduce_params "$line"
 
           # printf "$line\n"
 
