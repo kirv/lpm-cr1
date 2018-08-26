@@ -62,6 +62,7 @@ reduce_params() { ## reduce {{TAG,VAL}} to just params[TAG] or VAL
     buf="${buf#*{{}"
     warn "LINE: $line" " BUF: $buf"
 
+    ## return FALSE if no parameter substituion is needed
     [[ ${#line} == ${#buf} ]] && return 1
 
     warn "... isolate TAG"
@@ -74,12 +75,8 @@ reduce_params() { ## reduce {{TAG,VAL}} to just params[TAG] or VAL
     buf="${buf#*\}\}}"
     warn "LINE: $line" " BUF: $buf" "TAG: $tag" "VAL: $val"
 
-    warn "... try to replace VAL if in assoc. array"
-    if [[ -n ${params[$tag]} ]]; then
-        line+="${params[$tag]}$buf"
-    else
-        line+="$val$buf"
-    fi
+    warn "... replace VAL if in assoc. array, else use default VAL"
+    line+="${params[$tag]-$val}$buf"
     
     # recurse until no more expansion remain
     reduce_params "$line" || return 0
