@@ -36,6 +36,22 @@ resolve_attr() {
 resolve_attr @order || error "no @order file found"
 order=$attr
 
+reduce_params() {
+    ## in global var entry, reduce {{TAG,VAL}} to params[TAG] or VAL
+    local buf="$entry" tag val
+    entry="${buf%%{{*}"
+    buf="${buf#*{{}"
+    ## return FALSE if no parameter substituion is needed
+    [[ ${#entry} == ${#buf} ]] && return 1
+    tag="${buf%%:*}"
+    buf="${buf#*:}"
+    val="${buf%%\}\}*}"
+    buf="${buf#*\}\}}"
+    entry+="${params[$tag]-$val}$buf"
+    # recurse until no more expansion remain:
+    reduce_params "$entry" || return 0
+}
+
 declare -a tables
 tables=()
 
@@ -49,10 +65,19 @@ declare -A pat
 pat[endtable]="^ *endtable"
 pat[data]="^data"
 
+declare component_object
 for component in $(<$order); do
     resolve_attr "$component" || continue
+    component_object="$attr"
 
-    for dt in $attr/@datatable:*; do
+    declare -A params
+    if resolve_symvar ${component}:; then
+        for param in $(symvar $attr); do
+            params[${param%:*}]=${param#*:}
+        done
+    fi
+
+    for dt in $component_object/@datatable:*; do
         table=${dt##*:}
       # printf "'    %20s\t%s\n" "$table" "$dt"
 
@@ -69,6 +94,7 @@ for component in $(<$order); do
 
         while read entry; do
           # printf "\t%s\n" "$entry"
+            reduce_params "$entry"
 
             # cull all endTable statements:
             [[ "$entry" =~ ${pat[endtable]} ]] && continue
