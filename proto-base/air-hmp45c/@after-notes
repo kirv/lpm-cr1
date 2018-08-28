@@ -1,5 +1,4 @@
 HMP45C air temperature and relative humidity sensor.  Wiring:
-
     YEL - AT signal
     BLU - RH signal
     WHT - signal reference 

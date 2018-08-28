@@ -1,11 +1,11 @@
 beginProg
     scan (10,sec,0,0)
         '' read Geonor wire transducer thermistors:
-        BrHalf (X(),3,mV2500,GNR1_THERM__SE,GNR_THERMS__EX,3,2500,0,0,250,1.0,0)
-        For i=1 To 3
-            gnr_R(i) = GNR_THERM_REF_R*X(i)/(1-X(i))
+        BrHalf (X(),{{QTY:1}},mV2500,{{SE:1}},{{EX:1}},{{QTY:1}},2500,0,0,250,1.0,0)
+        For i=1 To {{QTY:1}}
+            gnr_R(i) = {{REF_R:1000}}*X(i)/(1-X(i))
         Next i
         '' update running averages for processing and logging in 60-second scan
-        avgRun(gnr_Ravg, 3, gnr_R(), 6)
+        avgRun(gnr_Ravg, {{QTY:1}}, gnr_R(), 6)
     nextScan
 endProg

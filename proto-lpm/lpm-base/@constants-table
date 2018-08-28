@@ -1,5 +1,3 @@
 const LPM_NAME  = "Laser Precipitation Monitor"
 const LPM_MODEL = "5.4110.11.100"
-const LPM_ID = 0
-const LPM__PORT = Com1      ' C1=Tx (db9F-pin3), C2=Rx (db9F-pin2)
 

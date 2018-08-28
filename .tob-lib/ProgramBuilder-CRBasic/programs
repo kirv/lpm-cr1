@@ -139,7 +139,7 @@ printf "\nbeginProg\n"
 # output init code first!
 [[ -n ${scans[init]} ]] && {
     scan=init
-    for (( n=1; n<=${s[$scan]}; n+=1 )); do
+    for (( n=1; n<=${s[$scan]-0}; n+=1 )); do
         line="${s[$scan.$n]}"
         printf "%s\n" "$line"
     done
@@ -165,7 +165,7 @@ for scan in "${scan_order[@]}"; do
     printf "    scan(%s,sec,0,0)\n" $scan
     
   # printf "DEBUG:\t<%s>\n" "${s[@]}"
-    for (( n=1; n<=${s[$scan]}; n+=1 )); do
+    for (( n=1; n<=${s[$scan]-0}; n+=1 )); do
         line="${s[$scan.$n]}"
         printf "%s\n" "$line"
     done

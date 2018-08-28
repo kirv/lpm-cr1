@@ -1,3 +1,3 @@
-public at  : units at = degC
-public rh  : units rh = %
-public dp  : units dp = degC
+public at({{QTY:1}}) : units at = degC
+public rh({{QTY:1}}) : units rh = %
+public dp({{QTY:1}}) : units dp = degC

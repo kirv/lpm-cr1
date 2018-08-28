@@ -36,6 +36,14 @@ resolve_attr() {
 resolve_attr @order || error "no @order file found"
 order=$attr
 
+resolve_symvar() {
+    for attr in "${search_paths[@]}"; do
+        attr+=/$1
+        test -L $attr && test ! -e $attr && return 
+    done
+    return 1
+}
+
 reduce_params() {
     ## in global var entry, reduce {{TAG,VAL}} to params[TAG] or VAL
     local buf="$entry" tag val

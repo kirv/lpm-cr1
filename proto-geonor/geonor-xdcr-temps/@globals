@@ -1,7 +1,7 @@
 '' a thermistor is taped to each vibrating wire transducer:
-public gnr_R(3)     : units gnr_R = Ohms  : alias gnr_R = g1_R, g2_R, g3_R
-public gnr_Ravg(3)
-public gnr_T(3)     : units gnr_T = Deg C  : alias gnr_T = g1_T, g2_T, g3_T
+public gnr_R({{QTY:1}})     : units gnr_R = Ohms  : alias gnr_R = g1_R, g2_R, g3_R
+public gnr_Ravg({{QTY:1}})
+public gnr_T({{QTY:1}})     : units gnr_T = Deg C  : alias gnr_T = g1_T, g2_T, g3_T
+dim X({{QTY:1}})
 dim Kt(3) as float = { THERM_A, THERM_B, THERM_C }  '' Kt(1), Kt(2), Kt(3)
-dim X(3)
 dim i
