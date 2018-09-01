@@ -94,6 +94,8 @@ for component in $(<$order); do
         # BUG: this simple parser fails with 'public foo as boolean', etc.
         for var in ${line//,/ }; do
             var="${var%(*}"
+            # HACK: end scanning if ':' is seen; e.g.: public foo : units foo = bar
+            [[ $var == : ]] && break
             test -n "${aliases[$var]}" || continue
             printf "%salias %s = %s\n" "$padding" $var "${aliases[$var]}"
         done
