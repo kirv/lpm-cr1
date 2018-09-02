@@ -1,5 +1,4 @@
 beginProg
     log("Judd sensor heights:",JUDD_DATUM_1,JUDD_DATUM_2,JUDD_DATUM_3,JUDD_DATUM_4,JUDD_DATUM_5,JUDD_DATUM_6)
-    log("The Judd-A stand is 'downwind' (dw)", "sensor A1 is east-most.")
-    log("The Judd-B stand is 'crosswind' (cw)", "sensor B1 is north-most.")
+    log("Judd(1) is A1, east-most on downwind stand; and Judd(4) is B1, north-most, crosswind")
 endProg
