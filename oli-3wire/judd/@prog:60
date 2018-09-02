@@ -1,0 +1,25 @@
+BeginProg
+    Scan(60,Sec,0,0)
+        '' Query sensors on A and B stands in pairs of furthest-apart sensors.
+        portSet({{AB1_EN__CP:1}}, 1)              
+        delay(0,800,MSEC)
+        voltSE({{TVAR:judd_temp}}(1), 2, mV5000, {{AB1__SE:1}}, True, 0, 250, 0.2, -273) 
+        delay(0,1800,MSEC)
+        voltSE({{DVAR:judd_dist}}(1), 2, mV5000, {{AB1__SE:1}}, True, 0, 250, -0.5, 0) 
+        portSet({{AB1_EN__CP:1}}, 0)              
+
+        portSet({{AB2_EN__CP:1}}, 1)              
+        delay(0,800,MSEC)
+        voltSE({{TVAR:judd_temp}}(3), 2, mV5000, {{AB2__SE:1}}, True, 0, 250, 0.2, -273) 
+        delay(0,1800,MSEC)
+        voltSE({{DVAR:judd_dist}}(3), 2, mV5000, {{AB2__SE:1}}, True, 0, 250, -0.5, 0) 
+        portSet({{AB2_EN__CP:1}}, 0)              
+
+        portSet({{AB3_EN__CP:1}}, 1)              
+        delay(0,800,MSEC)
+        voltSE({{TVAR:judd_temp}}(5), 2, mV5000, {{AB3__SE:1}}, True, 0, 250, 0.2, -273) 
+        delay(0,1800,MSEC)
+        voltSE({{DVAR:judd_dist}}(5), 2, mV5000, {{AB3__SE:1}}, True, 0, 250, -0.5, 0) 
+        portSet({{AB3_EN__CP:1}}, 0)              
+    NextScan
+EndProg

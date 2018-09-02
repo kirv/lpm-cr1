@@ -1,0 +1,7 @@
+beginProg
+    scan(10,sec,0,0)
+        gnr_orifice_T = read_Geonor_orifice_temp()
+        gnr_htr_on_ratio = gnr_htr_strategy({{AIR_TEMP:air_temp}}, gnr_orifice_T)
+        gnr_htr_state = htr_relay_control(gnr_htr__cp, gnr_htr_on_ratio, gnr_htr_scan, gnr_htr_period)
+    nextScan
+endProg

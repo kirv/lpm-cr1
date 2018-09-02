@@ -1,0 +1,11 @@
+Campbell Scientific SR50A sonic rangers are used for measuring snow depth.
+
+The SR50A uses the SDI12 protocol, so can support multiple sensors on a single datalogger
+control port for communications at 1200 baud, using the CRBasic SDI12Recorder() instruction.
+
+Each sensor on a SDI12 bus (shared communications control port) must have a unique address
+or ID number.  The default address for a new sensor is 0.  In this program, each SR50A sensor
+will have the ordinal number for the address.
+
+
+

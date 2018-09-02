@@ -1,0 +1,12 @@
+The Geonor heater kit is installed, with heating pads inside and
+outside the orifice, and controlled by a solid state relay from a
+CR1000 control port.  An RTD is fixed to the orifice and measured
+for the orifice temperatures, and logged in the Various table every
+minute..
+
+Functions:
+    gnr_htr_strategy(AT, RH, orifice_T) -- returns a duty cycle control setpt value
+
+    htr_relay_control(ratio, period) -- runs the heater according to the duty cycle
+
+A strategy for heating will need to be defined.

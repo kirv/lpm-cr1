@@ -1,0 +1,22 @@
+public LPM_flags(2) as long : alias LPM_flags = lpm_error_bits, lpm_warning_bits
+
+dim lpm_error_msgs(6) as string * 40 = { _     '' LPM error flags are in DX[1..6]
+    "static signal out of range", _
+    "laser temp (analog) too high", _
+    "laser temp (digital) too high", _
+    "laser current (analog) too high", _
+    "laser current (digital) too high", _
+    "sensor supply out of range" _
+}
+
+dim lpm_warning_msgs(9) as string * 40 = { _   '' LPM warning flags are in DX'[7..15]
+    "current: pane heating laser head", _
+    "current: pane heating receiver head", _
+    "temperature sensor", _
+    "heating supply out of allowed range", _
+    "current: heating housing", _
+    "current: heating heads", _
+    "current: heating carriers", _
+    "control output laser power high", _
+    "not used" _
+}

@@ -1,0 +1,9 @@
+beginProg
+    log("Geonor wire transducer constants follow:")
+    sprintf(msg,"GNR1: A=%.12g, B=%.12g, F0=%.12g, SN=%d",GNR1_A,GNR1_B,GNR1_F0,GNR1_SN)
+    log(msg)
+    sprintf(msg,"GNR2: A=%.12g, B=%.12g, F0=%.12g, SN=%d",GNR2_A,GNR2_B,GNR2_F0,GNR2_SN)
+    log(msg)
+    sprintf(msg,"GNR3: A=%.12g, B=%.12g, F0=%.12g, SN=%d",GNR3_A,GNR3_B,GNR3_F0,GNR3_SN)
+    log(msg)
+endProg
