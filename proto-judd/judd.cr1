@@ -1,0 +1,23 @@
+Public Air_TempC
+Public Depth
+
+SequentialMode 
+
+DataTable(Table101,true,-1)
+    OpenInterval       
+    DataInterval(0,1,Min,10)                   
+    Average(1, Air_TempF, FP2, 0)
+    Sample(1, Depth, FP2)
+EndTable
+
+BeginProg
+    Scan(5,Sec, 3, 0)
+        PortSet(1, 1)              
+        Delay(0,800,MSEC)
+        VoltDiff(Air_TempC, 1, mV2500, 3, True, 0, 250, 0.2, -273) 
+        Delay(0,1800,MSEC)
+        VoltDiff(Depth, 1, mV2500, 3, True, 0, 250, 0.1968, 0) 
+        PortSet(1, 0)              
+	    CallTable Table101 
+    NextScan
+EndProg

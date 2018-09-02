@@ -1,0 +1,11 @@
+BeginProg
+    Scan(5,Sec, 3, 0)
+        portSet({{ENABLE__CP:1}}, 1)              
+        delay(0,800,MSEC)
+        voltSE(AT_sd(1), {{QTY:1}}, mV2500, {{SE:1}}, True, 0, 250, 0.2, -273) 
+        delay(0,1800,MSEC)
+        voltSE(depth(1), {{QTY:1}}, mV2500, {{SE:1}}, True, 0, 250, 0.1968, 0) 
+        portSet({{ENABLE__CP:1}}, 0)              
+	    callTable Table101 
+    NextScan
+EndProg
