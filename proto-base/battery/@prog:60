@@ -1,5 +1,5 @@
 beginProg
-    scan(60,Sec,0,0)
-        battery(battery)
+    scan({{SCAN:60}},sec,0,0)
+        battery({{VAR:battery}})
     nextScan
 endProg

@@ -1,1 +1,1 @@
-public progSig as long
+public {{VAR:progSig}} as long

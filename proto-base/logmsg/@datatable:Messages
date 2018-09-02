@@ -1,1 +1,1 @@
-sample(1,msg,string)
+sample(1,{{VAR:msg}},string)

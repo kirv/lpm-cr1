@@ -1,1 +1,1 @@
-public battery : units battery = Volts
+public {{VAR:battery}} : units {{VAR:battery}} = {{UNITS:Volts}}
