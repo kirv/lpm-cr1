@@ -3,23 +3,23 @@ BeginProg
         '' Query sensors on A and B stands in pairs of furthest-apart sensors.
         portSet({{AB1_EN__CP:1}}, 1)              
         delay(0,800,MSEC)
-        voltDiff({{TVAR:judd_temp}}(1), 2, mV5000, {{AB1__DIFF:1}}, True, 0, 250, {{TMULT:0.1}}, {{TOFS:-273.15}}) 
+        voltDiff({{TVAR:judd_temp}}(1), 2, mV5000, {{AB1__DIFF:1}}, True, 0, _60Hz, {{TMULT:0.1}}, {{TOFS:-273.15}}) 
         delay(0,1800,MSEC)
-        voltDiff({{DVAR:judd_dist}}(1), 2, mV5000, {{AB1__DIFF:1}}, True, 0, 250, {{DMULT:0.25}}, 0) 
+        voltDiff({{DVAR:judd_dist}}(1), 2, mV5000, {{AB1__DIFF:1}}, True, 0, _60Hz, {{DMULT:0.25}}, 0) 
         portSet({{AB1_EN__CP:1}}, 0)              
 
         portSet({{AB2_EN__CP:1}}, 1)              
         delay(0,800,MSEC)
-        voltDiff({{TVAR:judd_temp}}(3), 2, mV5000, {{AB2__DIFF:1}}, True, 0, 250, {{TMULT:0.1}}, {{TOFS:-273.15}}) 
+        voltDiff({{TVAR:judd_temp}}(3), 2, mV5000, {{AB2__DIFF:1}}, True, 0, _60Hz, {{TMULT:0.1}}, {{TOFS:-273.15}}) 
         delay(0,1800,MSEC)
-        voltDiff({{DVAR:judd_dist}}(3), 2, mV5000, {{AB2__DIFF:1}}, True, 0, 250, {{DMULT:0.25}}, 0) 
+        voltDiff({{DVAR:judd_dist}}(3), 2, mV5000, {{AB2__DIFF:1}}, True, 0, _60Hz, {{DMULT:0.25}}, 0) 
         portSet({{AB2_EN__CP:1}}, 0)              
 
         portSet({{AB3_EN__CP:1}}, 1)              
         delay(0,800,MSEC)
-        voltDiff({{TVAR:judd_temp}}(3), 2, mV5000, {{AB3__DIFF:1}}, True, 0, 250, {{TMULT:0.1}}, {{TOFS:-273.15}}) 
+        voltDiff({{TVAR:judd_temp}}(5), 2, mV5000, {{AB3__DIFF:1}}, True, 0, _60Hz, {{TMULT:0.1}}, {{TOFS:-273.15}}) 
         delay(0,1800,MSEC)
-        voltDiff({{DVAR:judd_dist}}(3), 2, mV5000, {{AB3__DIFF:1}}, True, 0, 250, {{DMULT:0.25}}, 0) 
+        voltDiff({{DVAR:judd_dist}}(5), 2, mV5000, {{AB3__DIFF:1}}, True, 0, _60Hz, {{DMULT:0.25}}, 0) 
         portSet({{AB3_EN__CP:1}}, 0)              
     NextScan
 EndProg
