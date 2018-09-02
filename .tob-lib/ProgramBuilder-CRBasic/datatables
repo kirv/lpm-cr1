@@ -72,6 +72,42 @@ declare -i n init
 declare -A pat
 pat[endtable]="^ *endtable"
 pat[data]="^data"
+declare dt
+
+init_datatable() {
+    local table=${1%:} && shift
+    local param
+    local -A params
+    local key
+    for param in "$@"; do
+        key=${param%:*}
+        params[${key,,}]=${param#*:}
+    done
+    tables+=($table)
+    # generate datatable() statement:
+    t[$table.1]="dataTable($table,"
+    if [[ -n ${params[trigvar]} ]]; then
+        t[$table.1]+="${params[trigvar]},"
+    else
+        t[$table.1]+="1,"
+    fi
+    if [[ -n ${params[size]} ]]; then
+        t[$table.1]+="${params[size]})"
+    else
+        t[$table.1]+="-1)"
+    fi
+    t[$table]=1
+    # generate datainterval() statement, but only look for interval!
+    if [[ -n ${params[interval]} ]]; then
+        t[$table.2]="datainterval(0,${params[interval]},sec,0)"
+        t[$table]=2
+    fi
+}
+
+## handle datatable declarations
+for dt in $ob/datatable-*:; do
+    init_datatable "${dt##*-}" $(symvar $dt)
+done
 
 declare component_object
 for component in $(<$order); do
@@ -85,6 +121,7 @@ for component in $(<$order); do
         done
     fi
 
+    ## handle datatable specifiers in each component:
     for dt in $component_object/@datatable:*; do
         table=${dt##*:}
       # printf "'    %20s\t%s\n" "$table" "$dt"
@@ -130,4 +167,4 @@ for table in "${tables[@]}"; do
     done
     printf "%s\n" "endTable"
 done
-    
+
