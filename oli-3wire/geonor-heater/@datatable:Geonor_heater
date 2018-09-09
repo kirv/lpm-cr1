@@ -1,2 +1,1 @@
-average(1,gnr_orifice_T,fp2,false)
 average(1,gnr_htr_state,fp2,false)

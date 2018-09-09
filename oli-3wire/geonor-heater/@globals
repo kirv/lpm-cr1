@@ -1,5 +1,4 @@
-'' Geonor orifice RTD and heater
-public gnr_orifice_T        : units gnr_orifice_T = deg C
+'' Geonor heater control 
 public gnr_htr_scan         : units gnr_htr_scan = sec
 public gnr_htr_period       : units gnr_htr_period = sec    '' 100% duty cycle time
 public gnr_htr_on_ratio ' heater control setpoint, ratio of ON/OFF times

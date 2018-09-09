@@ -1,0 +1,3 @@
+public gnr_orifice_T        : units gnr_orifice_T = deg C
+public gnr_htr_V_supply     : units gnr_htr_V_supply = Volt
+dim x

@@ -1,6 +1,0 @@
-function read_Geonor_orifice_temp()
-    dim x, T
-    BrHalf (x,1,mV250,{{RTD__SE:1}},{{RTD__VX:1}},1,250,0,0,250,1.0,0)
-    prt(T,1,x/(1-x),1,0)
-    return T
-endFunction
