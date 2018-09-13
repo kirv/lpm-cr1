@@ -1,7 +1,7 @@
 program-signature
 cf-card-tablefiles
 logmsg
-power-supply
+battery
 panel-temp
 csi-therm109
 sr50a
