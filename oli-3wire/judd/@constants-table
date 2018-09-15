@@ -1,6 +1,6 @@
-const JUDD_DATUM_1 = 0
-const JUDD_DATUM_2 = 0
-const JUDD_DATUM_3 = 0
-const JUDD_DATUM_4 = 0
-const JUDD_DATUM_5 = 0
-const JUDD_DATUM_6 = 0
+const JUDD_1_SN = 6112 : const JUDD_1_DIST0 = 141
+const JUDD_2_SN = 6114 : const JUDD_2_DIST0 = 140
+const JUDD_3_SN = 6110 : const JUDD_3_DIST0 = 138
+const JUDD_4_SN = 6113 : const JUDD_4_DIST0 = 148
+const JUDD_5_SN = 6111 : const JUDD_5_DIST0 = 145
+const JUDD_6_SN = 6109 : const JUDD_6_DIST0 = 147
