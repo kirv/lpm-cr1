@@ -1,4 +1,4 @@
-function htr_relay_control(htr__cp as long, ratio as float, htr_scan as long, htr_period as long) as boolean
+function htr_relay_control(ratio as float, htr_scan as long, htr_period as long) as boolean
     dim elapsed as float
     dim ontime as float
     dim state as boolean
@@ -9,4 +9,5 @@ function htr_relay_control(htr__cp as long, ratio as float, htr_scan as long, ht
     if elapsed > htr_period then timer(htr_scan,sec,2)  '' restart timer
     if ontime < elapsed and ontime > 0 then state = 1 else state = 0
     portSet({{HTR__CP:1}},state)
+    return state
 endfunction

@@ -1,2 +1,1 @@
 average(1,{{VAR:orifice_temp}},fp2,false)
-average(1,gnr_htr_V_supply,fp2,false)

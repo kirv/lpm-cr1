@@ -62,7 +62,6 @@ reduce_params() {
 declare component_dir
 declare -A params
 for component in $(<$order); do
-    warn "COMPONENT: $component"
     resolve_attr "$component" || continue
     component_dir="$attr"
 

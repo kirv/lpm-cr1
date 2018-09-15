@@ -1,0 +1,5 @@
+beginProg
+    scan(10,sec,0,0)
+        voltSE({{VAR:heater_supply}}, 1, mV5000, {{VSPLY__SE:1}}, True, 0, _60Hz, 0.009091, 0)
+    nextScan
+endProg

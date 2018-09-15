@@ -1,0 +1,3 @@
+The Geonor orifice heater pads are powered by a 12V plug-in power supply.  A voltage divider
+is used to measure the supply voltage to the heater pads.  Alternatively a current shunt 
+resistor could be used to measure the current.
