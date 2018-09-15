@@ -50,7 +50,7 @@ reduce_params() {
     entry="${buf%%{{*}"
     buf="${buf#*{{}"
     ## return FALSE if no parameter substituion is needed
-    [[ ${#entry} == ${#buf} ]] && return 1
+    [[ "$entry" == "$buf" ]] && return 1
     tag="${buf%%:*}"
     buf="${buf#*:}"
     val="${buf%%\}\}*}"

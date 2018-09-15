@@ -49,7 +49,7 @@ reduce_params() {
     line="${buf%%{{*}"
     buf="${buf#*{{}"
     ## return FALSE if no parameter substituion is needed
-    [[ ${#line} == ${#buf} ]] && return 1
+    [[ "$line" == "$buf" ]] && return 1
     tag="${buf%%:*}"
     buf="${buf#*:}"
     val="${buf%%\}\}*}"

@@ -2,7 +2,8 @@
 
 # globals: compose global variables, aliases, units for final program 
 
-warn() { printf "%s\n" "$@" >&2; } 
+# warn() { printf "%s\n" "$@" >&2; } 
+warn() { printf "%s\n" "$@"; } 
 error() { warn "$@"; exit 1; } 
 
 ob=.
@@ -57,7 +58,7 @@ reduce_params() {
     line="${buf%%{{*}"
     buf="${buf#*{{}"
     ## return FALSE if no parameter substituion is needed
-    [[ ${#line} == ${#buf} ]] && return 1
+    [[ "$line" == "$buf" ]] && return 1
     tag="${buf%%:*}"
     buf="${buf#*:}"
     val="${buf%%\}\}*}"
@@ -70,11 +71,12 @@ reduce_params() {
 shopt -s nocasematch
 
 declare globals_list
+declare -A params
+declare line
 for component in $(<$order); do
     resolve_attr $component/@globals || continue
     globals_list="$attr"
 
-    declare -A params
     if resolve_symvar ${component}:; then
         for param in $(symvar $attr); do
             params[${param%:*}]=${param#*:}
@@ -83,8 +85,8 @@ for component in $(<$order); do
 
     [[ -n "$BUILD_SHOW_ID" ]] && printf "' %s:\n" "$component"
 
-    while read line; do
-        reduce_params "$line"
+    while IFS= read -r line; do
+        reduce_params "${line%$'\r'}"
         printf "%s\n" "$line"
         # add alias statement if a matching public variable is seen:
         line="${line## }"

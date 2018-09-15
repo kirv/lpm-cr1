@@ -1,10 +1,6 @@
 beginProg
     scan(10,sec,0,0)
-      ' gnr_orifice_T = read_Geonor_orifice_temp({{RTD__SE:1}},{{RTD__VX:1}})
-
-        BrHalf (x,1,mV250,{{RTD__SE:1}},{{RTD__VX:1}},1,250,0,0,250,1.0,0)
-        prt(gnr_orifice_T,1,x/(1-x),1,0)
-      ''voltSE(gnr_htr_V_supply, 1, mV5000, {{VSPLY__SE:7}}, True, 0, _60Hz, 0.009091, 0)
-        voltSE(gnr_htr_V_supply, 1, mV5000, 7, True, 0, _60Hz, 0.009091, 0)
+        {{VAR:orifice_temp}} = read_Geonor_orifice_temp()
+        voltSE(gnr_htr_V_supply, 1, mV5000, {{VSPLY__SE:7}}, True, 0, _60Hz, 0.009091, 0)
     nextScan
 endProg

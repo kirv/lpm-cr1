@@ -2,7 +2,8 @@
 
 # subs: compose subroutines for final program 
 
-error() { printf "%s\n"; exit 1; } 
+warn() { printf "%s\n" "$@"; } 
+error() { printf "%s\n" "$@"; exit 1; } 
 shopt -s nocasematch nullglob
 
 ob=.
@@ -34,14 +35,53 @@ resolve_attr() {
 resolve_attr @order || error "no @order file found"
 order=$attr
 
+resolve_symvar() {
+    for attr in "${search_paths[@]}"; do
+        attr+=/$1
+        test -L $attr && test ! -e $attr && return 
+    done
+    return 1
+}
+
+reduce_params() {
+    ## in global var line, reduce {{TAG,VAL}} to params[TAG] or VAL
+    local buf="$line" tag val
+    line="${buf%%{{*}"
+    buf="${buf#*{{}"
+    ## return FALSE if no parameter substituion is needed
+    [[ "$line" == "$buf" ]] && return 1
+    tag="${buf%%:*}"
+    buf="${buf#*:}"
+    val="${buf%%\}\}*}"
+    buf="${buf#*\}\}}"
+    line+="${params[$tag]-$val}$buf"
+    # recurse until no more expansion remain:
+    reduce_params "$line" || return 0
+}
+
+declare component_dir
+declare -A params
 for component in $(<$order); do
+    warn "COMPONENT: $component"
     resolve_attr "$component" || continue
-    for sub in $attr/@sub:*; do
+    component_dir="$attr"
+
+    if resolve_symvar ${component}:; then
+        for param in $(symvar $attr); do
+            params[${param%:*}]=${param#*:}
+        done
+    fi
+
+    for sub in $component_dir/@sub:*; do
         name=${sub##*:}
         printf "\n"
         [[ -n "$BUILD_SHOW_ID" ]] && 
             printf "' %s:%s()\n" "$component" "$name"
-        cat $sub
+      # cat $sub
+        while IFS=  read -r line; do 
+            reduce_params "$line"
+            printf "%s\n" "$line"
+        done < "$sub"
     done
 done
 
