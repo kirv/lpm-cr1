@@ -1,4 +1,4 @@
 beginProg
-    log("SR50A sensor heights:", SR50A_DATUM_1, SR50A_DATUM_2, SR50A_DATUM_3)
-    log("The SR50A stand is oriented 'downwind'", "sensor 1 is east-most.")
+    log("SR50A sensor heights:", SR50A_1_DIST0, SR50A_2_DIST0, SR50A_3_DIST0)
+    log("The SR50A stand is oriented 'downwind'", "sensor {{VAR:sr50a}}_1 is east-most.")
 endProg

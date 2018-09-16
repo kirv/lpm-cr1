@@ -1,9 +1,10 @@
 beginProg
     scan({{SCAN:60}},Sec,0,0)
-        for i = 1 to {{QTY:1}}
-            SDI12Recorder (sr50a(),{{SDI12__CP:1}},i,"M1!",1,0)
-            {{DVAR:sr50a_dist}}(i) = sr50a(1) * -100
-            {{QVAR:sr50a_qual}}(i) = sr50a(2) 
-        next i
+        SDI12Recorder ({{VAR:sr50a}}_1(),{{SDI12__CP:1}},1,"M1!",1,0)
+        {{VAR:sr50a}}_1 *= 100
+        SDI12Recorder ({{VAR:sr50a}}_2(),{{SDI12__CP:1}},2,"M1!",1,0)
+        {{VAR:sr50a}}_2 *= 100
+        SDI12Recorder ({{VAR:sr50a}}_3(),{{SDI12__CP:1}},3,"M1!",1,0)
+        {{VAR:sr50a}}_3 *= 100
     nextScan
 endProg

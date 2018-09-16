@@ -1,3 +1,4 @@
 DataTable(SR50A,1,-1)
-    sample({{QTY:1}},{{DVAR:sr50a_dist}},fp2)
-    sample({{QTY:1}},{{QVAR:sr50a_qual}},fp2)
+    sample(2,{{VAR:sr50a}}_1,fp2)
+    sample(2,{{VAR:sr50a}}_2,fp2)
+    sample(2,{{VAR:sr50a}}_3,fp2)
