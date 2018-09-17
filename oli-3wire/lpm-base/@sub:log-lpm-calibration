@@ -1,0 +1,10 @@
+sub log_lpm_calibration(id as long)
+    dim ofs as float
+    dim adj as float
+    ofs = lpm_query(id,"AT",-1) : if ofs > 100 then ofs=100-ofs
+    adj = lpm_query(id,"AZ",-1) : if adj > 100 then adj=100-adj
+    log("LPM_{{LPM_ID:0}} interior temperature correction (AT):", ofs, "degC")
+    log("LPM_{{LPM_ID:0}} sensor clock correction (AZ):", adj * 1.44, "sec/day")
+    log("LPM_{{LPM_ID:0}} measuring area (AU):" 4600 * 1000 / lpm_query(id,"AU",-1), "mm^2")
+    log("LPM_{{LPM_ID:0}} precip quantity & intensity correction (AV):" lpm_query(id,"AV",-1), "%")
+endSub

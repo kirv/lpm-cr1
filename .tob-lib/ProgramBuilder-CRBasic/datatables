@@ -158,7 +158,6 @@ for component in $(<$order); do
 done
 
 for table in "${tables[@]}"; do
-    printf "\n"
     [[ -n "$BUILD_SHOW_ID" ]] && 
         printf "' %s: %s\n" "$table" "${t[$table.USEDBY]}"
     printf "%s\n" "${t[$table.1]}"
@@ -166,5 +165,6 @@ for table in "${tables[@]}"; do
         printf "    %s\n" "${t[$table.$n]}"
     done
     printf "%s\n" "endTable"
+    printf "\n"
 done
 

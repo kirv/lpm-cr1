@@ -2,8 +2,7 @@
 
 # globals: compose global variables, aliases, units for final program 
 
-# warn() { printf "%s\n" "$@" >&2; } 
-warn() { printf "%s\n" "$@"; } 
+warn() { printf "%s\n" "$@" >&2; } 
 error() { warn "$@"; exit 1; } 
 
 ob=.
@@ -70,12 +69,12 @@ reduce_params() {
 
 shopt -s nocasematch
 
-declare globals_list
+declare globals_file
 declare -A params
 declare line
 for component in $(<$order); do
     resolve_attr $component/@globals || continue
-    globals_list="$attr"
+    globals_file="$attr"
 
     if resolve_symvar ${component}:; then
         for param in $(symvar $attr); do
@@ -102,6 +101,6 @@ for component in $(<$order); do
             printf "%salias %s = %s\n" "$padding" $var "${aliases[$var]}"
         done
     
-    done < $globals_list
+    done < $globals_file
     printf "\n"
 done

@@ -1,3 +1,3 @@
-const SR50A_1_SN = 7579 : const SR50A_1_DIST0 = 141
-const SR50A_2_SN = 7583 : const SR50A_2_DIST0 = 128
-const SR50A_3_SN = 7576 : const SR50A_3_DIST0 = 128
+const SR50A_1 = "sn: 7579, sensor_height: 141"
+const SR50A_2 = "sn: 7583, sensor_height: 128"
+const SR50A_3 = "sn: 7576, sensor_height: 128"

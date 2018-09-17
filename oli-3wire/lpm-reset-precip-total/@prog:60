@@ -1,12 +1,13 @@
 beginProg
     Scan (60,sec,1,-1)
         if timeIntoInterval(0,1,day) then
-            '' emit message with several parameters, then zero precip total:
-            log("LPM:" & lpm_query({{LPM_ID:0}},"ZT",-1), _
-                lpm_query({{LPM_ID:0}},"ZB",-1) & " hrs", _
-                "errors:" + LPM_error_bits, _
-                "warnings:" + LPM_warning_bits)
-             '' LPM_precip_qty & " mm in " & lpm_query({{LPM_ID:0}},"PT",-1) & " hrs")
+            splitStr (LPM_fields(),telegram,SEMICOLON,524,5)
+            log("LPM_{{LPM_ID:0}}:" & lpm_query({{LPM_ID:0}},"ZT",-1), _
+                "running " & lpm_query({{LPM_ID:0}},"ZB",-1) & " hrs", _
+                "errs: " + LPM_error_bits, _
+                "warn: " + LPM_warning_bits, _
+                "precip " & LPM_fields(17) & " mm in " & lpm_query({{LPM_ID:0}},"PT",-1) & " hrs")
+         '' '' we could reset precip totalizer at midnight, or maybe on some other interval?
          '' lpm_query({{LPM_ID:0}},"RA")
         endif
     NextScan

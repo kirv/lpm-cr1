@@ -1,5 +1,4 @@
-' Geonor model, transducers serial numbers and calibration constants:
 const GEONOR_MODEL = "T-200B3 - 600mm"
-const GNR1_SN = "343-16", GNR1_F0 = "1051.3" : const GNR1_A = "0.0165307" : const GNR1_B = "0.00000917639"
-const GNR2_SN = "652-17", GNR2_F0 = "?" : const GNR2_A = "?" : const GNR2_B = "?"
-const GNR3_SN = "651-17", GNR3_F0 = "?" : const GNR3_A = "?" : const GNR3_B = "?"
+const GEONOR_XDCR_1 = "sn: 343-16, f0: 1051.3, A: .0165307, B: .00000917639"
+const GEONOR_XDCR_2 = "sn: 652-17, f0:       , A:         , B:             "
+const GEONOR_XDCR_3 = "sn: 651-17, f0:       , A:         , B:             "

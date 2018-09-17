@@ -124,15 +124,14 @@ for component in $(<$order); do
 
         test -n "${#replace[@]}" && macro_replace "${line%=*}" "${line#*=}"
 
-        [[ -n "$BUILD_SHOW_ID" && -z "$id" ]] && const+=("" "' $component:") && id=1
+        [[ -n "$BUILD_SHOW_ID" && -z "$id" ]] && const+=("' $component:") && id=1
 
         const+=("$line")
     done < $const_file
+    const+=("")
 done
 
-printf "\n"
 printf "constTable\n"
 printf "    %s\n" "${const[@]}"
 printf "endConstTable\n"
 printf "\n"
-

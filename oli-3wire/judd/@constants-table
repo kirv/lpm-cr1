@@ -1,6 +1,6 @@
-const JUDD_1_SN = 6112 : const JUDD_1_DIST0 = 141
-const JUDD_2_SN = 6114 : const JUDD_2_DIST0 = 140
-const JUDD_3_SN = 6110 : const JUDD_3_DIST0 = 138
-const JUDD_4_SN = 6113 : const JUDD_4_DIST0 = 148
-const JUDD_5_SN = 6111 : const JUDD_5_DIST0 = 145
-const JUDD_6_SN = 6109 : const JUDD_6_DIST0 = 147
+const JUDD_1 = "sn: 6112, sensor_height: 141"
+const JUDD_2 = "sn: 6114, sensor_height: 140"
+const JUDD_3 = "sn: 6110, sensor_height: 138"
+const JUDD_4 = "sn: 6113, sensor_height: 148"
+const JUDD_5 = "sn: 6111, sensor_height: 145"
+const JUDD_6 = "sn: 6109, sensor_height: 147"

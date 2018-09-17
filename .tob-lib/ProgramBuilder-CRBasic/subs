@@ -73,7 +73,6 @@ for component in $(<$order); do
 
     for sub in $component_dir/@sub:*; do
         name=${sub##*:}
-        printf "\n"
         [[ -n "$BUILD_SHOW_ID" ]] && 
             printf "' %s:%s()\n" "$component" "$name"
       # cat $sub
@@ -81,6 +80,7 @@ for component in $(<$order); do
             reduce_params "$line"
             printf "%s\n" "$line"
         done < "$sub"
+        printf "\n"
     done
 done
 

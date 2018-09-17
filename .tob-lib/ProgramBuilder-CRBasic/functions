@@ -72,7 +72,6 @@ for component in $(<$order); do
 
     for function in $component_dir/@function:*; do
         name=${function##*:}
-        printf "\n"
         [[ -n "$BUILD_SHOW_ID" ]] && 
             printf "' %s:%s()\n" "$component" "$name"
       # cat $function
@@ -80,6 +79,7 @@ for component in $(<$order); do
             reduce_params "$line"
             printf "%s\n" "$line"
         done < "$function"
+        printf "\n"
     done
 done
 

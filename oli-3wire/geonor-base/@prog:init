@@ -1,6 +1,5 @@
 beginProg
-    log("Geonor vibrating wire transducers:")
-    log("GNR1 SN, F0, A, B:",GNR1_SN,GNR1_F0,GNR1_A,GNR1_B)
-    log("GNR2 SN, F0, A, B:",GNR2_SN,GNR2_F0,GNR2_A,GNR2_B)
-    log("GNR3 SN, F0, A, B:",GNR3_SN,GNR3_F0,GNR3_A,GNR3_B)
+    log("Geonor_xdcr_1 --", GEONOR_XDCR_1)
+    log("Geonor_xdcr_2 --", GEONOR_XDCR_2)
+    log("Geonor_xdcr_3 --", GEONOR_XDCR_3)
 endProg
