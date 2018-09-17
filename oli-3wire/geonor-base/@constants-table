@@ -1,12 +1,5 @@
-'' Geonor nameplate data:
+' Geonor model, transducers serial numbers and calibration constants:
 const GEONOR_MODEL = "T-200B3 - 600mm"
-
-' Geonor transducer serial numbers, pulse input channels:
-const GNR1_SN = 0
-const GNR2_SN = 0
-const GNR3_SN = 0
-
-' Geonor transducer calibration constants:
-const GNR1_F0 = 1 : const GNR1_A = 1 : const GNR1_B = 1
-const GNR2_F0 = 1 : const GNR2_A = 1 : const GNR2_B = 1
-const GNR3_F0 = 1 : const GNR3_A = 1 : const GNR3_B = 1
+const GNR1_SN = "343-16", GNR1_F0 = "1051.3" : const GNR1_A = "0.0165307" : const GNR1_B = "0.00000917639"
+const GNR2_SN = "652-17", GNR2_F0 = "?" : const GNR2_A = "?" : const GNR2_B = "?"
+const GNR3_SN = "651-17", GNR3_F0 = "?" : const GNR3_A = "?" : const GNR3_B = "?"
