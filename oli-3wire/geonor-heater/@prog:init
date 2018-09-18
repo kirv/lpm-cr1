@@ -1,4 +1,5 @@
 beginProg
     gnr_htr_scan = {{HTR_SCAN:10}}
     gnr_htr_period = {{HTR_PERIOD:60}}
+    portset(4,true)
 endProg
