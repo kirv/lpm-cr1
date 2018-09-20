@@ -1,0 +1,4 @@
+Automatic LPM telegram output is disabled.  Set constant LPM_TELEGRAM
+to a telegram number to query every minute.  If checksum fails, the
+first character (normally STX) is set to '?', but the telegram
+string is logged in any case.

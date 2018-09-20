@@ -1,2 +1,0 @@
-public depth({{QTY:1}}) : units depth() = cm
-public AT_sd({{QTY:1}}) : units AT_sd() = degC

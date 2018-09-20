@@ -1,0 +1,2 @@
+public {{TVAR:judd_temp}}({{QTY:1}}) as float : units {{TVAR:judd_temp}} = degC 
+public {{DVAR:judd_dist}}({{QTY:1}}) as float : units {{DVAR:judd_dist}} = cm 

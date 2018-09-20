@@ -1,0 +1,438 @@
+
+constTable
+    const SR50A_DATUM_1 = 0
+    const SR50A_DATUM_2 = 0
+    const SR50A_DATUM_3 = 0
+    const JUDD_DATUM_1 = 0
+    const JUDD_DATUM_2 = 0
+    const JUDD_DATUM_3 = 0
+    const JUDD_DATUM_4 = 0
+    const JUDD_DATUM_5 = 0
+    const JUDD_DATUM_6 = 0
+    '' Geonor nameplate data:
+    const GEONOR_MODEL = "T-200B3 - 600mm"
+    
+    ' Geonor transducer serial numbers, pulse input channels:
+    const GNR1_SN = 0
+    const GNR2_SN = 0
+    const GNR3_SN = 0
+    
+    ' Geonor transducer calibration constants:
+    const GNR1_F0 = 1 : const GNR1_A = 1 : const GNR1_B = 1
+    const GNR2_F0 = 1 : const GNR2_A = 1 : const GNR2_B = 1
+    const GNR3_F0 = 1 : const GNR3_A = 1 : const GNR3_B = 1
+    const LPM_NAME  = "Laser Precipitation Monitor"
+    const LPM_MODEL = "5.4110.11.100"
+    
+endConstTable
+
+const STX = chr(2)
+const ETX = chr(3)
+const LF = chr(10)
+const CR = chr(13)
+const SEMICOLON = ";"
+const QUESTION = "?"
+const BANG = "!"
+
+public progSig as long
+
+dim msg as string * 80
+
+public pwrSupply : units pwrSupply = Volts
+
+public panelTemp : units panelTemp = degC
+
+public sr50a_temp : units sr50a_temp = degC
+
+public sr50a_dist(3) as float : units sr50a_dist = cm
+public sr50a_qual(3) as long
+dim sr50a(2)
+dim i
+
+public judd_temp(6) as float : units judd_temp = degC
+public judd_dist(6) as float : units judd_dist = cm
+
+public gnr_freq(3)     : units gnr_freq = Hz
+
+public lpm_command as string * 10
+public lpm_results as string * 2233
+public lpm_err_msg as string * 80
+public lpm_checksum as long 
+dim logger_time(9) as long
+
+public telegram_query_tries as long
+dim telegram as string * 2233
+dim LPM(524) as string
+
+public LPM_flags(2) as long : alias LPM_flags = lpm_error_bits, lpm_warning_bits
+
+dim lpm_error_msgs(6) as string * 40 = { _     '' LPM error flags are in DX[1..6]
+"static signal out of range", _
+"laser temp (analog) too high", _
+"laser temp (digital) too high", _
+"laser current (analog) too high", _
+"laser current (digital) too high", _
+"sensor supply out of range" _
+}
+
+dim lpm_warning_msgs(9) as string * 40 = { _   '' LPM warning flags are in DX'[7..15]
+"current: pane heating laser head", _
+"current: pane heating receiver head", _
+"temperature sensor", _
+"heating supply out of allowed range", _
+"current: heating housing", _
+"current: heating heads", _
+"current: heating carriers", _
+"control output laser power high", _
+"not used" _
+}
+
+'' LPM diagnostic analog data from DD[1..13]
+public LPM_state_vars(13) as float
+alias LPM_state_vars = T_interior__C, T_laserdrvr__C, I_laser__mA, _
+V_control__mV, V_optical__mV, V_sensor__V, I_laser_pane__mA, _
+I_recvr_pane__mA, T_ambient__C, V_heating__V, I_housing__mA, _
+I_heads__mA, I_carriers__mA
+
+
+dataTable(Geonor,1,-1)
+    datainterval(0,10,sec,0)
+    sample(1,progSig,uint2)
+    tableFile("CRD:Geonor-",8,-1,0,1,Day,0,0)
+    sample(3,gnr_freq,ieee4)
+endTable
+
+dataTable(Geonor_heater,1,-1)
+    datainterval(0,60,sec,0)
+    sample(1,progSig,uint2)
+    tableFile("CRD:Geonor_heater-",8,-1,0,1,Day,0,0)
+endTable
+
+dataTable(Judd,1,-1)
+    datainterval(0,60,sec,0)
+    sample(1,progSig,uint2)
+    tableFile("CRD:Judd-",8,-1,0,1,Day,0,0)
+    sample(6,judd_dist,fp2)
+    sample(6,judd_temp,fp2)
+endTable
+
+dataTable(LPM,1,-1)
+    datainterval(0,60,sec,0)
+    sample(1,progSig,uint2)
+    tableFile("CRD:LPM-",8,-1,0,1,Day,0,0)
+    sample(1,telegram,String)
+endTable
+
+dataTable(LPM_status,1,-1)
+    datainterval(0,60,sec,0)
+    tableFile("CRD:LPM_status-",8,-1,0,1,Day,0,0)
+    sample(2,LPM_flags,uint2)
+    sample(13,LPM_state_vars,fp2)
+endTable
+
+dataTable(Logger,1,-1)
+    datainterval(0,60,sec,0)
+    tableFile("CRD:Logger-",8,-1,0,1,Day,0,0)
+    sample(1,pwrSupply,fp2)
+    sample(1,panelTemp,fp2)
+endTable
+
+dataTable(Messages,1,100)
+    sample(1,progSig,uint2)
+    tableFile("CRD:Messages-",8,-1,0,0,0,0,0)
+    sample(1,msg,string)
+endTable
+
+dataTable(SR50A,1,-1)
+    datainterval(0,60,sec,0)
+    sample(1,progSig,uint2)
+    tableFile("CRD:SR50A-",8,-1,0,1,Day,0,0)
+    sample(1,sr50a_temp,fp2)
+    sample(3,sr50a_dist,fp2)
+    sample(3,sr50a_qual,fp2)
+endTable
+
+function lpm_calc_cksum(telegram as string * 2233) as long
+    '' sum of non-checksum bytes plus checksum should result in 0x00 in last byte
+    dim N as long, H as long, L as long, S as long, i as long
+    N = len(telegram)
+    H = ascii(telegram(1,1,N-5)) : L = ascii(telegram(1,1,N-4))
+    S = 0 - H - L
+    if H>=48 AND H<=57 then H-=48 else if H>=65 AND H<=70 then H-=55
+    if L>=48 AND L<=57 then L-=48 else if L>=65 AND L<=70 then L-=55
+    S += H*16 + L
+    for i = 1 to N : S += ascii(telegram(1,1,i)) : next i
+    return S
+endFunction
+
+function lpm_query(id as long, cmd as string, param as long) as string * 2233
+    '' NOTE: param = -1 omits parameter
+    dim value as long
+
+    select case param
+    case -1
+        sprintf(lpm_command, "%02d%s", id, uppercase(cmd))
+    case 0 to 99999
+        sprintf(lpm_command, "%02d%s%05d", id, uppercase(cmd), param)
+    case else
+        lpm_err_msg = "rejected: invalid parameter" : lpm_command="" : lpm_results=""
+        return QUESTION & QUESTION & lpm_err_msg
+    endselect
+
+    serialOut(Com1, CR & lpm_command & CR,"",0,0)
+    
+    select case uppercase(cmd)
+    case "TR"
+        serialIn(lpm_results,Com1,300,ETX,2233)
+    case "??"
+        serialIn(lpm_results,Com1,30,LF,2233)
+        '' output begins with "User commands", so look for "U" below
+    case else
+        serialin(lpm_results,Com1,300,CR,80)
+        lpm_results = mid(lpm_results, 1, len(lpm_results))
+    endselect
+
+    select case left(lpm_results,1)
+    case BANG
+        '' examples: "!00BR00005", "!00CI00002"
+        select case mid(lpm_results,4,2)
+        case "CI"
+            lpm_err_msg = lpm_results
+            select case right(lpm_results,1)
+            case 0  : lpm_err_msg &= ": invalid parameter"      '' !00CI00000
+            case 2  : lpm_err_msg &= ": unknown command"        '' !00CI00002
+            case 4  : lpm_err_msg &= ": parameter out of range" '' !00CI00004
+            case 8  : lpm_err_msg &= ": config mode required"   '' !00CI00008
+            endselect
+            return QUESTION & lpm_err_msg
+        case uppercase(cmd)
+            '' command confirmed, so return numeric parameter
+            value = mid(lpm_results,6,5)
+            lpm_err_msg = ""
+            return value
+        case else
+            lpm_err_msg = "unexpected:" & lpm_results
+            return QUESTION & QUESTION & lpm_err_msg
+        endselect
+    case STX
+        '' framed telegram output with checksum
+        lpm_checksum = lpm_calc_cksum(lpm_results)
+        if (lpm_checksum and &h0FF) = 0 then
+            lpm_err_msg = ""
+            return lpm_results
+        else
+            lpm_results = QUESTION & mid(lpm_results,2,2233)
+            sprintf(msg,"DEBUG: %s, length: %d, checksum bad: 0x%X", _
+                    lpm_command, len(lpm_results), lpm_checksum)
+            calltable Messages
+            lpm_err_msg = "telegram checksum failed"
+        endif
+    case "U"
+        '' LPM help output from "??" command starts with "User commands:"
+        lpm_err_msg = ""
+        return lpm_results
+    case else
+        '' simple data output from DD, DX, FM, PT, DA, ZT
+        lpm_err_msg = ""
+        return lpm_results
+    endselect
+endfunction
+
+sub log(optional s as string * 80 = "MARK", _
+    optional t as string * 40 = "", optional u as string * 40 = "", _
+    optional v as string * 40 = "", optional w as string * 40 = "", _
+    optional x as string * 40 = "", optional y as string * 40 = "")
+    msg = s & " " & t & " " & u & " " & v & " " & w & " " & x & " " & y
+    msg = trim(msg)
+    calltable(Messages)
+endsub
+
+sub get_LPM_flags(id as long)
+    dim i as long
+    dim mask as long
+    dim flag as long
+    dim dx(15) as long
+    dim fm(15) as long
+    dim got_counts as boolean
+    dim msg as string * 60
+
+    '' note that the first (or 0th) entry in DX is ignored!
+    splitStr (dx(),mid(lpm_query(id,"DX",-1),3,31),SEMICOLON,15,5)
+    splitStr (fm(),lpm_query(id,"FM",-1),SEMICOLON,15,5)
+
+    '' LPM error flags are in DX[2..7] or DX'[1..6], counts are in FM[1..6]
+    mask = 1
+    for i = 1 to 6
+        msg = ""
+        flag = dx(i)
+        if flag = 1 and (LPM_error_bits AND mask) = 0 then
+            LPM_error_bits = LPM_error_bits OR mask 
+            sprintf(msg, "ERROR %d: %s (count:%d)", _
+                    i, lpm_error_msgs(i), fm(i))
+        endif
+        if flag = 0 and (LPM_error_bits AND mask) > 0 then
+            LPM_error_bits = LPM_error_bits XOR mask 
+            sprintf(msg, "ERROR %d TURNED OFF: %s (count:%d)", _
+                    i, lpm_error_msgs(i), fm(i))
+        endif
+        if msg <> "" then log(msg)
+        mask *= 2
+    next i
+
+    '' LPM warning flags are in DX[8..16]) or DX'[7..15]), counts are in FM[7..15]
+    mask = 1
+    for i = 1 to 8
+        msg = ""
+        flag = dx(6+i)
+        if flag = 1 and (LPM_warning_bits AND mask) = 0 then
+            LPM_warning_bits = LPM_warning_bits OR mask 
+            sprintf(msg, "WARNING %d: %s, (count:%d)", _
+                    6+i, lpm_warning_msgs(i), fm(6+i))
+        endif
+        if flag = 0 and (LPM_warning_bits AND mask) > 0 then
+            LPM_warning_bits = LPM_warning_bits XOR mask 
+            sprintf(msg, "WARNING %d TURNED OFF: %s (count:%d)", _
+                    6+i, lpm_warning_msgs(i), fm(6+i))
+        endif
+        if msg <> "" then log(msg)
+        mask *= 2
+    next i
+endsub
+
+sub get_LPM_diagnostics(id as long)
+    dim i as long
+    dim dd(13) as long
+    splitStr (dd(),lpm_query(id,"DD",-1),SEMICOLON,13,5)
+    '' LPM analog diagnostic data from DD[1..13]
+    for i = 1 to 13
+        LPM_state_vars(i) = dd(i)
+        if i = 3 then I_laser__mA /= 100
+        if i = 6 then V_sensor__V /= 10
+        if i = 10 then V_heating__V /= 10
+    next i
+endsub
+
+beginProg
+    progSig = status.ProgSignature
+    log()
+    log("SR50A sensor heights:", SR50A_DATUM_1, SR50A_DATUM_2, SR50A_DATUM_3)
+    log("The SR50A stand is oriented 'downwind'", "sensor 1 is east-most.")
+    log("Judd sensor heights:",JUDD_DATUM_1,JUDD_DATUM_2,JUDD_DATUM_3,JUDD_DATUM_4,JUDD_DATUM_5,JUDD_DATUM_6)
+    log("Judd(1) is A1, east-most on downwind stand; and Judd(4) is B1, north-most, crosswind")
+    log("Geonor wire transducer constants follow:")
+    sprintf(msg,"GNR1: A=%.12g, B=%.12g, F0=%.12g, SN=%d",GNR1_A,GNR1_B,GNR1_F0,GNR1_SN)
+    log(msg)
+    sprintf(msg,"GNR2: A=%.12g, B=%.12g, F0=%.12g, SN=%d",GNR2_A,GNR2_B,GNR2_F0,GNR2_SN)
+    log(msg)
+    sprintf(msg,"GNR3: A=%.12g, B=%.12g, F0=%.12g, SN=%d",GNR3_A,GNR3_B,GNR3_F0,GNR3_SN)
+    log(msg)
+    '' set logger port to match the LPM through the MD485 rs232-to-rs485 device
+    serialOpen (Com1,9600,0,300,4000)
+
+    '' put instrument in config mode:
+    if lpm_query(0,"KY",1) <> "1" then log("CONFIG MODE FAILED")
+
+    '' log LPM baud rate and interface mode (should be 9600, half duplex)
+    log("LPM baud rate, BR :", lpm_query(0,"BR",-1), "(5=9600,6=19200,9=115200)")
+    log("LPM comm mode, BD :", lpm_query(0,"BD",-1), "(0=full-,1=half-duplex)")
+
+    '' turn off automatic data telegram output
+    log("LPM auto telegram output: TM :", lpm_query(0,"TM",0))
+
+    '' set the LPM clock from the logger at startup:
+    realtime(logger_time) '' 1:year, 2:month, 3:day, 4:hour, 5:minute, 6:second
+    lpm_query(0,"ZS", logger_time(6))
+    lpm_query(0,"ZM", logger_time(5))
+    lpm_query(0,"ZH", logger_time(4))
+    lpm_query(0,"ZD", logger_time(3))
+    lpm_query(0,"ZN", logger_time(2))
+    lpm_query(0,"ZY", logger_time(1) mod 100)
+    log("LPM clock set from logger:", lpm_query(0,"ZT",-1))
+    log("LPM runtime:", lpm_query(0,"ZB",-1), "hrs")
+
+    '' put instrument in normal command mode:
+    if lpm_query(0,"KY",0) <> "0" then log("WARNING: CONFIG MODE FAILED TO TURN OFF")
+
+    scan(10,sec,0,0)
+        '' measure vibrating wire cycles since last scan, save as frequency
+        pulseCount(gnr_freq(1),1,1,0,1,1.0,0)
+        pulseCount(gnr_freq(2),1,2,0,1,1.0,0)
+        pulseCount(gnr_freq(3),1,18,0,1,1.0,0)
+    
+        callTable(Geonor)
+    
+    nextScan
+
+    slowSequence
+    scan(60,sec,0,0)
+        battery(pwrSupply)
+    
+        panelTemp(panelTemp,250)
+    
+        therm109(sr50a_temp,1,15,1,0,250,1,0)
+    
+        for i = 1 to 3
+            SDI12Recorder (sr50a(),3,i,"M1!",1,0)
+            sr50a_dist(i) = sr50a(1) * -100
+            sr50a_qual(i) = sr50a(2) 
+        next i
+    
+        '' Query sensors on A and B stands in pairs of furthest-apart sensors.
+        portSet(5, 1)              
+        delay(0,800,MSEC)
+        voltDiff(judd_temp(1), 2, mV5000, 1, True, 0, 250, 0.1, -273.15) 
+        delay(0,1800,MSEC)
+        voltDiff(judd_dist(1), 2, mV5000, 1, True, 0, 250, 0.25, 0) 
+        portSet(5, 0)              
+
+        portSet(6, 1)              
+        delay(0,800,MSEC)
+        voltDiff(judd_temp(3), 2, mV5000, 3, True, 0, 250, 0.1, -273.15) 
+        delay(0,1800,MSEC)
+        voltDiff(judd_dist(3), 2, mV5000, 3, True, 0, 250, 0.25, 0) 
+        portSet(6, 0)              
+
+        portSet(7, 1)              
+        delay(0,800,MSEC)
+        voltDiff(judd_temp(3), 2, mV5000, 5, True, 0, 250, 0.1, -273.15) 
+        delay(0,1800,MSEC)
+        voltDiff(judd_dist(3), 2, mV5000, 5, True, 0, 250, 0.25, 0) 
+        portSet(7, 0)              
+    
+        '' every minute, read data telegram from the LPM
+        '' retry query if LPM returns "!TR00001", which means: telegram not available
+        '' NOTE: STX has been replaced by "?" if the checksum failed!
+        telegram_query_tries = 0
+        do
+            delay(0,1,sec)
+            telegram = lpm_query(0, "TR", 5)
+            telegram_query_tries += 1
+        loop until telegram <> 1 or telegram_query_tries > 3
+        callTable LPM
+        SplitStr (LPM(),telegram,SEMICOLON,524,5)
+        LPM(1) = right(LPM(1),2)    ' remove <STX> from LPM ID code NN
+    
+        get_LPM_flags(0)
+    
+        get_LPM_diagnostics(0)
+    
+        if timeIntoInterval(0,1,day) then
+            '' emit message with several parameters, then zero precip total:
+            log("LPM:" & lpm_query(0,"ZT",-1), _
+                lpm_query(0,"ZB",-1) & " hrs", _
+                "errors:" + LPM_error_bits, _
+                "warnings:" + LPM_warning_bits)
+             '' LPM_precip_qty & " mm in " & lpm_query(0,"PT",-1) & " hrs")
+         '' lpm_query(0,"RA")
+        endif
+    
+        callTable(Geonor_heater)
+        callTable(logger)
+        callTable(judd)
+        callTable(sr50A)
+        callTable(LPM)
+        callTable(LPM_status)
+    
+    nextScan
+
+endProg

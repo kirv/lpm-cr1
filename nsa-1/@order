@@ -1,0 +1,15 @@
+program-signature
+cf-card-tablefiles
+logmsg
+battery
+panel-temp
+csi-therm107
+sr50a
+lpm-base
+lpm-telegram
+lpm-flags
+lpm-state
+lpm-reset-precip-total
+call-datatables
+
+

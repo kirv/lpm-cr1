@@ -1,0 +1,2 @@
+DataTable(Geonor_heater,1,-1)
+    sample(1,{{VAR:{{VAR:progSig}},uint2)

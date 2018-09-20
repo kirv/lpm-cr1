@@ -1,0 +1,4 @@
+Datatables are defined, to include datatable() and dataInterval() instructions, and
+also sample() of the proSig value to identify the working program that generated the
+data by the program signature.  Output to a CF memory card is defined by the
+tableFile() instruction.

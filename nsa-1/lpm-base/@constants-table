@@ -1,0 +1,3 @@
+const LPM_NAME  = "Laser Precipitation Monitor"
+const LPM_MODEL = "5.4110.11.100"
+

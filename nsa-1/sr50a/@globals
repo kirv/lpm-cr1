@@ -1,0 +1,4 @@
+public {{DVAR:sr50a_dist}}({{QTY:1}}) as float : units {{DVAR:sr50a_dist}} = cm 
+public {{QVAR:sr50a_qual}}({{QTY:1}}) as long
+dim sr50a(2)
+dim i

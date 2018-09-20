@@ -1,0 +1,8 @@
+beginProg
+    Scan(60,sec,0,0)
+        callTable(logger)
+        callTable(sr50A)
+        callTable(LPM)
+        callTable(LPM_status)
+    NextScan
+endProg
