@@ -2,13 +2,12 @@ beginProg
     Scan (60,sec,1,-1)
         '' Read LPM data telegram every minute.
         '' Retry query if LPM returns "!TR00001", which means: telegram not available.
-        '' NOTE: STX is replaced by "?" if the checksum failed, but telegram is still logged.
         telegram_query_tries = 0
         do
             delay(0,1,sec)
-            telegram = lpm_query({{LPM_ID:0}}, "TR", {{LPM_TELEGRAM:8}})
+            lpm_query({{LPM_ID:0}}, "TR", {{LPM_TELEGRAM:8}})
             telegram_query_tries += 1
-        loop until telegram <> 1 or telegram_query_tries > 3
+        loop until lpm_results <> 1 or telegram_query_tries > 3
         callTable LPM
     NextScan
 endProg

@@ -1,1 +1,2 @@
-sample(1,telegram,String)
+sample(1,lpm_checksum,unit2)
+sample(1,lpm_results,String)

@@ -8,6 +8,6 @@ function htr_relay_control(ratio as float, htr_scan as long, htr_period as long)
     if ontime < htr_scan then ontime = 0
     if elapsed > htr_period then timer(htr_scan,sec,2)  '' restart timer
     if ontime < elapsed and ontime > 0 then state = 1 else state = 0
-    portSet({{HTR__CP:1}},state)
+    portSet(HTR_RELAY__CP,state)
     return state
 endfunction

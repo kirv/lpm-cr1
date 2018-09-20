@@ -1,10 +1,7 @@
 beginProg
     scan({{SCAN:60}},Sec,0,0)
-        SDI12Recorder ({{VAR:sr50a}}_1(),{{SDI12__CP:1}},1,"M1!",1,0)
-        {{VAR:sr50a}}_1 *= 100
-        SDI12Recorder ({{VAR:sr50a}}_2(),{{SDI12__CP:1}},2,"M1!",1,0)
-        {{VAR:sr50a}}_2 *= 100
-        SDI12Recorder ({{VAR:sr50a}}_3(),{{SDI12__CP:1}},3,"M1!",1,0)
-        {{VAR:sr50a}}_3 *= 100
+        SDI12Recorder ({{VAR:sr50a}}_1(),{{SDI12__CP:1}},1,"M1!",1,0) : {{VAR:sr50a}}_1 *= 100
+        SDI12Recorder ({{VAR:sr50a}}_2(),{{SDI12__CP:1}},2,"M1!",1,0) : {{VAR:sr50a}}_2 *= 100
+        SDI12Recorder ({{VAR:sr50a}}_3(),{{SDI12__CP:1}},3,"M1!",1,0) : {{VAR:sr50a}}_3 *= 100
     nextScan
 endProg

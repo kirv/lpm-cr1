@@ -1,3 +1,2 @@
 public telegram_query_tries as long
-dim telegram as string * 2233
 dim lpm_fields(524) as string

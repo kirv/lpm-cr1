@@ -1,5 +1,4 @@
 public lpm_command as string * 10
 public lpm_results as string * 2233
-public lpm_err_msg as string * 80
 public lpm_checksum as long 
 dim logger_time(9) as long

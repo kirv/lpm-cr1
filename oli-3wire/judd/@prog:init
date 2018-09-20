@@ -5,6 +5,6 @@ beginProg
     log("judd_4 --:", JUDD_4)
     log("judd_5 --:", JUDD_5)
     log("judd_6 --:", JUDD_6)
-    log("judd_1 is east-most on downwind stand"
-    log("judd_4 is north-most on crosswind stand")
+    log(JUDD_123_INFO)
+    log(JUDD_456_INFO)
 endProg

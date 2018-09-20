@@ -1,1 +1,1 @@
-average(1,{{VAR:heater_supply}},fp2,false)
+sample(1,{{VAR:heater_supply}},fp2)

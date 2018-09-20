@@ -8,5 +8,5 @@ function lpm_calc_cksum(telegram as string * 2233) as long
     if L>=48 AND L<=57 then L-=48 else if L>=65 AND L<=70 then L-=55
     S += H*16 + L
     for i = 1 to N : S += ascii(telegram(1,1,i)) : next i
-    return S
+    return S AND &h0FF
 endFunction

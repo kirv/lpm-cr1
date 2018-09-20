@@ -1,1 +1,1 @@
-average(1,{{VAR:orifice_temp}},fp2,false)
+sample(1,{{VAR:orifice_temp}},fp2)

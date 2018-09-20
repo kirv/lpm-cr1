@@ -2,5 +2,5 @@ beginProg
     log("sr50a_1 --", SR50A_1_INFO)
     log("sr50a_2 --", SR50A_2_INFO)
     log("sr50a_3 --", SR50A_3_INFO)
-    log("sr50a_1 is east-most on downwind stand"
+    log(SR50A_123_INFO)
 endProg
