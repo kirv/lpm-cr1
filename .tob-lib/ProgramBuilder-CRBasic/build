@@ -3,6 +3,15 @@
 warn() { printf "%s\n" "$@" >&2; }
 error() { warn "$@"; exit 1; }
 
+get_header_lines() {
+    ob="$1" && shift
+    local -a hdrs
+    [[ -L $ob/name && ! -e $ob/name ]] &&
+        hdrs+=( "$(symvar $ob/name)" ) 
+    hdrs+=("crbasic program generated $(date)")
+    printf "' %s\n" "${hdrs[@]}"
+}
+
 main() {
     local site
     local -a chunks=(
@@ -20,8 +29,10 @@ main() {
 
     local save_output
     local -a sig
+    local HEADER=1
     while [[ ${1:0:1} == "-" ]]; do
         case "$1" in
+        --no-header) HEADER=; shift ;;
         --chunk | --chunks)     chunks=($2); shift ;;
         --show-id | --show-ids) export BUILD_SHOW_ID=1 ;;
         --no-notes)             export BUILD_NO_NOTES=1 ;;
@@ -40,6 +51,8 @@ main() {
         exec 1> $site/v/prog.cr1 ||
             error "$site/v/ container does not exist; HINT: mkdir $site/v to use --save"
     }
+
+    [[ -n $HEADER ]] && get_header_lines "$site"
 
     for chunk in "${chunks[@]}"; do  
         $chunk $site "$@"
@@ -79,6 +92,9 @@ OPTIONS
 
     --help
         Show manpage and exit.
+
+    --no-header
+        Suppress default action of including one or more header lines at the top of the program.
 
     --show-id
         Include a comment line identifying each component in the output.

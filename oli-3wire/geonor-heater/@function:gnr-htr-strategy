@@ -1,4 +1,4 @@
-function gnr_htr_strategy({ambient_temp, orifice_temp) as float
+function gnr_htr_strategy(ambient_temp, orifice_temp) as float
     '' OUTPUT RATIO SHOULD BE >=0 AND <=1
     '' the output is the ratio of time on vs time off over the heater duty cycle period
     '' rather arbitary heater control strategy: 
