@@ -1,0 +1,2 @@
+dataTable("Messages",1,100)
+    sample(1,{{VAR:progSig}},uint2)

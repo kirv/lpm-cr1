@@ -1,0 +1,10 @@
+'' Judd Communications depth senor wiring diagram:
+'' 
+''  wire    purpose     datalogger
+''  ______________________________
+''  GRN     enable      C1
+''  WHT     signal +    SE
+''  BLK     GND         AG
+''  RED     power       +12V
+''  Clear   shield      G
+

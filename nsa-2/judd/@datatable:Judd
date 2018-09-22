@@ -1,0 +1,3 @@
+DataTable(Judd,1,-1)
+    sample({{QTY:1}},{{DVAR:judd_dist}},fp2)
+    sample({{QTY:1}},{{TVAR:judd_temp}},fp2)

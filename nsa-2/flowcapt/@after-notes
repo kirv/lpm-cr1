@@ -1,0 +1,9 @@
+ISAW FlowCapt measures particle flux (g/m^2/s) and wind speed (km/hr) by acoustic means.
+Wind speed is rescaled after measurement to m/s.
+Wiring:
+    WHT -- PWR (12V, 20 mA max, <1 mA quiescent)
+    BLK -- PWR GND
+    BLU -- SDI12
+    BRN -- SDI12 GND
+    GRY -- RX (not used for logger)
+    PNK -- TX (not used for logger)

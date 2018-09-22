@@ -1,3 +1,5 @@
 *.swp
 v
 lpm-test*
+tmp
+*-SAVE

@@ -1,0 +1,5 @@
+public fc_1(8)
+public fc_2(8)
+alias fc_1()=fc1_qMin,fc1_qMean,fc1_qMax,fc1_qStd,fc1_qSum,fc1_wMin,fc1_wMean,fc1_wMax
+alias fc_2()=fc2_qMin,fc2_qMean,fc2_qMax,fc2_qStd,fc2_qSum,fc2_wMin,fc2_wMean,fc2_wMax
+' units info: g/m^2/s   g/m^2/s  g/m^2/s  g/m^2/s    g/m^2      m/s       m/s      m/s

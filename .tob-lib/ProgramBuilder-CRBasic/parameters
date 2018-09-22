@@ -1,0 +1,48 @@
+#!/usr/local/bin/bash
+
+# parameters: list parameter symvars for each component in @order
+
+warn() { printf "%s\n" "$@" >&2; } 
+error() { warn "$@"; exit 1; } 
+
+main() {
+    local build_object=./
+    local component
+    local keyval
+    local indent="    "
+
+  # while [[ ${1:0:1} == "-" ]]; do
+  #     case "$1" in
+  #     --indent)
+  #     --help)                 awk '/^NAME/,/EOF/{print}' $0; exit ;; 
+  #     -h)                     awk '/^SYNOPSIS/{getline;print}' $0; exit ;; 
+  #     *)                      error "unknown option: $1" ;;
+  #     esac
+  #     shift
+  # done
+
+    
+    [[ -n "$1" ]] && build_object="$1"
+    [[ -e $build_object/@order ]] || error "no @order file"
+
+  # while IFS= read -r component; do
+  #     [[ -L $build_object/$component: && ! -e $build_object/$component: ]] || continue
+  #     printf "%s:" $component
+  #     printf "\t%s" $(symvar $build_object/$component:)
+  #     printf "\n\n"
+  # done < $build_object/@order
+
+    while IFS= read -r component; do
+        [[ -L $build_object/$component: && ! -e $build_object/$component: ]] || continue
+        printf "%s:\n" $component
+        printf "\t\t\t%s\n" $(symvar $build_object/$component:)
+    done < $build_object/@order
+
+}
+
+main "$@"
+
+exit 0
+
+NAME parameters
+

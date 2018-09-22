@@ -1,0 +1,8 @@
+const JUDD_1 = "sn: 6112, sensor_height: 141"
+const JUDD_2 = "sn: 6114, sensor_height: 140"
+const JUDD_3 = "sn: 6110, sensor_height: 138"
+const JUDD_4 = "sn: 6113, sensor_height: 148"
+const JUDD_5 = "sn: 6111, sensor_height: 145"
+const JUDD_6 = "sn: 6109, sensor_height: 147"
+const JUDD_123_INFO = "judd_1 is east-most on downwind stand"
+const JUDD_456_INFO = "judd_4 is north-most on crosswind stand"

@@ -3,13 +3,14 @@
 warn() { printf "%s\n" "$@" >&2; }
 error() { warn "$@"; exit 1; }
 
-get_header_lines() {
+print_header_lines() {
     ob="$1" && shift
     local -a hdrs
     [[ -L $ob/name && ! -e $ob/name ]] &&
         hdrs+=( "$(symvar $ob/name)" ) 
     hdrs+=("crbasic program generated $(date)")
-    printf "' %s\n" "${hdrs[@]}"
+    printf "' %s\r\n" "${hdrs[@]}"
+    printf "\n"
 }
 
 main() {
@@ -52,7 +53,7 @@ main() {
             error "$site/v/ container does not exist; HINT: mkdir $site/v to use --save"
     }
 
-    [[ -n $HEADER ]] && get_header_lines "$site"
+    [[ -n $HEADER ]] && print_header_lines "$site"
 
     for chunk in "${chunks[@]}"; do  
         $chunk $site "$@"
