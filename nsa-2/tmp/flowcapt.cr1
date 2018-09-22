@@ -1,5 +1,5 @@
 ' Barrow NSA-2 -- LPM, U3D, 6 Judd sensors, 2 FlowCapt sensors
-' crbasic program generated Sat Sep 22 10:42:13 AKDT 2018
+' crbasic program generated Sat Sep 22 12:06:07 AKDT 2018
 
 constTable
     const FLOWCAPT_1_INFO = "sn: ?, height=?"
@@ -11,17 +11,23 @@ public progSig as long
 
 dim msg as string * 80
 
-public fc_1(8)
-public fc_2(8)
-alias fc_1()=fc1_qMin,fc1_qMean,fc1_qMax,fc1_qStd,fc1_qSum,fc1_wMin,fc1_wMean,fc1_wMax
-alias fc_2()=fc2_qMin,fc2_qMean,fc2_qMax,fc2_qStd,fc2_qSum,fc2_wMin,fc2_wMean,fc2_wMax
-' units info: g/m^2/s   g/m^2/s  g/m^2/s  g/m^2/s    g/m^2      m/s       m/s      m/s
+public fc_1_flux(8) : units fc_1_flux()=g/m^2/s : alias fc_1_flux()=fc1_qMin,fc1_qMean,fc1_qMax
+public fc1_qSum : units fc1_qSum()=g/m^2
+public fc_1_wind(3) : units fc_1_wind()=m/s : alias fc_1_wind()=fc1_wMin,fc1_wMean,fc1_wMax
+
+public fc_2_flux(8) : units fc_2_flux()=g/m^2/s : alias fc_2_flux()=fc2_qMin,fc2_qMean,fc2_qMax
+public fc2_qSum : units fc2_qSum()=g/m^2
+public fc_2_wind(3) : units fc_2_wind()=m/s : alias fc_2_wind()=fc2_wMin,fc2_wMean,fc2_wMax
 
 dataTable(FlowCapt,1,-1)
     datainterval(0,60,sec,0)
     sample(1,progSig,uint2)
-    sample(8,fc_1,fp2)
-    sample(8,fc_2,fp2)
+    sample(4,fc_1_flux(),fp2)
+    sample(1,fc1_total(),fp2)
+    sample(3,fc_1_wind(),fp2)
+    sample(4,fc_2_flux(),fp2)
+    sample(1,fc2_total(),fp2)
+    sample(3,fc_2_wind(),fp2)
 endTable
 
 dataTable("Messages",1,100)
@@ -44,6 +50,22 @@ sub log(optional s as string * 80 = "MARK", _
     calltable(Messages)
 endsub
 
+sub read_flowcapt_sensors()
+    '' read FlowCapt particle flux and wind speed acoustical sensors
+    dim i
+    SDI12Recorder (fc_1_flux(),3,1,"M!",1,0)
+    SDI12Recorder (fc_2_flux(),3,2,"M!",1,0)
+    ' the first three values are for particle flux in g/m^2/s, no scaling needed
+    ' the fourth value is totalized particle flux over the measurement interval:
+    fc1_total = fc_1_flux(4)
+    fc2_total = fc_2_flux(4)
+    ' values 6,7,8 are for wind speed in km/h, converted to m/s:
+    for i=1 to 3
+        fc_1_wind(i) = fc_1_flux(i+5) * 5/18
+        fc_2_wind(i) = fc_2_flux(i+5) * 5/18
+    next i
+endsub
+
 beginProg
     progSig = status.ProgSignature
     
@@ -53,14 +75,45 @@ beginProg
     log("flowcapt_2 --", FLOWCAPT_2_INFO, get_sdi12_id(2))
     
     scan(60,sec,0,0)
-        '' read particle flux (g/m^2/s) and wind speed (km/h, converted to m/s):
-        SDI12Recorder (fc_1(),3,1,"M!",1,0)
-        fc_1(6)*=5/18 : fc_1(7)*=5/18 : fc_1(8)*=5/18
-        SDI12Recorder (fc_2(),3,2,"M!",1,0)
-        fc_2(6)*=5/18 : fc_2(7)*=5/18 : fc_2(8)*=5/18
+        read_flowcapt_sensors()
     
         callTable(FlowCapt)
-    
     nextScan
-
 endProg
+
+' ***** ./program-signature *****
+' 
+'  Datatables are defined, to include datatable() and dataInterval() instructions, and
+'  also sample() of the proSig value to identify the working program that generated the
+'  data by the program signature.  Output to a CF memory card is defined by the
+'  tableFile() instruction.
+
+' ***** ./logmsg *****
+' 
+'  Utility function log() records space-separated arguments to the Messages log.
+
+' ***** ./flowcapt *****
+' 
+'  ISAW FlowCapt measures particle flux (g/m^2/s) and wind speed (km/hr) by acoustic means.
+'  Wind speed is rescaled after measurement to m/s.
+'  Wiring:
+'      WHT -- PWR (12V, 20 mA max, <1 mA quiescent)
+'      BLK -- PWR GND
+'      BLU -- SDI12
+'      BRN -- SDI12 GND
+'      GRY -- RX (not used for logger)
+'      PNK -- TX (not used for logger)
+
+' ***** ./call-datatables *****
+' 
+'  Included datatables are called via callTable() at the end of each respective
+'  scan interval.
+' ********** parameters:
+' logmsg:
+'       VAR:msg
+'       TABLE:Messages
+'
+' flowcapt:
+'       SDI12__CP:3
+'       ADDR1:1
+'       ADDR2:2
