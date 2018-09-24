@@ -1,0 +1,18 @@
+beginProg
+    log("U3D_{{U3D_ID:0}} serial number (SH,SL):", thies_query({{U3D_ID:0}},"SH",-1), thies_query({{U3D_ID:0}},"SL",-1))
+    log("U3D_{{U3D_ID:0}} software version (SV):", "V" + thies_query({{U3D_ID:0}},"SV",-1)/100)
+    log("U3D_{{U3D_ID:0}} bootloader version (BL):", "V" + thies_query({{U3D_ID:0}},"BL",-1)/100)
+
+    '' log U3D baud rate and interface mode (should be 115200, half duplex)
+    log("U3D_{{U3D_ID:0}} baud rate (BR):", thies_query({{U3D_ID:0}},"BR",-1), "(5=9600,6=19200,9=115200)")
+    log("U3D_{{U3D_ID:0}} comm mode (DM):", thies_query({{U3D_ID:0}},"DM",-1), "(0=half,1=full-off,2=full-on)")
+
+    log("U3D_{{U3D_ID:0}} runtime (OH):", thies_query({{U3D_ID:0}},"OH",-1), "hrs")
+    log("U3D_{{U3D_ID:0}} supply (PW):", thies_query({{U3D_ID:0}},"PW",-1), "volts AC")
+
+    '' put U3D in config mode, turn off auto-output of telegram, then restore normal mode:
+    if thies_query({{U3D_ID:0}},"KY",1) <> "1" then log("U3D_{{U3D_ID:0}} CONFIG MODE FAILED")
+    log("U3D_{{U3D_ID:0}} auto telegram output (TT):", thies_query({{U3D_ID:0}},"TT",0))
+    if thies_query({{U3D_ID:0}},"KY",0) <> "0" then log("U3D_{{U3D_ID:0}} WARNING: CONFIG MODE STILL ON")
+    endif
+endProg

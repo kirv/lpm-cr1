@@ -1,6 +1,16 @@
+sd-card-tablefiles
 program-signature
 logmsg
 battery
 panel-temp
 flowcapt
+judd
+thies-clima
+u3d-base
+u3d-telegram
+lpm-base
+lpm-telegram
+lpm-flags
+lpm-state
+lpm-reset-precip-total
 call-datatables

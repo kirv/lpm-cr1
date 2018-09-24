@@ -1,0 +1,2 @@
+const U3D_NAME  = "Ultrasonic Anemometer 3D"
+const U3D_MODEL = "4.383x.xx.xxx"

@@ -9,7 +9,7 @@ sub read_flowcapt_sensors()
     fc2_qSum = fc_2_flux(4)
     ' values 6,7,8 are for wind speed in km/h, converted to m/s:
     for i=1 to 3
-        fc_1_wind(i) = fc_1_flux(i+5) * 5/18
-        fc_2_wind(i) = fc_2_flux(i+5) * 5/18
+        fc_1_wind(i) = fc_1_flux(i+5) * 1000/3600
+        fc_2_wind(i) = fc_2_flux(i+5) * 1000/3600
     next i
 endsub
