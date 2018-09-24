@@ -1,8 +1,3 @@
-Basic interface functions for the LPM:
-
-    lpm_query(id, cmd, param) -- returns string (set param to -1 to omit)
-    lpm_calc_cksum(telegram) -- returns checksum value (low byte == 0 if good)
-
 The LPM is connected to the CR1000 logger via CSI MD485 interface module at 9600
 baud and half-duplex (rs485) mode.  Wiring:
 

@@ -1,0 +1,47 @@
+function thies_query(id as long, cmd as string, param as long) as string * 2233
+    '' NOTE: param = -1 omits parameter
+    dim command as string * 10
+    dim results as string * 2233
+    '' format command from cmd and param, then send command to instrument::
+    select case param
+    case -1
+        sprintf(command, "%02d%s", id, uppercase(cmd))
+    case 0 to 99999
+        sprintf(command, "%02d%s%05d", id, uppercase(cmd), param)
+    case else
+        return QUESTION & QUESTION & "rejected: invalid parameter: " & param
+    endselect
+    serialOut({{COMMPORT:Com1}}, CR & command & CR,"",0,0)
+    
+    '' handle read differently depending on cmd: TR, "??", or anything else:
+    select case uppercase(cmd)
+    case "TR"
+        serialIn(results,{{COMMPORT:Com1}},300,ETX,2233)
+    case "??"
+        serialIn(results,{{COMMPORT:Com1}},30,LF,2233)
+        '' output begins with "User commands", so look for "U" below
+    case else
+        serialin(results,{{COMMPORT:Com1}},300,CR,80)
+        results = mid(results, 1, len(results))
+    endselect
+
+    select case left(results,1)
+    case BANG
+        '' examples: "!00BR00005", "!00CI00002"
+        select case mid(results,4,2)
+        case "CI"
+            select case right(results,1)
+            case 0  : results = QUESTION & results & ": invalid parameter"      '' !00CI00000
+            case 2  : results = QUESTION & results & ": unknown command"        '' !00CI00002
+            case 4  : results = QUESTION & results & ": parameter out of range" '' !00CI00004
+            case 8  : results = QUESTION & results & ": config mode required"   '' !00CI00008
+            endselect
+        case uppercase(cmd)
+            '' the command is confirmed, so isolate just the numeric parameter in results
+            results = mid(results,6,5)
+        case else
+            results = QUESTION & QUESTION & "unexpected:" & results
+        endselect
+    endselect
+    return results
+endfunction

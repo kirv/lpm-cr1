@@ -1,4 +1,0 @@
-public u3d_telegram as string * 200
-public u3d_telegram_check as long 
-public u3d_state(5)
-alias u3d_state() = u3d_warning, u3d_memory, u3d_error, u3d_heat_call, u3d_heat_on

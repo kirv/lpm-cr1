@@ -1,9 +1,0 @@
-At the end of each day, a message is logged to the Messages table with the current LPM
-time (ZT), the LPM runtime hours (ZB), the error and warning bit mapped values, and the LPM 
-totalized precipitation (PT).  The LPM precipitation total is then zeroed (RA) -- or would
-be if the command were to be uncommented.
-
-A srategy is needed to determine when (or if) to reset the LPM totalized precipitation.
-Daily reset would be on an obvious time boundary, but other intervals might make sense,
-e.g., weekly, every 10 days, monthly (e.g., on minute 0 of day 1 of each month); this 
-depends on how this information is used, if at all.

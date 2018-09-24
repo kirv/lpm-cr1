@@ -1,5 +1,5 @@
-program-signature
 cf-card-tablefiles
+program-signature
 logmsg
 battery
 panel-temp
@@ -10,6 +10,7 @@ geonor-base
 geonor-RTD
 geonor-heater
 geonor-heater-status
+thies-clima
 lpm-base
 lpm-telegram
 lpm-flags

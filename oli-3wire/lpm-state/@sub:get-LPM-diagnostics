@@ -1,7 +1,7 @@
 sub get_LPM_diagnostics(id as long)
     dim i as long
     dim dd(13) as long
-    splitStr (dd(),lpm_query(id,"DD",-1),SEMICOLON,13,5)
+    splitStr (dd(),thies_query(id,"DD",-1),SEMICOLON,13,5)
     '' LPM analog diagnostic data from DD[1..13]
     for i = 1 to 13
         LPM_state_vars(i) = dd(i)
