@@ -1,3 +1,0 @@
-Automatic LPM telegram output is disabled.  Set parameter LPM_TELEGRAM
-to a telegram number to query every minute.  The resulting telegram is
-logged along with the checksum value of 0 (good) or 1 (bad).

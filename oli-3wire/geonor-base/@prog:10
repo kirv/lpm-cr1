@@ -1,8 +1,0 @@
-beginProg
-    scan (10,sec,0,0)
-        '' measure vibrating wire cycles since last scan, save as frequency
-        pulseCount(gnr_freq(1),1,{{GNR1__PP:1}},0,1,1.0,0)
-        pulseCount(gnr_freq(2),1,{{GNR2__PP:1}},0,1,1.0,0)
-        pulseCount(gnr_freq(3),1,{{GNR3__PP:1}},0,1,1.0,0)
-    nextScan
-beginProg

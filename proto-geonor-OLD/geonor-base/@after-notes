@@ -5,3 +5,6 @@ to the Geonor datatable.
 
 Calibration constants for the wire transducers  are defined in
 constants, and are recorded to the Messages datatable on startup.
+
+Frequencies are averaged every 60 seconds and the values converted
+to a depth value for each wire, and logged to the Various datatable.

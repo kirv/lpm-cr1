@@ -1,6 +1,0 @@
-'' LPM diagnostic analog data from DD[1..13]
-public LPM_state_vars(13) as float
-alias LPM_state_vars = T_interior__C, T_laserdrvr__C, I_laser__mA, _
-    V_control__mV, V_optical__mV, V_sensor__V, I_laser_pane__mA, _
-    I_recvr_pane__mA, T_ambient__C, V_heating__V, I_housing__mA, _
-    I_heads__mA, I_carriers__mA

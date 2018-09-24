@@ -1,8 +1,0 @@
-const JUDD_1 = "sn: ?, sensor_height: ?"
-const JUDD_2 = "sn: ?, sensor_height: ?"
-const JUDD_3 = "sn: ?, sensor_height: ?"
-const JUDD_4 = "sn: ?, sensor_height: ?"
-const JUDD_5 = "sn: ?, sensor_height: ?"
-const JUDD_6 = "sn: ?, sensor_height: ?"
-const JUDD_123_INFO = "?"
-const JUDD_456_INFO = "?"

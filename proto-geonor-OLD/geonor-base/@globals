@@ -1,0 +1,14 @@
+'' measured Geonor variables; f:frequency from pulseCount():
+public gnr_F(3)     : units gnr_F = Hz     : alias gnr_F = g1_F, g2_F, g3_F
+public gnr_Favg(3)
+
+'' derived Geonor variables
+public gnr_level(3) : units gnr_level = mm : alias gnr_level = g1_lvl,g2_lvl,g3_lvl 
+public gnr_precip   : units gnr_precip = mm
+public gnr_last_level 
+
+dim Kw(3,3) as float = { _
+    GNR1_A, GNR1_B, GNR1_F0, _  '' Kw(1,1), Kw(1,2), Kw(1,3)
+    GNR2_A, GNR2_B, GNR2_F0, _  '' Kw(2,1), Kw(2,2), Kw(2,3)
+    GNR3_A, GNR3_B, GNR3_F0 _   '' Kw(3,1), Kw(3,2), Kw(3,3)
+}

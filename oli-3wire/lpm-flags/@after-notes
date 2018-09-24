@@ -1,3 +1,0 @@
-LPM flags are taken from the DX command, but are also present in Telegram 5.
-Included are error and warning flags; a message is logged when any flag turns
-on or off.  Error and warning flags are combined into bit-mapped long values. 
