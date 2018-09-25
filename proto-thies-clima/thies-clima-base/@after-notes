@@ -1,0 +1,18 @@
+Thies CLIMA is the manufacturer of the LPM (laser precipitation
+monitor) and U3D (ultrasonic 3D anemometer).  These instruments can
+operate in 'bus mode' using RS485, since they respond only to
+commands with the correct instrument ID.
+
+The LPM manual, under Command BD (p28/66), says (sic):
+    The latency period is 20 ms.  This means that after sending of a
+    command within 20 ms the switching of the direction must happen.
+    And after receiving a answer from the sensor at the earliest time of
+    20 ms a command can be send.
+
+The U3D manual seems to not mention this topic at all, but in initial
+testing at 115200 baud rate, many skipped commands or responses were
+seen until the CRBasic serialOpen() TxDelay parameter was set to 20000,
+representing 20000 usec or 20 msec.
+
+The CRBasic serialOpen() format parameter is 3, for:
+    3:  logic 1 low, binary, no parity, 1 stop bit, 8 data bits

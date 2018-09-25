@@ -14,5 +14,4 @@ beginProg
     if thies_query({{U3D_ID:0}},"KY",1) <> "1" then log("U3D_{{U3D_ID:0}} CONFIG MODE FAILED")
     log("U3D_{{U3D_ID:0}} auto telegram output (TT):", thies_query({{U3D_ID:0}},"TT",0))
     if thies_query({{U3D_ID:0}},"KY",0) <> "0" then log("U3D_{{U3D_ID:0}} WARNING: CONFIG MODE STILL ON")
-    endif
 endProg

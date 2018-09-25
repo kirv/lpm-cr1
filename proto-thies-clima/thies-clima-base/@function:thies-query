@@ -2,6 +2,7 @@ function thies_query(id as long, cmd as string, param as long) as string * 2233
     '' NOTE: param = -1 omits parameter
     dim command as string * 10
     dim results as string * 2233
+    dim num as long
     '' format command from cmd and param, then send command to instrument::
     select case param
     case -1
@@ -38,7 +39,8 @@ function thies_query(id as long, cmd as string, param as long) as string * 2233
             endselect
         case uppercase(cmd)
             '' the command is confirmed, so isolate just the numeric parameter in results
-            results = mid(results,6,5)
+            num = mid(results,6,5)
+            return num
         case else
             results = QUESTION & QUESTION & "unexpected:" & results
         endselect

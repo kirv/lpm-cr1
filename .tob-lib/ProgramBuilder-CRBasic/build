@@ -8,7 +8,7 @@ print_header_lines() {
     local -a hdrs
     [[ -L $ob/name && ! -e $ob/name ]] &&
         hdrs+=( "$(symvar $ob/name)" ) 
-    hdrs+=("crbasic program generated $(date)")
+  # hdrs+=("crbasic program generated $(date)")
     printf "' %s\r\n" "${hdrs[@]}"
     printf "\n"
 }
@@ -72,6 +72,7 @@ main() {
             mv $site/v/prog.cr1 $site/v/psig-$sig.cr1 && 
                 ln -sf psig-$sig.cr1 $site/v/latest.cr1 ||
                     error "unable to save $site/v/psig-$sig.cr1"
+            warn "saved $site/v/psig-$sig.cr1"
         fi
     }
     

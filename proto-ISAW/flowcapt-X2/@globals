@@ -1,7 +1,7 @@
-public fc_1_flux(8) : units fc_1_flux()=g/m^2/s : alias fc_1_flux()=fc1_qMin,fc1_qMean,fc1_qMax
+public fc_1_flux(8) : units fc_1_flux()=g/m^2/s : alias fc_1_flux=fc1_qMin,fc1_qMean,fc1_qMax
 public fc1_qSum : units fc1_qSum()=g/m^2
-public fc_1_wind(3) : units fc_1_wind()=m/s : alias fc_1_wind()=fc1_wMin,fc1_wMean,fc1_wMax
+public fc_1_wind(3) : units fc_1_wind()=m/s : alias fc_1_wind=fc1_wMin,fc1_wMean,fc1_wMax
 
-public fc_2_flux(8) : units fc_2_flux()=g/m^2/s : alias fc_2_flux()=fc2_qMin,fc2_qMean,fc2_qMax
+public fc_2_flux(8) : units fc_2_flux()=g/m^2/s : alias fc_2_flux=fc2_qMin,fc2_qMean,fc2_qMax
 public fc2_qSum : units fc2_qSum()=g/m^2
-public fc_2_wind(3) : units fc_2_wind()=m/s : alias fc_2_wind()=fc2_wMin,fc2_wMean,fc2_wMax
+public fc_2_wind(3) : units fc_2_wind()=m/s : alias fc_2_wind=fc2_wMin,fc2_wMean,fc2_wMax

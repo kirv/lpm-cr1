@@ -4,7 +4,6 @@ sub get_LPM_flags(id as long)
     dim flag as long
     dim dx(15) as long
     dim fm(15) as long
-    dim got_counts as boolean
     dim msg as string * 60
 
     '' note that the first (or 0th) entry in DX is ignored!
