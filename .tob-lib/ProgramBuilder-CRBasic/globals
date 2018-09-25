@@ -82,11 +82,11 @@ for component in $(<$order); do
         done
     fi
 
-    [[ -n "$BUILD_SHOW_ID" ]] && printf "' %s:\r\n" "$component"
+    [[ -n "$BUILD_SHOW_ID" ]] && printf "' %s:\n" "$component"
 
     while IFS= read -r line; do
         reduce_params "${line%$'\r'}"
-        printf "%s\r\n" "$line"
+        printf "%s\n" "$line"
         # add alias statement if a matching public variable is seen:
         line="${line## }"
         test "${line#public }" = "$line" && continue
@@ -98,9 +98,9 @@ for component in $(<$order); do
             # HACK: end scanning if ':' is seen; e.g.: public foo : units foo = bar
             [[ $var == : ]] && break
             test -n "${aliases[$var]}" || continue
-            printf "%salias %s = %s\r\n" "$padding" $var "${aliases[$var]}"
+            printf "%salias %s = %s\n" "$padding" $var "${aliases[$var]}"
         done
     
     done < $globals_file
-    printf "\r\n"
+    printf "\n"
 done

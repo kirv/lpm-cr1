@@ -40,9 +40,9 @@ for component in $(<$order); do
     resolve_attr "$component" || continue
     for notes in $attr/@after-notes; do
         [[ -e $notes ]] || continue
-        printf "\r\n"
-        printf "' ***** %s *****\r\n" "$attr"
-        printf "' \r\n"
+        printf "\n"
+        printf "' ***** %s *****\n" "$attr"
+        printf "' \n"
         awk '{print "X ", $0}' $notes | sed "s/^X/'/"
     done
 done

@@ -9,8 +9,8 @@ print_header_lines() {
     [[ -L $ob/name && ! -e $ob/name ]] &&
         hdrs+=( "$(symvar $ob/name)" ) 
   # hdrs+=("crbasic program generated $(date)")
-    printf "' %s\r\n" "${hdrs[@]}"
-    printf "\r\n"
+    printf "' %s\n" "${hdrs[@]}"
+    printf "\n"
 }
 
 main() {
@@ -53,12 +53,12 @@ main() {
             error "$site/v/ container does not exist; HINT: mkdir $site/v to use --save"
     }
 
-    [[ -n $HEADER ]] && print_header_lines "$site"
+    [[ -n $HEADER ]] &&
+        print_header_lines "$site" | awk '{gsub(/\r/,""); printf("%s\r\n", $0)}'
 
     for chunk in "${chunks[@]}"; do  
         $chunk $site "$@"
-    done
-  # done | awk '{sub(/\r/,""); printf("%s\r\n", $0)}'
+    done | awk '{gsub(/\r/,""); printf("%s\r\n", $0)}'
 
     ((save_output)) && {
         exec 1>&-
