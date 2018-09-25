@@ -10,7 +10,7 @@ print_header_lines() {
         hdrs+=( "$(symvar $ob/name)" ) 
   # hdrs+=("crbasic program generated $(date)")
     printf "' %s\r\n" "${hdrs[@]}"
-    printf "\n"
+    printf "\r\n"
 }
 
 main() {
