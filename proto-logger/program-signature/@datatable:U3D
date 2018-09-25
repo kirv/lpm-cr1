@@ -1,2 +1,2 @@
 DataTable(U3D,1,-1)
-    sample(1,{{VAR:progSig}},uint2)
+    sample(1,{{VAR:psig}},uint2)

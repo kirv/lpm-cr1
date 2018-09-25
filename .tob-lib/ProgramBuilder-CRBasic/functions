@@ -73,13 +73,13 @@ for component in $(<$order); do
     for function in $component_dir/@function:*; do
         name=${function##*:}
         [[ -n "$BUILD_SHOW_ID" ]] && 
-            printf "' %s:%s()\n" "$component" "$name"
+            printf "' %s:%s()\r\n" "$component" "$name"
       # cat $function
         while IFS=  read -r line; do 
             reduce_params "$line"
-            printf "%s\n" "$line"
+            printf "%s\r\n" "$line"
         done < "$function"
-        printf "\n"
+        printf "\r\n"
     done
 done
 

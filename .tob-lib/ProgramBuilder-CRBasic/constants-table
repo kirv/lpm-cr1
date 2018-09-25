@@ -13,7 +13,7 @@ macro_replace() {
     key="${key## *}"
     key="${key%% *}"
 
-  # printf "TRY: replace[%s]\n" "$key"
+  # printf "TRY: replace[%s]\r\n" "$key"
 
     test -n "${replace[$key]}" || return
     value="${replace[$key]}"
@@ -119,7 +119,7 @@ for component in $(<$order); do
     fi
 
     while read line; do
-      # printf "\t%s\n" "$line"
+      # printf "\t%s\r\n" "$line"
         reduce_params "$line"
 
         test -n "${#replace[@]}" && macro_replace "${line%=*}" "${line#*=}"
@@ -131,7 +131,7 @@ for component in $(<$order); do
     const+=("")
 done
 
-printf "constTable\n"
-printf "    %s\n" "${const[@]}"
-printf "endConstTable\n"
-printf "\n"
+printf "constTable\r\n"
+printf "    %s\r\n" "${const[@]}"
+printf "endConstTable\r\n"
+printf "\r\n"

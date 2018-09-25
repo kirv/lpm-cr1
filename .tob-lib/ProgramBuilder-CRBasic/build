@@ -57,7 +57,8 @@ main() {
 
     for chunk in "${chunks[@]}"; do  
         $chunk $site "$@"
-    done | awk '{sub(/\r/,""); printf("%s\r\n", $0)}'
+    done
+  # done | awk '{sub(/\r/,""); printf("%s\r\n", $0)}'
 
     ((save_output)) && {
         exec 1>&-

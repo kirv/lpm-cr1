@@ -124,7 +124,7 @@ for component in $(<$order); do
     ## handle datatable specifiers in each component:
     for dt in $component_object/@datatable:*; do
         table=${dt##*:}
-      # printf "'    %20s\t%s\n" "$table" "$dt"
+      # printf "'    %20s\t%s\r\n" "$table" "$dt"
 
         n=${t[$table]}
         if (( n == 0 )); then
@@ -138,7 +138,7 @@ for component in $(<$order); do
         fi
 
         while read entry; do
-          # printf "\t%s\n" "$entry"
+          # printf "\t%s\r\n" "$entry"
             reduce_params "$entry"
 
             # cull all endTable statements:
@@ -159,12 +159,12 @@ done
 
 for table in "${tables[@]}"; do
     [[ -n "$BUILD_SHOW_ID" ]] && 
-        printf "' %s: %s\n" "$table" "${t[$table.USEDBY]}"
-    printf "%s\n" "${t[$table.1]}"
+        printf "' %s: %s\r\n" "$table" "${t[$table.USEDBY]}"
+    printf "%s\r\n" "${t[$table.1]}"
     for ((n=2; n<=${t[$table]}; n+=1)); do
-        printf "    %s\n" "${t[$table.$n]}"
+        printf "    %s\r\n" "${t[$table.$n]}"
     done
-    printf "%s\n" "endTable"
-    printf "\n"
+    printf "%s\r\n" "endTable"
+    printf "\r\n"
 done
 
