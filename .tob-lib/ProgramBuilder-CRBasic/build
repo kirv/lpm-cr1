@@ -15,6 +15,7 @@ print_header_lines() {
 
 main() {
     local site
+    local ext
     local -a chunks=(
         constants-table
         constants
@@ -47,9 +48,15 @@ main() {
 
     site="$1" && shift
     [[ -n $site ]] || site=.
-
+    if [[ $(symvar logger) == cr1000x ]]; then
+        ext=cr1x
+    else
+        ext=cr1
+    fi
+    
+    
     ((save_output)) && {
-        exec 1> $site/v/prog.cr1 ||
+        exec 1> $site/v/prog.$ext ||
             error "$site/v/ container does not exist; HINT: mkdir $site/v to use --save"
     }
 
@@ -62,18 +69,18 @@ main() {
 
     ((save_output)) && {
         exec 1>&-
-        sig=($(csi-signature $site/v/prog.cr1))
-        if [[ -e $site/v/psig-$sig.cr1 ]] &&
-            diff -q $site/v/prog.cr1 $site/v/psig-$sig.cr1 >/dev/null
+        sig=($(csi-signature $site/v/prog.$ext))
+        if [[ -e $site/v/psig-$sig.$ext ]] &&
+            diff -q $site/v/prog.$ext $site/v/psig-$sig.$ext >/dev/null
         then
-            rm $site/v/prog.cr1
-            ln -sf psig-$sig.cr1 $site/v/latest.cr1
-            error "$site/v/psig-$sig.cr1 already exists"
+            rm $site/v/prog.$ext
+            ln -sf psig-$sig.$ext $site/v/latest.$ext
+            error "$site/v/psig-$sig.$ext already exists"
         else
-            mv $site/v/prog.cr1 $site/v/psig-$sig.cr1 && 
-                ln -sf psig-$sig.cr1 $site/v/latest.cr1 ||
-                    error "unable to save $site/v/psig-$sig.cr1"
-            warn "saved $site/v/psig-$sig.cr1"
+            mv $site/v/prog.$ext $site/v/psig-$sig.$ext && 
+                ln -sf psig-$sig.$ext $site/v/latest.$ext ||
+                    error "unable to save $site/v/psig-$sig.$ext"
+            warn "saved $site/v/psig-$sig.$ext"
         fi
     }
     
