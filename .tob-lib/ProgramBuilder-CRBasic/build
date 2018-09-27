@@ -48,12 +48,12 @@ main() {
 
     site="$1" && shift
     [[ -n $site ]] || site=.
-    if [[ $(symvar logger) == cr1000x ]]; then
-        ext=cr1x
-    else
-        ext=cr1
-    fi
-    
+
+    case $(symvar logger) in
+    cr1000x)    ext=cr1x ;;
+    cr800)      ext=cr8 ;;
+    *)          ext=cr1 ;;
+    esac
     
     ((save_output)) && {
         exec 1> $site/v/prog.$ext ||
