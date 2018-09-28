@@ -165,14 +165,12 @@ parse_format_scan() {
     done
     value=${1:0:i}
     case ${1#$value} in
-        ms) units=msec;;
-        s) units=sec;;
-        "") units=sec;;
-        m) units=min;;
-        h) units=hr;;
+        ms | msec)              units=msec;;
+        s | "" | sec | second)  units=sec;;
+        m | min | minute)       units=min;;
+        h | hr | hour)          units=hr;;
         *) error "error parsing scan units in $1";;
     esac
-
     printf "    scan(%s,%s,0,0)\n" $value $units
 }
 
