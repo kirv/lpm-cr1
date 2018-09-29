@@ -74,6 +74,27 @@ pat[endtable]="^ *endtable"
 pat[data]="^data"
 declare dt
 
+parse_interval() {
+    # parse units from interval parameter spec, or use sec if not specified
+    local interval
+    local units
+    local -i i
+    i=0
+    while [[ ${1:i:1} =~ [0-9] ]]; do
+        i=$((i+1))
+    done
+    interval=${1:0:i}
+    case ${1#$interval} in
+        ms | msec)              units=msec;;
+        s | "" | sec | second)  units=sec;;
+        m | min | minute)       units=min;;
+        h | hr | hour)          units=hr;;
+        *) error "error parsing scan units in $1";;
+    esac
+    params[interval]=$interval
+    params[units]=$units
+}
+
 init_datatable() {
     local table=${1%:} && shift
     local param
@@ -99,7 +120,8 @@ init_datatable() {
     t[$table]=1
     # generate datainterval() statement, but only look for interval!
     if [[ -n ${params[interval]} ]]; then
-        t[$table.2]="datainterval(0,${params[interval]},sec,0)"
+        parse_interval ${params[interval]} 
+        t[$table.2]="datainterval(0,${params[interval]},${params[units]},0)"
         t[$table]=2
     fi
 }
