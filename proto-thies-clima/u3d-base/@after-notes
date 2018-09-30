@@ -1,4 +1,4 @@
-The U3D is connected to the CR1000 logger via CSI MD485 interface module at 115200
+The U3D is connected to the CR1000 logger via CSI MD485 interface module at 38400
 baud and half-duplex (rs485) mode.  Wiring:
 
     CR1000 C1 (COM1-Tx) -to-  MD485 db9F pin-3
@@ -11,7 +11,7 @@ baud and half-duplex (rs485) mode.  Wiring:
     U3D pin 4 (Vy) ---   not used
     U3D pin 5 (T+) -to-  MD485 B (BRN wire)
     U3D pin 6 (G)  -to-  MD485 G (YEL wire)
-    U3D pin 7      -to-  48VAC transformer
+    U3D pin 7      -to-  48VAC transformer, through 10A fuse
     U3D pin 8      -to-  48VAC transformer
 
 As the CR1000 program starts: the U3D is placed in config mode
