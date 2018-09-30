@@ -1,5 +1,0 @@
-beginProg
-    Scan(100,msec,0,0)
-        callTable(U3D)
-    NextScan
-endProg

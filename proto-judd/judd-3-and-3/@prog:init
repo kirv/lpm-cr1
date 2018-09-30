@@ -7,4 +7,5 @@ beginProg
     log("judd_6 --:", JUDD_6)
     log(JUDD_123_INFO)
     log(JUDD_456_INFO)
+    sw12({{PWRPORT:SW12_1}},1)
 endProg
