@@ -1,4 +1,4 @@
 beginProg
     '' set logger port to match the LPM and U3D through the MD485 rs232-to-rs485 device
-    serialOpen ({{COMMPORT:Com1}},{{BAUDRATE:115200}},3,20000,4000)
+    serialOpen ({{COMMPORT:Com1}},{{BAUDRATE:115200}},3,{{TXDELAY_USEC:20000}},4000)
 endProg

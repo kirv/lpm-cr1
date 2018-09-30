@@ -8,8 +8,8 @@ beginProg
     '' put LPM in config mode:
     if thies_query({{LPM_ID:0}},"KY",1) <> "1" then log("LPM_{{LPM_ID:0}} CONFIG MODE FAILED")
 
-    '' log LPM baud rate and interface mode (should be 115200, half duplex)
-    log("LPM_{{LPM_ID:0}} baud rate (BR):", thies_query({{LPM_ID:0}},"BR",-1), "(5=9600,6=19200,9=115200)")
+    '' log LPM baud rate and interface mode (should be 38400, half duplex)
+    log("LPM_{{LPM_ID:0}} baud rate (BR):", thies_query({{LPM_ID:0}},"BR",-1), "(5=9600,7=38400,9=115200)")
     log("LPM_{{LPM_ID:0}} comm mode (BD):", thies_query({{LPM_ID:0}},"BD",-1), "(0=full-,1=half-duplex)")
 
     '' turn off automatic LPM data telegram output!

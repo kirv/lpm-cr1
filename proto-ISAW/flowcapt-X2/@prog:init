@@ -1,5 +1,4 @@
 beginProg
     log("flowcapt_1 --", FLOWCAPT_1_INFO, get_sdi12_id({{ADDR1:1}}))
     log("flowcapt_2 --", FLOWCAPT_2_INFO, get_sdi12_id({{ADDR2:2}}))
-    sw12({{PWRPORT:SW12_1}},1)
 endProg
