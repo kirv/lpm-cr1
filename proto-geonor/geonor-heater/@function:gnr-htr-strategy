@@ -20,6 +20,7 @@ function gnr_htr_strategy(ambient_temp, orifice_temp) as float
     else ' temp is > -10 and <= 0 C
         ' slope goes from .1 up to .5 over 10 C
         ratio = ambient_temp * (.4/10) + .5
+    endif
     if ratio < 0 then ratio = 0
     if ratio > 1 then ratio = 1
     return ratio
