@@ -5,3 +5,4 @@ const CR = chr(13)
 const SEMICOLON = ";"
 const QUESTION = "?"
 const BANG = "!"
+const STAR = "*"
