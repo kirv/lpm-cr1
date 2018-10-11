@@ -1,4 +1,0 @@
-beginProg
-    log("SR50A sensor heights:", SR50A_DATUM_1, SR50A_DATUM_2, SR50A_DATUM_3)
-    log("The SR50A stand is oriented 'downwind'", "sensor 1 is east-most.")
-endProg

@@ -1,7 +1,0 @@
-const STX = chr(2)
-const ETX = chr(3)
-const LF = chr(10)
-const CR = chr(13)
-const SEMICOLON = ";"
-const QUESTION = "?"
-const BANG = "!"

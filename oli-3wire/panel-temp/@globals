@@ -1,1 +1,0 @@
-public {{VAR:panelTemp}} : units {{VAR:panelTemp}} = {{UNITS:degC}}

@@ -1,5 +1,0 @@
-beginProg
-    scan({{SCAN:60}},sec,0,0)
-        therm107({{VAR:temp}},{{QTY:1}},{{SE:1}},{{EX:1}},0,250,1,0)
-    nextScan
-endProg

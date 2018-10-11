@@ -1,8 +1,0 @@
-sub log(optional s as string * 80 = "MARK", _
-    optional t as string * 40 = "", optional u as string * 40 = "", _
-    optional v as string * 40 = "", optional w as string * 40 = "", _
-    optional x as string * 40 = "", optional y as string * 40 = "")
-    msg = s & " " & t & " " & u & " " & v & " " & w & " " & x & " " & y
-    msg = trim(msg)
-    calltable(Messages)
-endsub

@@ -1,5 +1,0 @@
-beginProg
-    scan({{SCAN:60}},Sec,0,0)
-        panelTemp({{VAR:panelTemp}},250)
-    nextScan
-endProg

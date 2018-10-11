@@ -1,15 +1,21 @@
-program-signature
 cf-card-tablefiles
+program-signature
 logmsg
 battery
 panel-temp
-csi-therm107
-sr50a
+
+therm107
+
+sr50a-x3
+
+thies-clima-base
+
 lpm-base
 lpm-telegram
 lpm-flags
 lpm-state
 lpm-reset-precip-total
+
 call-datatables
 
 

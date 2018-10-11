@@ -1,0 +1,5 @@
+beginProg
+    scan({{SCAN:60}},sec,0,0)
+        therm107({{VAR:temp}},{{QTY:1}},{{SE:1}},{{VX:1}},0,_60Hz,1,0)
+    nextScan
+endProg

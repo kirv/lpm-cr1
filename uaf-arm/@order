@@ -1,12 +1,16 @@
+cf-card-tablefiles
 program-signature
-init-datatables
-battery
-logger-panel-temp
 logmsg
+battery
+panel-temp
 
 geonor-base
+geonor-RTD
+geonor-heater
+geonor-heater-status
 geonor-xdcr-temps
-geonor-orifice-heater
+
+thies-clima-base
 
 lpm-base
 lpm-telegram

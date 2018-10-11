@@ -1,0 +1,147 @@
+Ultrasonic 3D Anemometer commands
+
+QUERY MODE (KY:0)   -- SYSTEM STATUS
+
+IT          -- housing internal temperature
+OH          -- operating hours counter
+PW          -- system voltage
+
+
+QUERY MODE (KY:0)   -- SYSTEM VERSIONS
+
+BL  308     -- bootloader version V3.08
+SS          -- system status -- print out these values
+SV  315     -- software version is V3.15 
+
+
+QUERY MODE (KY:0)   -- TELEGRAMS
+
+TR          -- telegram request
+
+
+QUERY MODE (KY:0)   -- USER-DEFINED TELEGRAMS
+
+UA          -- add field to end of user-defined telegram
+UR          -- remove field from end of user-defined telegram
+UT          -- define user-defined telegram
+
+
+QUERY MODE (KY:0)   -- OTHER
+
+DA          -- data request in Bararia-Hesse mode
+KY          -- access mode (key)
+
+
+USER MODE (KY:1) -- ANALOG I/O (to disable, set AN=2, AA=AB=AC=0)
+
+AA  3       -- pin 1 analog output of wind velocity in azumuth
+AB  3       -- pin 4 analog output of wind velocity in azumuth
+AC  3       -- pin 3 analog output of acoustic virtual temperature
+AG  0       -- output of Vx, Vy, Vz to pins 1, 4, and 3
+AN  1       -- pins 1, 4, and 3 outputs are in current mode
+AR  60      -- wind velocity value mapping to top end of analog output [m/s]
+AS          -- fixed values for analog outputs
+AT          -- some sort of check on the analog outputs
+AU  50      -- analog outputs or inputs are sampled every 50 ms
+AY  0       -- pin 3 input minimum value is 1
+AZ  0       -- pin 1 input maximum value is 0
+BY  0       -- pin 3 input minimum value is 1
+BZ  0       -- pin 3 input maximum value is 0
+CY  0       -- pin 3 input minimum value is 1
+CZ  0       -- pin 3 input maximum value is 0
+EI  0       -- analog value in case of error is set to minimum
+
+
+USER MODE (KY:1) -- SYSTEM INTERFACE 
+
+BH  0       -- instrument addresses for Bavaria Hesse: WV:011, WD:001, and VT:022
+BR  7       -- baud rate is 38400
+BT  0       -- bus mode terminating resistor is switched off
+BX  7       -- baud rate is 38400 (extended) 
+DM  0       -- half duplex mode
+FB  0       -- fast boot is off
+ID  3       -- u3d id on the md485 bus is 3 (LPM is 2)
+RD  5       -- 5 ms delay before responding to a query
+XI  0       -- instrument ID is read from EEPROM (and not input lines)
+
+
+USER MODE (KY:1) -- SYSTEM CONTROL
+
+AM  0       -- averaging method: vector-averaged velocity and angle
+MA  13      -- 13 ms between pulses in case of measurement error
+MD  5       -- 5 ms between ultrasonic pulses
+RF  120     -- 120 seconds of no measurements before restarting instrument
+RS          -- restart ultrasonic instrument
+
+
+USER MODE (KY:1) -- TELEGRAMS
+
+OR  100     -- 100 ms between auto-output of telegram (manual: QUERY MODE)
+TB  2       -- telegram 2 would be output following burst mode trigger (manual: QUERY MODE)
+TT  0       -- telegram auto-output is off
+UD          -- define user-defined telegram
+US          -- store user-defined telegram
+
+
+USER MODE (KY:1) -- SYSTEM PARAMETERS STORAGE
+
+RP          -- read parameters from storage area 1 or 2
+SP          -- store parameters into storage area 1 or 2
+
+
+USER MODE (KY:1) -- MEASUREMENT CALCULATIONS
+
+AV  1       -- averaging time is 1 s
+CO  0       -- turbulence calculation is switched off
+DE  1       -- standard deviation calculation is on
+GU  0       -- gust acquisition is off
+NC  0       -- 0 degrees north correction 
+OS  0       -- wind velocity output is in m/s
+PC  7       -- plausibility check is on (don't know what 7 means)
+
+
+USER MODE (KY:1) -- BURST MODE (uses pin 3 for trigger, AC:16 or AC:17)
+
+BP  100     -- burst mode pretrigger is 100 ms
+BS  100     -- burst mode buffer is 100 measuring cycles
+
+
+USER MODE (KY:1) -- HEATING CONTROL
+
+HC  10      -- low voltage limit to disable heating (probably for battery system)
+HL  275     -- heating is on below 275 K, +2 C
+HH  280     -- heating is off above 280 K, +7 C
+HT  5       -- heaters are controlled by virtual temperature and housing temperature
+
+
+CONFIGURATION MODE (KY:xxxxx)
+
+CA  59894   -- analog current or voltage output calibration, slope
+CB  1026    -- analog current or voltage output calibration, offset
+CI  0       -- standard Thies command interpreter
+DF          -- add default values command (overwrites eeprom)
+DU  19929   -- no entry in manual
+DV  19939   -- no entry in manual
+DW  19948   -- no entry in manual
+PR  48      -- 4800 ns (or 4.8 ms) receiver time period (factory set)
+PT  48      -- 4800 ns (or 4.8 ms) transmit time period (factory set)
+RC  506     -- 5060 ppm correction for analog input values (factory set)
+SC  0       -- analog output starts at 0 mA (or 0 V)
+SH  918     -- serial number high word is 918
+SL  1       -- serial number low word is 1
+TA  508052  -- not in manual (parameter value should be 5 digits, not 6)
+TC  1       -- vitual acoustical temperature correction is enabled
+TF  1       -- acoustic transducer type 1
+VC  1088    -- velocity correction (factory set)
+VT  1       -- wind velocity correction is on
+
+
+NOT IN MANUAL (??)
+
+SM  0       -- not in manual
+UM  0       -- not in manual
+UN  2       -- not in manual
+VM  0       -- not in manual
+VN  1       -- not in manual
+WM  0       -- not in manual
+WN  3       -- not in manual

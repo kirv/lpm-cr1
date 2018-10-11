@@ -1,0 +1,3 @@
+public {{VAR_AT:at}}({{QTY:1}}) : units {VAR_AT:at}} = degC
+public {{VAR_RH:rh}}({{QTY:1}}) : units {{VAR_RH:rh}} = %
+public {{VAR_DP:dp}}({{QTY:1}}) : units {{VAR_DP:dp}} = degC

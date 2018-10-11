@@ -1,3 +1,0 @@
-beginProg
-    {{VAR:progSig}} = status.ProgSignature
-endProg
