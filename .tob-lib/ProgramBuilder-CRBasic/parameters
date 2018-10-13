@@ -8,8 +8,10 @@ error() { warn "$@"; exit 1; }
 main() {
     local build_object=./
     local component
-    local keyval
-    local indent="    "
+    local -a keyvals
+    local kv
+    local indent=24
+    local i
 
   # while [[ ${1:0:1} == "-" ]]; do
   #     case "$1" in
@@ -34,8 +36,15 @@ main() {
 
     while IFS= read -r component; do
         [[ -L $build_object/$component: && ! -e $build_object/$component: ]] || continue
-        printf "%s:\n" $component
-        printf "\t\t\t%s\n" $(symvar $build_object/$component:)
+        keyvals=( $(symvar $build_object/$component:) )
+        printf "%s:" $component
+        (( ${#keyvals[@]} == 0 )) && continue
+        i=$((indent-${#component}))
+        while ((i--)); do printf " "; done
+        printf "%s\n" ${keyvals[0]}
+        for kv in  ${keyvals[@]:1}; do
+            printf "%24s %s\n" " " $kv
+        done
     done < $build_object/@order
 
 }
