@@ -34,8 +34,13 @@ main() {
     [[ -e $build_object/@order ]] || error "no @order file"
 
     while IFS= read -r component; do
-        [[ -L $build_object/$component: && ! -e $build_object/$component: ]] || continue
+        [[ ${component// /} == "" ]] && continue
         keyvals=( $(symvar $build_object/$component:) )
+        if [[ ${#keyvals[@]} == 0 ]]; then
+            printf "%s\n" $component
+            (( BLANKLINE )) && printf "\n"
+            continue
+        fi
         printf "%s:" $component
         (( ${#keyvals[@]} == 0 )) && continue
         i=$((indent-${#component}-1))
@@ -48,7 +53,12 @@ main() {
         i=$indent
         printf "%s" ${keyvals[0]}
         i+=${#keyvals[0]}
-        if ((ONELINE)); then
+        if ((ONELINE==0)); then
+            printf "\n"
+            for kv in  ${keyvals[@]:1}; do
+                printf "%s%s\n" "$padding" $kv
+            done
+        else
             for kv in  ${keyvals[@]:1}; do
                 i+=1
                 i+=${#kv}
@@ -60,11 +70,6 @@ main() {
                 fi
             done
             printf "\n"
-        else
-            printf "\n"
-            for kv in  ${keyvals[@]:1}; do
-                printf "%s%s\n" "$padding" $kv
-            done
         fi
         (( BLANKLINE )) && printf "\n"
     done < $build_object/@order
