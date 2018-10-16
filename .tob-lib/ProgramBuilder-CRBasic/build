@@ -38,6 +38,7 @@ main() {
         --chunk | --chunks)     chunks=($2); shift ;;
         --show-id | --show-ids) export BUILD_SHOW_ID=1 ;;
         --no-notes)             export BUILD_NO_NOTES=1 ;;
+        --show-params)          export BUILD_SHOW_PARAMS=1 ;;
         --save)                 save_output=1 ;;
         --help)                 awk '/^NAME/,/EOF/{print}' $0; exit ;; 
         -h)                     awk '/^SYNOPSIS/{getline;print}' $0; exit ;; 
@@ -66,6 +67,15 @@ main() {
     for chunk in "${chunks[@]}"; do  
         $chunk $site "$@"
     done | awk '{gsub(/\r/,""); printf("%s\r\n", $0)}'
+
+    (( BUILD_SHOW_PARAMS )) && {
+        printf "\n"
+        printf "'' %s\n" "program components and parameters:"
+        parameters --oneline --width 80 --indent 24 $site |
+            while IFS= read -r line; do
+                printf "'' \t%s\n" "$line"
+            done
+    }
 
     ((save_output)) && {
         exec 1>&-
@@ -111,6 +121,10 @@ OPTIONS
 
     --no-notes
         Do not include @after-notes files (attributes) after end of program.
+
+    --show-params
+        List components and/or component parameter list symvars of the build object
+        as comments following the program.
 
     --chunk CHUNK
     --chunk "CHUNK1 CHUNK2 ..."
