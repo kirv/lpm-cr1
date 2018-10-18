@@ -1,6 +1,5 @@
 beginProg
     Scan (60,sec,1,-1)
-        '' Read LPM data telegram every minute.
         '' Retry query if LPM returns "!TR00001", which means: telegram not available.
         telegram_query_tries = 0
         do

@@ -1,9 +1,8 @@
 beginProg
     Scan(60,sec,0,0)
         callTable(Judd)
-        callTable(FlowCapt)
         callTable(LPM)
         callTable(LPM_status)
-        callTable(U3D)
+        callTable(Logger)
     NextScan
 endProg

@@ -1,0 +1,3 @@
+dataTable(SRS,1,-1)
+  tableFile("CRD:SRS-",8,-1,0,1,Day,0,0)
+endTable

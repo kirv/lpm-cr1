@@ -1,4 +1,0 @@
-const SR50A_1_INFO = "sn: 7579, height: 141"
-const SR50A_2_INFO = "sn: 7583, height: 128"
-const SR50A_3_INFO = "sn: 7576, height: 128"
-const SR50A_123_INFO = "{{VAR:sr50a}}_1 is east-most on downwind stand"

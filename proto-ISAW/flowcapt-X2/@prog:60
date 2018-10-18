@@ -1,5 +1,0 @@
-beginProg
-    scan(60,Sec,0,0)
-        read_flowcapt_sensors()
-    nextScan
-endProg

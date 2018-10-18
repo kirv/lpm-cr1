@@ -7,7 +7,6 @@ function gnr_htr_strategy(ambient_temp, orifice_temp) as float
     ''      ramp up/down to 0.5 between -10 and +10 C
     '' orifice temp is not used, but could be, e.g., to limit heating if orifice is warm
     dim ratio
-    dim slope
     if ambient_temp > 10 then
         ratio = 0
     else if ambient_temp < -10 then

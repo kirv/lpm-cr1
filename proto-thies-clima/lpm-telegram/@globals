@@ -1,4 +1,3 @@
 dim lpm_telegram as string * 2233
 public lpm_telegram_ok as long 
 public telegram_query_tries as long
-dim lpm_fields(524) as string

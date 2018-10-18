@@ -1,3 +1,0 @@
-public {{VAR:sr50a}}_1(2) : alias {{VAR:sr50a}}_1 = {{VAR:sr50a}}_1_dist, {{VAR:sr50a}}_1_qual
-public {{VAR:sr50a}}_2(2) : alias {{VAR:sr50a}}_2 = {{VAR:sr50a}}_2_dist, {{VAR:sr50a}}_2_qual
-public {{VAR:sr50a}}_3(2) : alias {{VAR:sr50a}}_3 = {{VAR:sr50a}}_3_dist, {{VAR:sr50a}}_3_qual

@@ -1,12 +1,12 @@
 cf-card-tablefiles
 program-signature
 logmsg
-battery
-panel-temp
+battery-to-SRS-table
+panel-temp-to-SRS-table
 
-therm107
+therm107-to-SRS-table
 
-sr50a-x3
+srs-sr50a-x3
 
 thies-clima-base
 
@@ -14,7 +14,7 @@ lpm-base
 lpm-telegram
 lpm-flags
 lpm-state
-lpm-reset-precip-total
+lpm-summary
 
 call-datatables
 

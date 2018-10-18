@@ -1,7 +1,19 @@
-public fc_1_flux(8) : units fc_1_flux()=g/m^2/s
-public fc1_qSum : units fc1_qSum()=g/m^2
-public fc_1_wind(3) : units fc_1_wind()=m/s
+public fc1(8)
+public fc1_flux(4) : units fc1_flux()=g/m^2/s
+public fc1_qSum    : units fc1_qSum()=g/m^2
+public fc1_wind(3) : units fc1_wind()=m/s
 
-public fc_2_flux(8) : units fc_2_flux()=g/m^2/s
-public fc2_qSum : units fc2_qSum()=g/m^2
-public fc_2_wind(3) : units fc_2_wind()=m/s
+public fc2(8)
+public fc2_flux(4) : units fc2_flux()=g/m^2/s
+public fc2_qSum    : units fc2_qSum()=g/m^2
+public fc2_wind(3) : units fc2_wind()=m/s
+
+dim fc_configuration(7) as string * 16 = { _     '' flowcapt key parameter values
+    "out1-mode=off", _
+    "out2-mode=off", _
+    "serial-mode=off", _
+    "logger-mode=off", _
+    "avg-a=1", _
+    "avg-c=1", _
+    "avg-m=10" _
+)
