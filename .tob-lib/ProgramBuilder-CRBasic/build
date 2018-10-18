@@ -16,6 +16,7 @@ print_header_lines() {
 main() {
     local site
     local ext
+    local tag
     local -a chunks=(
         constants-table
         constants
@@ -55,7 +56,14 @@ main() {
     cr800)      ext=cr8 ;;
     *)          ext=cr1 ;;
     esac
-    
+
+    tag=$(symvar $site/tag)
+    if [[ -n $tag ]]; then
+        tag=$tag-
+    else
+        tag=
+    fi
+
     ((save_output)) && {
         exec 1> $site/v/prog.$ext ||
             error "$site/v/ container does not exist; HINT: mkdir $site/v to use --save"
@@ -69,28 +77,28 @@ main() {
     done | awk '{gsub(/\r/,""); printf("%s\r\n", $0)}'
 
     (( BUILD_SHOW_PARAMS )) && {
-        printf "\n"
-        printf "'' %s\n" "program components and parameters:"
+        printf "\r\n"
+        printf "'' %s\r\n" "program components and parameters:"
         parameters --oneline --width 80 --indent 24 $site |
             while IFS= read -r line; do
-                printf "'' \t%s\n" "$line"
+                printf "'' \t%s\r\n" "$line"
             done
     }
 
     ((save_output)) && {
         exec 1>&-
         sig=($(csi-signature $site/v/prog.$ext))
-        if [[ -e $site/v/psig-$sig.$ext ]] &&
-            diff -q $site/v/prog.$ext $site/v/psig-$sig.$ext >/dev/null
+        if [[ -e $site/v/${tag}psig-$sig.$ext ]] &&
+            diff -q $site/v/prog.$ext $site/v/${tag}psig-$sig.$ext >/dev/null
         then
             rm $site/v/prog.$ext
-            ln -sf psig-$sig.$ext $site/v/latest.$ext
-            error "$site/v/psig-$sig.$ext already exists"
+            ln -sf ${tag}psig-$sig.$ext $site/v/latest.$ext
+            error "$site/v/${tag}psig-$sig.$ext already exists"
         else
-            mv $site/v/prog.$ext $site/v/psig-$sig.$ext && 
-                ln -sf psig-$sig.$ext $site/v/latest.$ext ||
-                    error "unable to save $site/v/psig-$sig.$ext"
-            warn "saved $site/v/psig-$sig.$ext"
+            mv $site/v/prog.$ext $site/v/${tag}psig-$sig.$ext && 
+                ln -sf ${tag}psig-$sig.$ext $site/v/latest.$ext ||
+                    error "unable to save $site/v/${tag}psig-$sig.$ext"
+            warn "saved $site/v/${tag}psig-$sig.$ext"
         fi
     }
     
