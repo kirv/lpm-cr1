@@ -126,9 +126,49 @@ init_datatable() {
     fi
 }
 
-## handle datatable declarations
+add_datafield() {
+    # datafield-sample:psig -> =type:uint2 tables:Messages,Logger,LPM,LPM_status
+    # called with: sample:psig type:uint2 tables:Messages,Logger,LPM,LPM_status
+    local name=${1#*:}
+    local instr=${1%:*}
+    local type=fp2
+    local -i qty=1
+    local -a tables=()
+    local -i n
+    local entry key val
+    shift
+    for entry in "$@"; do 
+        key=${entry%:*}
+        val=${entry#*:}
+        case $key in
+            qty)            qty=$val ;;
+            type)           type=$val ;;
+            table | tables) tables=( ${val//,/ } ) ;;
+            *)              error "? unknown datafield parameter: $entry" ;;
+        esac
+    done
+    for table in "${tables[@]}"; do
+        case $instr in
+            sample)     printf -v entry "sample(%d,%s,%s)" $qty $name $type ;;
+            average)    printf -v entry "average(%d,%s,%s,0)" $qty $name $type ;;
+            min)        printf -v entry "min(%d,%s,%s,0)" $qty $name $type ;;
+            max)        printf -v entry "max(%d,%s,%s,0)" $qty $name $type ;;
+            *)          error "? unknown instruction type: $instr" ;;
+        esac
+        n=$((t[$table]+1))
+        t[$table.$n]="$entry"
+        t[$table]=$n
+    done
+}
+
+## handle datatable declarations:
 for dt in $ob/datatable-*:; do
     init_datatable "${dt##*-}" $(symvar $dt)
+done
+
+## handle datafield declarations:
+for df in $ob/datafield-*:*; do
+    add_datafield "${df##*-}" $(symvar $df)
 done
 
 declare component_object
