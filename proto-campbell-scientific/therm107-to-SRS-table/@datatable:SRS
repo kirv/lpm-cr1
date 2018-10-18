@@ -1,0 +1,3 @@
+dataTable(SRS,1,-1)
+    sample({{QTY:1}},{{VAR:temp}},fp2)
+endTable

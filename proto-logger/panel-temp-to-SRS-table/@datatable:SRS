@@ -1,0 +1,3 @@
+dataTable(SRS,1,-1)
+    sample(1,{{VAR:panelTemp}},fp2)
+endTable

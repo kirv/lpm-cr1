@@ -1,0 +1,3 @@
+DataTable(Logger,1,-1)
+  tableFile("CRD:Logger-",8,-1,0,1,Day,0,0)
+EndTable

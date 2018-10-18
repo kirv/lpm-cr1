@@ -1,0 +1,5 @@
+function get_sdi12_id(addr) as string * 32
+    dim id as string * 32
+    sdi12recorder(id,{{SDI12__CP:1}},addr,"I!",1,0)
+    return id
+endsub

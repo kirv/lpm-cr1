@@ -1,0 +1,6 @@
+beginProg
+    Scan(60,sec,0,0)
+        callTable(FlowCapt)
+        callTable(U3D)
+    NextScan
+endProg

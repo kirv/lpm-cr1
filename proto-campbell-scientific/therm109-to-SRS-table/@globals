@@ -1,0 +1,1 @@
+public {{VAR:temp}} : units {{VAR:temp}} = {{UNITS:degC}}

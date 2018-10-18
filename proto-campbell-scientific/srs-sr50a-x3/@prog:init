@@ -1,0 +1,6 @@
+beginProg
+    log("SRS1 --", SRS_1_INFO, get_sdi12_id(1))
+    log("SRS2 --", SRS_2_INFO, get_sdi12_id(2))
+    log("SRS3 --", SRS_3_INFO, get_sdi12_id(3))
+    log(SRS_123_INFO)
+endProg

@@ -1,0 +1,7 @@
+beginProg
+    scan({{SCAN:60}},Sec,0,0)
+        SDI12Recorder (srs1(),{{SDI12__CP:1}},1,"M1!",1,0) : srs1(1) *= 100
+        SDI12Recorder (srs2(),{{SDI12__CP:1}},2,"M1!",1,0) : srs2(1) *= 100
+        SDI12Recorder (srs3(),{{SDI12__CP:1}},3,"M1!",1,0) : srs3(1) *= 100
+    nextScan
+endProg

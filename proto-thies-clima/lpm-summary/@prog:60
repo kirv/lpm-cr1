@@ -1,0 +1,5 @@
+beginProg
+    Scan (60,sec,1,-1)
+        if timeIntoInterval(0,1,day) then log(lpm_summary({{LPM_ID:0}},lpm_telegram))
+    NextScan
+endProg

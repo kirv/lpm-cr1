@@ -1,0 +1,3 @@
+public srs1(2) : alias srs1 = srs1_dist_raw, srs1_qual
+public srs2(2) : alias srs2 = srs2_dist_raw, srs2_qual
+public srs3(2) : alias srs3 = srs3_dist_raw, srs3_qual

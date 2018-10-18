@@ -1,0 +1,5 @@
+beginProg
+    scan(10,Sec,0,0)
+        read_flowcapt_sensors()
+    nextScan
+endProg

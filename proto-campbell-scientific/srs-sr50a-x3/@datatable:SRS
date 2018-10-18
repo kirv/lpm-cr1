@@ -1,0 +1,5 @@
+dataTable(SRS,1,-1)
+    sample(2,srs1,fp2)
+    sample(2,srs2,fp2)
+    sample(2,srs3,fp2)
+endTable

@@ -1,0 +1,3 @@
+dataTable(SRS,1,-1)
+    sample(1,{{VAR:battery}},fp2)
+endTable
