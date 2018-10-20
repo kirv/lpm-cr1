@@ -133,6 +133,7 @@ add_datafield() {
     local instr=${1%:*}
     local type=fp2
     local -i qty=1
+    local -i order=0
     local -a tables=()
     local -i n
     local entry key val
@@ -143,6 +144,7 @@ add_datafield() {
         case $key in
             qty)            qty=$val ;;
             type)           type=$val ;;
+            order)          order=$val ;;
             table | tables) tables=( ${val//,/ } ) ;;
             *)              error "? unknown datafield parameter: $entry" ;;
         esac

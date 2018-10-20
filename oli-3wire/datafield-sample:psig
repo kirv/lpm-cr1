@@ -1,1 +1,1 @@
-=type:uint2 tables:Messages,Logger,Judd,SRS,Geonor,LPM,LPM_status
+=order:1 type:uint2 tables:Messages,Logger,Judd,SRS,Geonor,LPM,LPM_status

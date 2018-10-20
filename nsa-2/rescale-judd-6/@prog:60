@@ -1,0 +1,7 @@
+BeginProg
+    Scan(60,Sec,0,0)
+        '' Judd_6 seems to be in 2.5V mode despite 5V jumper, so rescale to fix:
+        {{DVAR:judd_temp}}(6) = (({{DVAR:judd_temp}}(6) + 273) * 2) - 273
+        {{DVAR:judd_dist}}(6) *= 2
+    NextScan
+EndProg
