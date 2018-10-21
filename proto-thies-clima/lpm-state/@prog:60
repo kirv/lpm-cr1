@@ -1,5 +1,5 @@
 beginProg
     Scan (60,sec,1,-1)
-        get_LPM_diagnostics({{LPM_ID:0}})
+        get_LPM_diagnostics({{ID:0}})
     NextScan
 endProg

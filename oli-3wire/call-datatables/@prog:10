@@ -1,5 +1,0 @@
-beginProg
-    scan(10,Sec,0,0)
-        callTable(Geonor)
-    nextScan
-endProg

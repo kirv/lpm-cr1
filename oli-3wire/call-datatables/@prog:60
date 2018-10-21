@@ -1,9 +1,0 @@
-beginProg
-    Scan(60,sec,0,0)
-        callTable(Judd)
-        callTable(SRS)
-        callTable(LPM)
-        callTable(LPM_status)
-        callTable(Logger)
-    NextScan
-endProg

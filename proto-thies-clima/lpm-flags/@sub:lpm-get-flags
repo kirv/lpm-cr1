@@ -11,6 +11,14 @@ sub get_LPM_flags(id as long)
     splitStr (fm(),thies_query(id,"FM",-1),SEMICOLON,15,5)
 
     '' LPM error flags are in DX[2..7] or DX'[1..6], counts are in FM[1..6]
+    dim error_msgs(6) as string * 40 = { _
+        "static signal out of range", _
+        "laser temp (analog) too high", _
+        "laser temp (digital) too high", _
+        "laser current (analog) too high", _
+        "laser current (digital) too high", _
+        "sensor supply out of range" _
+    }
     mask = 1
     for i = 1 to 6
         msg = ""
@@ -18,18 +26,29 @@ sub get_LPM_flags(id as long)
         if flag = 1 and (LPM_error_bits AND mask) = 0 then
             LPM_error_bits = LPM_error_bits OR mask 
             sprintf(msg, "ERROR %d: %s (count:%d)", _
-                    i, lpm_error_msgs(i), fm(i))
+                    i, error_msgs(i), fm(i))
         endif
         if flag = 0 and (LPM_error_bits AND mask) > 0 then
             LPM_error_bits = LPM_error_bits XOR mask 
             sprintf(msg, "ERROR %d TURNED OFF: %s (count:%d)", _
-                    i, lpm_error_msgs(i), fm(i))
+                    i, error_msgs(i), fm(i))
         endif
         if msg <> "" then log(msg)
         mask *= 2
     next i
 
     '' LPM warning flags are in DX[8..16]) or DX'[7..15]), counts are in FM[7..15]
+    dim warning_msgs(9) as string * 40 = { _
+        "current: pane heating laser head", _
+        "current: pane heating receiver head", _
+        "temperature sensor", _
+        "heating supply out of allowed range", _
+        "current: heating housing", _
+        "current: heating heads", _
+        "current: heating carriers", _
+        "control output laser power high", _
+        "not used" _
+    }
     mask = 1
     for i = 1 to 8
         msg = ""
@@ -37,12 +56,12 @@ sub get_LPM_flags(id as long)
         if flag = 1 and (LPM_warning_bits AND mask) = 0 then
             LPM_warning_bits = LPM_warning_bits OR mask 
             sprintf(msg, "WARNING %d: %s, (count:%d)", _
-                    6+i, lpm_warning_msgs(i), fm(6+i))
+                    6+i, warning_msgs(i), fm(6+i))
         endif
         if flag = 0 and (LPM_warning_bits AND mask) > 0 then
             LPM_warning_bits = LPM_warning_bits XOR mask 
             sprintf(msg, "WARNING %d TURNED OFF: %s (count:%d)", _
-                    6+i, lpm_warning_msgs(i), fm(6+i))
+                    6+i, warning_msgs(i), fm(6+i))
         endif
         if msg <> "" then log(msg)
         mask *= 2

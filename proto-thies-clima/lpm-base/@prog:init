@@ -1,24 +1,24 @@
 beginProg
-    log("LPM_{{LPM_ID:0}} serial number (SN):", thies_query({{LPM_ID:0}},"SN",-1))
-    log("LPM_{{LPM_ID:0}} software version (SV):", "V" + thies_query({{LPM_ID:0}},"SV",-1)/100)
-    log("LPM_{{LPM_ID:0}} bootloader version (SB):", "V" + thies_query({{LPM_ID:0}},"SB",-1)/100)
-    log("LPM_{{LPM_ID:0}} baud rate (BR):", thies_query({{LPM_ID:0}},"BR",-1), "(5=9600,7=38400,9=115200)")
-    log("LPM_{{LPM_ID:0}} comm mode (BD):", thies_query({{LPM_ID:0}},"BD",-1), "(0=full-,1=half-duplex)")
-    log("LPM_{{LPM_ID:0}} runtime (ZB):", thies_query({{LPM_ID:0}},"ZB",-1), "hrs")
-    log_lpm_calibration({{LPM_ID:0}})
+    log("LPM_{{ID:0}} serial number (SN):", thies_query({{ID:0}},"SN",-1))
+    log("LPM_{{ID:0}} software version (SV):", "V" + thies_query({{ID:0}},"SV",-1)/100)
+    log("LPM_{{ID:0}} bootloader version (SB):", "V" + thies_query({{ID:0}},"SB",-1)/100)
+    log("LPM_{{ID:0}} baud rate (BR):", thies_query({{ID:0}},"BR",-1), "(5=9600,7=38400,9=115200)")
+    log("LPM_{{ID:0}} comm mode (BD):", thies_query({{ID:0}},"BD",-1), "(0=full-,1=half-duplex)")
+    log("LPM_{{ID:0}} runtime (ZB):", thies_query({{ID:0}},"ZB",-1), "hrs")
+    log_lpm_calibration({{ID:0}})
 
-    if thies_query({{LPM_ID:0}},"KY",1) <> 1 then
-        log("LPM_{{LPM_ID:0}} FAILED TO ENTER CONFIG MODE")
+    if thies_query({{ID:0}},"KY",1) <> 1 then
+        log("LPM_{{ID:0}} FAILED TO ENTER CONFIG MODE")
     else
-        log("LPM_{{LPM_ID:0}} ENTERING CONFIG MODE")
-        lpm_set_clock({{LPM_ID:0}})
-        log("LPM_{{LPM_ID:0}} auto telegram output (TM):", thies_query({{LPM_ID:0}},"TM",0))
-        if thies_query({{LPM_ID:0}},"KY",0) = 0 then
-            log("LPM_{{LPM_ID:0}} EXITED CONFIG MODE, IN QUERY MODE")
+        log("LPM_{{ID:0}} ENTERING CONFIG MODE")
+        lpm_set_clock({{ID:0}})
+        log("LPM_{{ID:0}} auto telegram output (TM):", thies_query({{ID:0}},"TM",0))
+        if thies_query({{ID:0}},"KY",0) = 0 then
+            log("LPM_{{ID:0}} EXITED CONFIG MODE, IN QUERY MODE")
         else
-            log("LPM_{{LPM_ID:0}} FAILED TO EXIT CONFIG MODE")
+            log("LPM_{{ID:0}} FAILED TO EXIT CONFIG MODE")
         endif
     endif 
 
-    log("LPM_{{LPM_ID:0}} clock time (ZT):", thies_query({{LPM_ID:0}},"ZT",-1))
+    log("LPM_{{ID:0}} clock time (ZT):", thies_query({{ID:0}},"ZT",-1))
 endProg

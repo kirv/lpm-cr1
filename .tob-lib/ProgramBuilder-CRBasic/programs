@@ -133,6 +133,25 @@ for component in $(<$order); do
 
 done
 
+# for tag in "${!s[@]}"; do
+#     warn "$tag :: ${s[$tag]}"
+# done
+# error 
+    
+# special handling for symvars call-datatables:N, where N is scan seconds
+for entry in call-datatables:*; do 
+    scan=${entry#*:}
+    n=s[$scan]
+    for table in $(symvar $entry); do
+        n+=1
+        s[$scan.$n]="        callTable($table)"
+        s[$scan]=$n
+    done
+    n+=1
+    s[$scan.$n]="    "
+    s[$scan]=$n
+done
+
 # check the number of scan intervals to output to the program:
 ((${#scans[@]}>4)) && error "too many scan intervals: ${#scans[@]}"
 
