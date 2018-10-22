@@ -1,0 +1,15 @@
+function lpm_query(id as long, cmd as string, param as long) as string * 2233
+    dim command as string * 10, results as string * 2233, trailer as string * 2, num as long
+    results = thies_query(id, cmd, param)
+    if left(results,1,5) = BANG + id & "CI" then
+        select case right(results,1)
+        case 0  : results = QUESTION & results & "LPM: invalid parameter"      '' !xxCI00000
+        case 2  : results = QUESTION & results & "LPM: unknown command"        '' !xxCI00002
+        case 4  : results = QUESTION & results & "LPM: parameter out of range" '' !xxCI00004
+        case 8  : results = QUESTION & results & "LPM: config mode required"   '' !xxCI00008
+        case else : results = QUESTION & QUESTION & "unexpected:" & results
+        endselect
+    endif
+    return results
+endfunction
+
