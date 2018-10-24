@@ -1,22 +1,32 @@
 function u3d_query(id as long, cmd as string, param as long) as string * 2233
-    dim command as string * 10, results as string * 2233, trailer as string * 2, num as long
+    dim results as string * 2233, num as long, p as long
     results = thies_query(id, cmd, param)
-    select case left(results,1,5)
-    if left(results,1,5) = BANG + id & "CE" then
-        select case right(results,2)
-        case "04" : results = QUESTION & results & "U3D: parameter violation"    '' !xxCE00004
-        case "08" : results = QUESTION & results & "U3D: incorrect access mode"  '' !xxCE00008
-        case "16" : results = QUESTION & results & "U3D: parameter out of range" '' !xxCE00016
-        case "32" : results = QUESTION & results & "U3D: parameter violation"    '' !xxCE00032
-        case else : results = QUESTION & QUESTION & "unexpected:" & results
-        endselect
-    else if uppercase(cmd) = "KY" and (results = "USER ACCESS" or  results = "WRITE PROTECTED") then
-        serialin(results,{{COMMPORT:Com1}},300,CR,2233)
-        if left(results,1) = BANG then
+    select case left(results,1)
+    case STX :
+        return results
+    case BANG
+        select case mid(results,4,2)
+        case uppercase(cmd)
             num = mid(results,6,5)
             return num
+        case "CE"
+            select case right(results,2)
+            case "04" : results = QUESTION & results & "U3D: parameter violation"    '' !xxCE00004
+            case "08" : results = QUESTION & results & "U3D: incorrect access mode"  '' !xxCE00008
+            case "16" : results = QUESTION & results & "U3D: parameter out of range" '' !xxCE00016
+            case "32" : results = QUESTION & results & "U3D: parameter violation"    '' !xxCE00032
+            case else : results = QUESTION & QUESTION & "unexpected:" & results
+            endselect
+        endselect
+    case "U","W" :
+        if uppercase(cmd) = "KY" 
+            '' "USER ACCESS" or  "WRITE PROTECTED" is output before "!KYxx0000y"
+            p = instr(10, results, BANG, 2) 
+            if p > 0 then
+                num = mid(results,p+5,5)
+                return num
+            endif
         endif
-    endif
+    endselect
     return results
 endfunction
-

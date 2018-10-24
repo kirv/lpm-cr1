@@ -3,7 +3,7 @@ beginProg
         '' Retry query if LPM returns "!TR00001", which means: telegram not available.
         telegram_query_tries = 0
         do
-            lpm_telegram = thies_query({{ID:0}}, "TR", {{TELEGRAM:8}})
+            lpm_telegram = lpm_query({{ID:0}}, "TR", {{TELEGRAM:8}})
             telegram_query_tries += 1
         loop until lpm_telegram <> 1 or telegram_query_tries > 3
         lpm_telegram_ok = lpm_checksum(lpm_telegram)

@@ -1,6 +1,6 @@
 beginProg
     Scan (100,msec,1,-1)
-        u3d_telegram = thies_query({{ID:0}}, "TR", {{TELEGRAM:1}})
+        u3d_telegram = u3d_query({{ID:0}}, "TR", {{TELEGRAM:1}})
         u3d_telegram_ok = u3d_checksum(u3d_telegram)
         u3d_get_status(u3d_telegram)
     NextScan

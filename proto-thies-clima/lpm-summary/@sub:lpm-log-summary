@@ -1,0 +1,10 @@
+sub lpm_log_summary(id as long, telegram as string)
+    dim fields(524), results as string * 80
+    splitStr (fields(),telegram,SEMICOLON,524,5)
+    results = "LPM_" + id & ":" & lpm_query(id,"ZT",-1) & ", "
+    results &= "running " & lpm_query(id,"ZB",-1) & " hrs, "
+    results &= "errs: " + LPM_error_bits & ", "
+    results &= "warn: " + LPM_warning_bits & ", "
+    results &= "precip " & fields(17) & " mm in " & lpm_query(id,"PT",-1) & " hrs"
+    log(results)
+endFunction

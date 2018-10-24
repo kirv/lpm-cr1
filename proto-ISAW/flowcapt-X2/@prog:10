@@ -1,5 +1,6 @@
 beginProg
     scan(10,Sec,0,0)
-        read_flowcapt_sensors()
+        read_flowcapt_sensor({{ADDR1:1}}, fc1_flux(), fc1_qSum, fc1_wind())
+        read_flowcapt_sensor({{ADDR2:2}}, fc2_flux(), fc2_qSum, fc2_wind())
     nextScan
 endProg

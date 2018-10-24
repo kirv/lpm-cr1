@@ -7,8 +7,8 @@ sub get_LPM_flags(id as long)
     dim msg as string * 60
 
     '' note that the first (or 0th) entry in DX is ignored!
-    splitStr (dx(),mid(thies_query(id,"DX",-1),3,31),SEMICOLON,15,5)
-    splitStr (fm(),thies_query(id,"FM",-1),SEMICOLON,15,5)
+    splitStr (dx(),mid(lpm_query(id,"DX",-1),3,31),SEMICOLON,15,5)
+    splitStr (fm(),lpm_query(id,"FM",-1),SEMICOLON,15,5)
 
     '' LPM error flags are in DX[2..7] or DX'[1..6], counts are in FM[1..6]
     dim error_msgs(6) as string * 40 = { _

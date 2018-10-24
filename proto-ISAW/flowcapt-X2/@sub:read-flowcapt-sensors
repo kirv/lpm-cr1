@@ -1,16 +1,17 @@
-sub read_flowcapt_sensors()
+sub read_flowcapt_sensor(addr as long, flux(4) as float, qSum as float, wind(3) as float)
     '' read FlowCapt particle flux and wind speed acoustical sensors
     dim i
-    SDI12Recorder (fc1(),{{SDI12__CP:1}},{{ADDR1:1}},"M!",1,0)
-    SDI12Recorder (fc2(),{{SDI12__CP:1}},{{ADDR2:2}},"M!",1,0)
-    ' the first three values are for particle flux in g/m^2/s
-    ' the fourth value is standard deviation
+    dim fc(8) as float
+    SDI12Recorder (fc(),{{SDI12__CP:1}},addr,"M!",1,0)
+    ' the first values are for particle flux in g/m^2/s and standard deviation
+    for i=1 to 4
+        flux(i) = fc(i)
+    next i
     ' the fifth value is totalized particle flux over the measurement interval:
-    fc1_qSum = fc1(5)
-    fc2_qSum = fc2(5)
+    qSum = fc(5)
     ' values 6,7,8 are for wind speed in km/h, convert to m/s:
     for i=1 to 3
-        fc1_wind(i) = fc1(i+5) * 1000/3600
-        fc2_wind(i) = fc2(i+5) * 1000/3600
+        wind(i) = fc(i+5) * 1000/3600
+        wind(i) = fc(i+5) * 1000/3600
     next i
 endsub

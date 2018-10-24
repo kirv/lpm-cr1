@@ -1,0 +1,5 @@
+sub flowcapt_log_param(addr as long, param as string)
+    dim result as string * 40
+    sdi12Recorder(result, {{SDI12__CP:1}}, addr, "XG" & param & BANG, 1, 0)
+    log("flowcapt_" + addr, param & ":", result)
+endsub

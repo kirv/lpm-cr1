@@ -1,20 +1,16 @@
 function thies_query(id as long, cmd as string, param as long) as string * 2233
     '' NOTE: param = -1 omits parameter
-    dim command as string * 10, results as string * 2233, trailer as string * 2, num as long
+    dim command as string * 10, results as string * 2233, trailer as string * 255
     select case param
     case -1         : sprintf(command, "%02d%s", id, uppercase(cmd))
     case 0 to 99999 : sprintf(command, "%02d%s%05d", id, uppercase(cmd), param)
     case else       : return QUESTION & QUESTION & "invalid parameter: " & param
     endselect
     serialOut({{COMMPORT:Com1}}, CR & command & CR,"",0,0)
-    serialin(results,{{COMMPORT:Com1}},300,CR,2233)
-    select case left(results,1)
-    if left(results,1,5) = BANG + id & uppercase(cmd) then
-        num = mid(results,6,5)
-        return num
-    else if left(results,1) = STX then
-        serialIn(trailer,{{COMMPORT:Com1}},30,ETX,2)
-        results &= trailer
-    endselect
+    serialin(results,{{COMMPORT:Com1}},100,CR,2233)
+    if serialinChk({{COMMPORT:Com1}}) then 
+        serialinBlock({{COMMPORT:Com1}},trailer,serialinChk({{COMMPORT:Com1}}))
+        if len(trailer) > 0 then results &= trailer
+    endif
     return results
 endfunction

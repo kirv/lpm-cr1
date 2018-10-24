@@ -1,6 +1,6 @@
 beginProg
-    log("flowcapt_1 --", FLOWCAPT_1_INFO, get_sdi12_id({{ADDR1:1}}))
-    log("flowcapt_2 --", FLOWCAPT_2_INFO, get_sdi12_id({{ADDR2:2}}))
-    flowcapt_check({{ADDR:1}})
-    flowcapt_check({{ADDR:2}})
+    log("flowcapt_1 --", FLOWCAPT_1_INFO)
+    flowcapt_log_params({{ADDR1:1}})
+    log("flowcapt_2 --", FLOWCAPT_2_INFO)
+    flowcapt_log_params({{ADDR2:2}})
 endProg
