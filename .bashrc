@@ -4,4 +4,4 @@
 }
 export TOBLIB=$(pwd)/.tob-lib
 PATH=$(pwd)/bin:$PATH
-command_not_found_handle () { exec tob "$@"; }
+export command_not_found_handle () { exec tob "$@"; }
