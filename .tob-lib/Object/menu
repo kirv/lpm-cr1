@@ -1,0 +1,157 @@
+#!/bin/bash
+self=.
+
+while test -n "$1"; do
+    opt=$1 && shift
+    case $opt in
+        --show-hidden)
+            show_hidden=1
+            ;;
+        --show-skipped)
+            show_skipped=1
+            ;;
+        -*) echo unknown option: $opt >&2
+            exit 1
+            ;;
+        *)  choice=$opt
+            ;;
+    esac
+done
+
+declare -a display
+declare -a keys
+declare -a methods
+declare -a hidden
+declare -a hkeys
+n=1
+unset methods[0]
+k=1
+unset keys[0]
+allkeys=""
+unset hide_entry
+for p in ${TOB_search_paths//:/ }; do
+    # process the @MENU form first, continue only if super.menu was given
+    for f in $p/{,.}@MENU; do
+        test -e $f && {
+            final_menu=1
+            for method in $(<$f); do
+                test "$method" == super.menu &&
+                    unset final_menu &&
+                        continue
+                methods[$n]="$method"
+                display[$n]="$n \t- $TOB_object.$method"
+                n=$(($n+1))
+            done
+            test -n "$final_menu" && break 2
+            }
+    done
+    for f in $p/{,.}%MENU; do
+        test -e $f && {
+            final_menu=1
+            while read key_value; do
+                # ignore blank or commented lines:
+                test "$key_value" == "" && continue
+                original_entry="$key_value"
+                test "${key_value#\#}" == "$key_value" || continue
+                # change 'tag = value' to 'tag value':
+                key_value="${key_value/=/ }"
+                key=${key_value%% *}
+                test $key == super.menu &&
+                    unset final_menu &&
+                        continue
+                test ${key:0:1} == . && {
+                    key=${key#.}
+                    hide_entry=1
+                    }
+                # check for and skip duplicate entry:
+                test "${allkeys/ $key //}" == "$allkeys" || {
+                    test -n "$show_skipped" && 
+                        printf "skipping duplicate entry in file %s: %s\n" \
+                            $f "$original_entry"
+                    continue
+                    }
+                allkeys="$allkeys $key "
+                keys[$k]=$key
+                value="${key_value#* }"
+                # strip leading spaces:
+                while test "${value:0:1}" == " "; do
+                    value="${value# }"
+                done
+                vals[$k]="$value"
+              # printf "\t<%s>=<%s>\n" "$key" "$value"
+
+                if test -n "$hide_entry"; then
+                    unset kdisplay[$k]
+                    hidden[$k]="$key \t. $TOB_object.$value"
+                    hkeys[${#hkeys[@]}]=$k
+                    unset hide_entry
+                else
+                    kdisplay[$k]="$key \t- $TOB_object.$value"
+                fi
+
+                k=$(($k+1))
+            done < $f
+            test -n "$final_menu" && break 2
+        }
+    done
+done
+
+for entry in "${display[@]}"; do
+    printf "$entry\n"
+done
+
+k=1
+while test $k -le ${#keys[@]}; do 
+    entry="${kdisplay[$k]}"
+    test -n "$entry" && 
+        printf "$entry\n"
+    k=$(($k+1))
+done
+
+test -n "$show_hidden" && {
+    for k in "${hkeys[@]}"; do
+        entry="${hidden[$k]}"
+        printf "$entry\n"
+    done
+
+    }
+unset k
+
+
+exec_method () {
+    method_args="$@"
+    method="${method_args%% *}"
+    args="${method_args#$method}"
+    if do_method=$(tob $self.method $method); then
+        echo $TOB_object.$method_args
+        exec $do_method $args
+    else
+        echo $TOB_object.$method_args
+        exec tob $self._default $method $args
+    fi
+    }
+
+test -n "$choice" ||
+    read -p "? " choice
+
+test "$choice" == "" && exit 0
+test "$choice" == "?" && {
+    echo "$TOB_object.menu --show-hidden # marked with ." 
+    exec $0 --show-hidden
+    }
+
+# first check if choice is numeric, from @MENU files:
+test ${choice/[-]/} == $choice &&
+    test -n "${methods[$choice]}" &&
+        exec_method "${methods[$choice]}"
+
+# next check if choice is a key from %MENU files:
+k=1
+while test $k -le ${#keys[@]}; do 
+    test "$choice" == "${keys[$k]}" &&
+        exec_method "${vals[$k]}"
+    k=$(($k+1))
+done
+
+echo invalid choice >&2
+

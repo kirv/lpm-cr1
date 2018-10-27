@@ -1,0 +1,50 @@
+#!/bin/bash
+
+show_number=1 # show one help page by default
+
+# can specify number of pages to show in a numeric argument
+test -n "$1" &&
+    show_number=$1 &&
+        shift 
+
+declare -a help
+for p in ${TOB_search_paths//:/ }; do
+    test -e $p/\@HELP &&
+        help=(${help[@]} $p/\@HELP)
+done
+
+available=${#help[@]}
+
+# for h in ${help[@]}; do
+#     printf \\t$h\\n
+# done
+
+i=0
+while test "$i" -lt "$show_number"; do
+    
+    cat ${help[$i]} # display the help page
+
+    i=$(($i + 1))
+
+  # echo i=$i, available=$available, show=$show_number
+
+    test "$i" -lt "$available" || # no more pages are available
+        break 
+    
+    test "$i" -lt "$show_number" || {
+        pending=$(($available - $i))
+
+        pluralize=s
+        test $pending -eq 1 &&
+            unset pluralize
+
+        printf "\nNOTE: %s more help page$pluralize available, type: %s.help N, N=1 to %d\n"\
+            $pending $TOB_object $available
+
+        break
+        }
+
+    printf "\nCHAINING TO NEXT (%d of %d) HELP PAGE...\n\n"\
+        $(($i+1)) $available
+    
+done

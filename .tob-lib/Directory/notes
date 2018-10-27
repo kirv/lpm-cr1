@@ -1,0 +1,25 @@
+#!/bin/sh
+
+notes=/usr/local/bin/notes
+
+while test "${1:0:1}" == "-"; do 
+    test $1 == --create-ok && {
+        CREATE_OK=1
+        shift
+        continue
+        }
+    test $1 == -h && exec $notes -h
+    test $1 == --help &&  exec $notes --help
+    echo unknown $0 option: \"$1\"
+    exit 1
+done
+
+test -e NOTES || {
+    if [ -n "$CREATE_OK" ]; then
+        pwd >> NOTES
+    else    
+        exit 1
+    fi
+    }
+
+/usr/local/bin/notes $@

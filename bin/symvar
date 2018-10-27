@@ -1,0 +1,29 @@
+#!/bin/bash
+
+error() { printf "%s\n" "$*"; exit 1; }
+
+# symvar [-f] NAME [VALUE]
+
+force=""
+test "$1" = -f && force=-f && shift
+
+name="$1" && shift
+
+test -n "$name" || error "SYNOPSIS: symvar [-f] NAME [VALUE]"
+
+test -e "$name" && error "symvar cannot exist as ordinary file"
+
+test -n "$1" && exec ln $force -s "=$*" $name
+
+test -L "$name" || {
+    name=."$name"
+    test -L "$name" || exit
+    }
+
+value=$(readlink $name)
+
+test "${value:0:1}" = '=' || error "symlink $name is not a symvar"
+
+printf "%s\n" "${value#=}"
+
+
