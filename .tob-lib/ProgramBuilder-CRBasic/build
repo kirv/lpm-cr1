@@ -125,6 +125,7 @@ OPTIONS
         Suppress default action of including one or more header lines at the top of the program.
 
     --show-id
+    --show-ids
         Include a comment line identifying each component in the output.
 
     --no-notes
@@ -136,12 +137,12 @@ OPTIONS
 
     --chunk CHUNK
     --chunk "CHUNK1 CHUNK2 ..."
-        Run only the named chunk handlers
+        Run only the named chunk handlers, e.g., globals, functions, etc.
 
     --save
         Save output as v/psig-<PSIG>.cr1, and set symlink v/latest.cr1 to point to
         it.  Output directory v must exist (e.g., created manually).
-        
+
 DESCRIPTION
     Runs one or more 'chunk' handlers in order, where each handler composes code
     for its type contained in all 'components' inside the builder-object.  A builder-

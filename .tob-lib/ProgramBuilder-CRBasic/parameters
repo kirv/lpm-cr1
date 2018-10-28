@@ -80,5 +80,36 @@ main "$@"
 
 exit 0
 
-NAME parameters
+NAME
+    parameters
 
+SYNOPSIS 
+    parameters [--indent N] [--width N] [--one-line] [--blank]
+
+DESCRIPTION
+    Lists parameters declared for each component of the build object, where a component is a
+    directory or symlink to a prototype object
+
+OPTIONS
+    --indent N
+        indent param values N spaces from start-of-line
+
+    --width N
+        max width of param values list
+
+    --oneline
+    --one-line
+        print component parameters on one line
+
+    --blank
+    --blank-line
+        print blank line after each component
+
+    --help
+        verbose help
+
+    -h
+        show synopsis
+
+AUTHOR
+    ken.irving@alaska.edu
