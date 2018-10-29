@@ -26,6 +26,14 @@ COMPONENT PARAMETERS
     chunk handlers for that component.  Component parameters are
     build-time variables with a namespace restricted to the component.
 
+    In the component parameters symvar, parameters are declared
+    like: NAME:VALUE, with parameter-value pairs separated by spaces.
+
+    In component program text chunks, parameter expansions appear
+    like {{NAME:VALUE}}.  The entire construct is replaced by VALUE
+    unless parameter NAME is defined for the component, in which case 
+    that value is used.
+
 PROPERTIES
     ^   The ^ symlink identifies the ProgramBuilder-CRBasic type
         directly (as a non-resolving symlink) or indirectly as a
@@ -38,6 +46,15 @@ PROPERTIES
     name
         The value of symvar 'name', if present, is output by the build
         method as a comment for the first line of the program. 
+
+    tag
+        Symvar tag's value is used as the prefix for the program
+        output file obtained using the build --save option. 
+
+    logger
+        Symvar logger describes the datalogger model, used by the
+        build --save option to set the progream extension.  Supported
+        types include cr1000 (default), cr1000x, and cr800.
 
 METHODS
     build
