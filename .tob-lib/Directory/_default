@@ -27,6 +27,7 @@ done
 
 unset property default_handler
 for p in ${TOB_search_paths//:/ }; do
+    warn "DEBUG: $p"
     test ! -e $p/$method && test -L $p/$method && { # found symvar?
         property=$p/$method
         default_handler=symvar

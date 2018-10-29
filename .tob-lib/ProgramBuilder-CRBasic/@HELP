@@ -20,6 +20,12 @@ COMPONENTS
     A component can be a directory in the builder object, or can
     be a symlink to a component in a prototype object.
 
+COMPONENT PARAMETERS
+    For any component, a symvar of the same name with ':' appended
+    can be used to define parameters to be expanded in any of the
+    chunk handlers for that component.  Component parameters are
+    build-time variables with a namespace restricted to the component.
+
 PROPERTIES
     ^   The ^ symlink identifies the ProgramBuilder-CRBasic type
         directly (as a non-resolving symlink) or indirectly as a
@@ -29,13 +35,28 @@ PROPERTIES
         The @order file lists components to be included in the
         generated program.
 
+    name
+        The value of symvar 'name', if present, is output by the build
+        method as a comment for the first line of the program. 
+
 METHODS
     build
         The build method generates the complete program text, taking
-        several optional arguments, then calling 'chunk handler' methods
-        in turn.
+        several optional arguments, then calling the following methods
+        in turn to handle 'chunks' of the program, producing output in
+        sequence:
+
+            constants-table
+            constants
+            globals
+            datatables
+            functions
+            subs
+            programs
+            after-notes
 
         The build method has several options; see build --help.
+
 
 METHODS, CHUNK HANDLERS
 
@@ -44,20 +65,20 @@ METHODS, CHUNK HANDLERS
         object symvars: FOO -> =VALUE replaces FOO value from @constatnts-table
 
         CRBasic constants declared in a constTable block can be edited
-        using a keypad or other terminal connection to the datalogger.
+        using a keypad or by some terminal connection to the datalogger.
 
             constTable
                 const NAME = VALUE
                 ...
             endConstTable
 
-        See also next section:
+        See next section:
 
     constants
         component property: @constants
         object symvars: FOO -> =VALUE replaces FOO value from @constatnts
 
-        This method includes code found in '@constants' properties in each
+        This method copies code found in '@constants' properties in each
         component listed in the '@order' property.  Constants look like:
 
             const NAME = VALUE
@@ -104,8 +125,8 @@ METHODS, CHUNK HANDLERS
 
     datatables
         component properties: @datatable:NAME
-        object symvars: datatable-TABLE_NAME:
-        object symvars: datafield-FIELD_NAME:
+        object symvars: datatable-NAME:
+        object symvars: datafield-TYPE:NAME
 
         Symvars declared in the build object as 'datatable-TABLE_NAME:' can be used
         to initialize datatable declarations in the generated program.  Supported 
@@ -124,45 +145,101 @@ METHODS, CHUNK HANDLERS
             tables:T1,T2,T3
             order:N
 
-        '@datatable:NAME' component properties define column elements to be 
-        included in the program datatable.  Elements can look like:
-        
-            sample(NAME, REPS, TYPE)
-            average(NAME, REPS, TYPE)
-            min(NAME, REPS, TYPE)
-            ...
+        Note: Use of 'datafield-TYPE:NAME' symvars is complicated by the need
+        to maintain datatable columns in strict order.  One use is to declare
+        a certain datatable field to be the first column.:w
 
-    subs
-        component properties: @sub:NAME
+        @datatable:NAME
+            Each line in this list property represents a field declaration in
+            the datatable NAME.   Lines other than for field elements are ignored,
+            'datatable()' or 'endtable'.
+        
+                sample(NAME, REPS, TYPE)
+                average(NAME, REPS, TYPE)
+                min(NAME, REPS, TYPE)
+                ...
 
     functions
         component properties: @function:NAME
 
+        	The contents of each @function:NAME list property is output
+        	as program text after component parameter expansion, but
+        	with no other processing.  The function name is as defined
+        	in the file, and may be different from NAME.  A convention
+        	is for NAME to use '-' (hyphen) to separate portions of the
+        	function name, while the function name in the program uses
+            '_' (underscore) instead.
+
+    subs
+        component properties: @sub:NAME
+
+        	The contents of each @sub:NAME list property is output
+        	as program text after component parameter expansion, but
+        	with no other processing.  The sub name is as defined
+        	in the file, and may be different from NAME.  A convention
+        	is for NAME to use '-' (hyphen) to separate portions of the
+        	sub name, while the sub name in the program uses
+            '_' (underscore) instead.
+
+            (Note that CRBasic subroutines arguments use pass-by-reference;
+            code in subroutines can change the state of global variables.)
+
     programs
         component properties: @prog:init
         component properties: @prog:SCAN
+        component properties: @prog:N<UNITS>
+        object symvar: scan-order
+
+        Text lines found in @prog:* list properties are output into separate
+        chunks for each scan interval.  @prog:init text precedes any scan block,
+        so will run one time as the program starts up.
+
+        The SCAN value is in seconds by default, but support may be added for
+        other time intervals via the suffix, e.g., msec.
+
+        Scan blocks are output in numeric order except if overridden by the
+        symvar 'scan-order'.  Scan blocks are separated by a 'slowSequence' line,
+        but do not need to be in a particular order.
 
     after-notes
         component property: @after-notes
         build method option: --no-notes
 
         Text in any @after-notes properties is appended as comments after the
-        end of the program.
+        end of the program, unless build is called with --no-notes.
         
     parameters
         build method option: --show-params
 
         If --show-params is included in the build invocation, component parameters
-        are shown after the end of the program as comments.
+        are shown after the end of the program as comments.  The component names
+        and parameter values are formatted according to options to the parameters
+        method.  See the build method text to see/edit how the parameters method
+        is called.
 
 
 UTILITY METHODS
-
-    deploy
+    A few methods were found useful in the past...
 
     strip
+        This is an awk script that strips spaces, blank lines, comments, and
+        other non-functional parts of a crbasic program, in order to achieve
+        a smaller program file size.
+
+    deploy
+        This method stores the generated program under deploy/, along with a 
+        version run through the strip method, and including program signatures
+        of original and unstripped versions in the name. 
 
     print-lines-crlf
+        An awk script to ensure \r\n (CR + LF) line endings, which are required
+        for CRBasic programs.  Hopefully build and other methods already output
+        lines with DOS-like line endings, so this method is superfluous.
+        
+SEE ALSO    
+    github.com/kirv/thinobject
+    ProgramBuilder-CRBasic.build --help
+    ProgramBuilder-CRBasic.parameters --help
 
 AUTHOR
     ken.irving@alaska.edu 2008-2018
