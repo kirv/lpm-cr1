@@ -1,4 +1,4 @@
-#!/usr/local/bin/bash
+#!/usr/bin/env bash
 
 # create a 'deployment set' of fulltext and stripped cr1 files under deploy/ as:
 #    deploy/DATE/fulltext/TAGNAME-DATE-SIG1-SIG2.cr1

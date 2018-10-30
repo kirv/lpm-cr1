@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # tob -- thinobject 'enabler' program
 # Copyright (C) 2013 Ken Irving
 #
@@ -269,8 +269,8 @@ cull_duplicate_paths () {
         warn "size of types, envars, mpaths differ: ${#types[@]}, ${#envars[@]}, ${#mpaths[@]}"
     # arrays types, envars, and mpaths are 1:1, so scan types, discard from all
     for (( i=${#types[@]}-1; i>=0; i-- )); do
-        entry=${types[i]}
-        test "${unique/$entry/}" = "$unique" && unique+=" $entry" && continue
+        entry=X${types[i]}X
+        test "${unique/X${entry}X/}" = "$unique" && unique+=" $entry" && continue
         unset 'types[i]'
         unset 'envars[i]'
         unset 'mpaths[i]'
@@ -279,8 +279,8 @@ cull_duplicate_paths () {
     apaths=("${apaths[@]}") # pack array first, though...
     unique=
     for (( i=${#apaths[@]}-1; i>=0; i-- )); do
-        entry=${apaths[i]}
-        test "${unique/$entry/}" = "$unique" && unique+=" $entry" && continue
+        entry=X${apaths[i]}X
+        test "${unique/X${entry}X/}" = "$unique" && unique+=" $entry" && continue
         unset 'apaths[i]'
     done
     }
