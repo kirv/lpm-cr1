@@ -1,4 +1,4 @@
-sub lpm_log_summary(id as long, telegram as string)
+sub lpm_log_summary(id as long, telegram as string * 2233)
     dim fields(524), results as string * 80
     splitStr (fields(),telegram,SEMICOLON,524,5)
     results = "LPM_" + id & ":" & lpm_query(id,"ZT",-1) & ", "

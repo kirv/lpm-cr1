@@ -2,3 +2,6 @@ public u3d_telegram as string * 200
 public u3d_telegram_ok as long 
 public u3d_state(5)
 alias u3d_state = u3d_warning, u3d_memory, u3d_error, u3d_heat_call, u3d_heat_on
+
+public u3d_debug(3) as long 
+alias u3d_debug = u3d_CS,u3d_S,u3d_N

@@ -3,7 +3,7 @@ program-signature
 logmsg
 battery-to-SRS-table
 panel-temp-to-SRS-table
-
+    
 therm107-to-SRS-table
 
 srs-sr50a-x3
