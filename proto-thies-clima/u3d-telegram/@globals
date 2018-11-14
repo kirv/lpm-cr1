@@ -1,7 +1,7 @@
 public u3d_telegram as string * 200
 public u3d_telegram_ok as long 
-public u3d_state(5)
-alias u3d_state = u3d_warning, u3d_memory, u3d_error, u3d_heat_call, u3d_heat_on
+public u3d_state(6)
+alias u3d_state = u3d_status,u3d_warning,u3d_memory,u3d_error,u3d_heat_call,u3d_heat_on
 
-public u3d_debug(3) as long 
-alias u3d_debug = u3d_CS,u3d_S,u3d_N
+public u3d_debug(6) as long 
+alias u3d_debug = u3d_I,u3d_LEN,u3d_LAST,u3d_N,u3d_CS,u3d_S

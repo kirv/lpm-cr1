@@ -14,11 +14,12 @@ sub u3d_get_status(telegram as string * 200)
         endif
         status += nbl
     next i
+    u3d_state(1) = status
     '' store into global variable per U3D manual section 7.4.6.2
-    u3d_state(1) = (status AND &b00000001)>>0   '' bit 0 -- general malfunction
-    u3d_state(2) = (status AND &b00001110)>>1   '' bits 1..3 -- used averaging memory
-    u3d_state(2) /= 8                           '' ... convert to fraction of memory used
-    u3d_state(3) = (status AND &b00100000)>>5   '' bit 5 -- static malfunction
-    u3d_state(4) = (status AND &b01000000)>>6   '' bit 6 -- heating criterion is 
-    u3d_state(5) = (status AND &b10000000)>>7   '' bit 7 -- heating is switched on
+    u3d_state(2) = (status AND &b00000001)>>0   '' bit 0 -- general malfunction
+    u3d_state(3) = (status AND &b00001110)>>1   '' bits 1..3 -- used averaging memory
+    u3d_state(3) /= 8                           '' ... convert to fraction of memory used
+    u3d_state(4) = (status AND &b00100000)>>5   '' bit 5 -- static malfunction
+    u3d_state(5) = (status AND &b01000000)>>6   '' bit 6 -- heating criterion is 
+    u3d_state(6) = (status AND &b10000000)>>7   '' bit 7 -- heating is switched on
 endsub

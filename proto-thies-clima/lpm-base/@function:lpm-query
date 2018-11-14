@@ -1,7 +1,8 @@
 function lpm_query(id as long, cmd as string, param as long) as string * 2233
     dim results as string * 2233, num as long
     results = thies_query(id, cmd, param)
-    if instr(1, results, BANG, 2) = 1 then
+    select case left(results,1)
+    case BANG
         select case mid(results,4,2)
         case uppercase(cmd)
             num = mid(results,6,5)
@@ -15,6 +16,10 @@ function lpm_query(id as long, cmd as string, param as long) as string * 2233
             case else : results = QUESTION & QUESTION & "unexpected:" & results
             endselect
         endselect
-    endif
+    case STX
+        '' need to make sure ETX is the last character
+      ' results = left(results, <POSITION OF ETX>)
+        results = left(results, instr(1, results, ETX, 2))
+    endselect
     return results
 endfunction

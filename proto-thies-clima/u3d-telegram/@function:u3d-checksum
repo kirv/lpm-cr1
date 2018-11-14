@@ -5,11 +5,15 @@ function u3d_checksum(telegram as string * 200) as long
     case STX,STAR : i = 2
     case else     : i = 1
     endselect
+    u3d_I = i
     n = len(telegram)
+    u3d_LEN = n
+    u3d_LAST = ascii(telegram(1,1,n))
     select case ascii(telegram(1,1,n))
-    case ETX,LF : n -= 4
-    case CR     : n -= 3
+    case ETX,LF    : n -= 4
+    case CR,SPACE  : n -= 3
     endselect
+    u3d_N = n
     H = ascii(telegram(1,1,n+1)) : L = ascii(telegram(1,1,n+2))
     if H>=48 AND H<=57 then H-=48 else if H>=65 AND H<=70 then H-=55
     if L>=48 AND L<=57 then L-=48 else if L>=65 AND L<=70 then L-=55
@@ -19,6 +23,5 @@ function u3d_checksum(telegram as string * 200) as long
     '' DEBUG the calculations:
     u3d_CS = CS
     u3d_S = S
-    u3d_N = N
     if S = CS then return 0 else return 1
 endFunction

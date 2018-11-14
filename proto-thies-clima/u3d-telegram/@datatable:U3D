@@ -1,4 +1,4 @@
 sample(5,u3d_state,fp2)
 sample(1,u3d_telegram_ok,uint2)
 sample(1,u3d_telegram,String)
-sample(3,u3d_debug,uint2)
+sample(6,u3d_debug,uint2)
