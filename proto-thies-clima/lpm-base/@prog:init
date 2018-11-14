@@ -1,4 +1,5 @@
 beginProg
+    log("LPM make, name & model: Thies Clima", LPM_NAME, LPM_MODEL)
     log("LPM_{{ID:0}} serial number (SN):", lpm_query({{ID:0}},"SN",-1))
     log("LPM_{{ID:0}} software version (SV):", "V" + lpm_query({{ID:0}},"SV",-1)/100)
     log("LPM_{{ID:0}} bootloader version (SB):", "V" + lpm_query({{ID:0}},"SB",-1)/100)

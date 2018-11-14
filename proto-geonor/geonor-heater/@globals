@@ -1,5 +1,5 @@
 '' Geonor heater control 
-public gnr_htr_scan         : units gnr_htr_scan = sec
-public gnr_htr_period       : units gnr_htr_period = sec    '' 100% duty cycle time
-public gnr_htr_on_ratio ' heater control setpoint, ratio of ON/OFF times
-public gnr_htr_state as boolean
+public gnr_htr_scan as long     : units gnr_htr_scan = sec
+public gnr_htr_period as long   : units gnr_htr_period = sec    '' 100% duty cycle time
+public gnr_htr_ratio as float
+public gnr_htr_state as long

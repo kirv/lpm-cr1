@@ -1,6 +1,6 @@
 beginProg
     scan(10,sec,0,0)
-        gnr_htr_on_ratio = gnr_htr_strategy({{AIR_TEMP:air_temp}}, {{ORIFICE_TEMP:orifice_temp}})
-        gnr_htr_state = htr_relay_control(gnr_htr_on_ratio, gnr_htr_scan, gnr_htr_period)
+        gnr_htr_ratio = gnr_htr_strategy({{AIR_TEMP:air_temp}}, {{ORIFICE_TEMP:orifice_temp}})
+        gnr_htr_state = gnr_htr_control(gnr_htr_on_ratio, gnr_htr_scan, gnr_htr_period)
     nextScan
 endProg

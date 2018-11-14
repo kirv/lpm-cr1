@@ -1,7 +1,7 @@
-function htr_relay_control(ratio as float, htr_scan as long, htr_period as long) as boolean
+function gnr_htr_control(ratio as float, htr_scan as long, htr_period as long) as long
     dim elapsed as float
     dim ontime as float
-    dim state as boolean
+    dim state as long
     elapsed = timer(htr_scan,sec,4)                 '' read timer
     if elapsed = 0 then timer(htr_scan,sec,0)       '' start timer if not running
     ontime = ratio * htr_period
