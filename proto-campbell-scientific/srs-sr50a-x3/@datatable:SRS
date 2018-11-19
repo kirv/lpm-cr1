@@ -1,5 +1,8 @@
 dataTable(SRS,1,-1)
-    sample(2,srs1,fp2)
-    sample(2,srs2,fp2)
-    sample(2,srs3,fp2)
+    sample(srs1_dist_raw,fp2)
+    sample(srs1_qual,fp2)
+    sample(srs2_dist_raw,fp2)
+    sample(srs2_qual,fp2)
+    sample(srs3_dist_raw,fp2)
+    sample(srs3_qual,fp2)
 endTable
