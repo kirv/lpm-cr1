@@ -1,9 +1,7 @@
-public fc1(8)
 public fc1_flux(4) : units fc1_flux()=g/m^2/s
 public fc1_qSum    : units fc1_qSum()=g/m^2
 public fc1_wind(3) : units fc1_wind()=m/s
 
-public fc2(8)
 public fc2_flux(4) : units fc2_flux()=g/m^2/s
 public fc2_qSum    : units fc2_qSum()=g/m^2
 public fc2_wind(3) : units fc2_wind()=m/s

@@ -9,7 +9,7 @@ function u3d_checksum(telegram as string * 200) as long
     n = len(telegram)
     u3d_LEN = n
     u3d_LAST = ascii(telegram(1,1,n))
-    select case ascii(telegram(1,1,n))
+    select case telegram(1,1,n)
     case ETX,LF    : n -= 4
     case CR,SPACE  : n -= 3
     endselect
