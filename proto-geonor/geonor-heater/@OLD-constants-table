@@ -1,8 +1,0 @@
-'' Geonor orifice RTD, Minco S665PFY40B, 1000 Ohms at 0C
-const GNR_RTD__SE = 7 
-const GNR_RTD__EX = 2
-const GNR_RTD_R0 = 1000 ' Ohms
-
-const HTR_RELAY__CP = 1      ' control port wired to solid state relay
-const HTR_SCAN_SEC = 10     ' control scan time, also minimum heater ON time
-const HTR_PERIOD_SEC = 120  ' duty cycle period for heater control

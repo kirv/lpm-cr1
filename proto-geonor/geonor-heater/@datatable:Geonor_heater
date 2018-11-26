@@ -1,3 +1,7 @@
 sample(1,{{AIR_TEMP:air_temp}},fp2)
-average(1,gnr_htr_ratio,fp2,0)
-average(1,gnr_htr_state,fp2,0)
+sample(1,gnr_htr_ofs,fp2)           ' offset from ambient temperature
+sample(1,gnr_htr_setpt,fp2)         ' control setpoint is air_temp + ofs
+sample(1,gnr_htr_pb,fp2)            ' proportional band (1/gain)
+sample(1,gnr_htr_itm,fp2)           ' integral time 
+average(1,gnr_htr_bias,fp2,0)       ' zero-error output
+average(1,gnr_htr_state,fp2,0)      ' output ratio for relay 

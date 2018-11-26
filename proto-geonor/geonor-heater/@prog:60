@@ -1,5 +1,0 @@
-beginProg
-    scan(60,sec,0,0)
-        gnr_htr_ratio = gnr_htr_strategy({{AIR_TEMP:air_temp}}, {{ORIFICE_TEMP:orifice_temp}})
-    nextScan
-endProg

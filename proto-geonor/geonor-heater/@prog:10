@@ -1,5 +1,12 @@
 beginProg
     scan(10,sec,0,0)
-        gnr_htr_state = gnr_htr_control(gnr_htr_ratio, gnr_htr_scan, gnr_htr_period)
+        gnr_htr_setpt = air_temp + gnr_htr_ofs
+        if air_temp > 5 then gnr_htr_setpt = -40
+        gnr_htr_bias += (gnr_temp-gnr_htr_setpt)*10/gnr_htr_itm/gnr_htr_pb
+        gnr_htr_bias += (gnr_temp-gnr_htr_setpt)/gnr_htr_pb*10/gnr_htr_itm
+        if gnr_htr_bias < 0 then gnr_htr_bias = 0
+        if gnr_htr_bias > 1 then gnr_htr_bias = 1
+        gnr_htr_state = (gnr_temp-air_temp-gnr_htr_ofs)/gnr_htr_pb + gnr_htr_bias
+        pwm(gnr_htr_state, {{HTR_RELAY:1}}, 10, sec)
     nextScan
 endProg
