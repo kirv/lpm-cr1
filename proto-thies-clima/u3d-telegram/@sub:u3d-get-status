@@ -1,7 +1,7 @@
 sub u3d_get_status(telegram as string * 200)
     '' isolate and decode the Thies status byte, a hexadecimal string value
     dim n as long, nbl as long, status as long, i as long
-    n = len(telegram) - 6
+    n = len(telegram) - 5
     if {{U3D_TELEGRAM:1}} = 10 then n -= 10
     status = 0
     for i = n to n + 1

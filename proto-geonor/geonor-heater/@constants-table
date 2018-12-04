@@ -1,4 +1,0 @@
-const HTR_RELAY__CP = {{HTR_RELAY__CP:1}}   ' control port or sw12v (cp 9) wired to d1d07 relay input
-const GEONOR_HTR_PB = 20        ' proportional band, degrees per full-scale output
-const GEONOR_HTR_ITM = 600      ' integral time in seconds
-const GEONOR_HTR_OFS = 5        ' deg C to add to air_temp for control setpoint 
