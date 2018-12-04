@@ -1,15 +1,14 @@
 function u3d_checksum(telegram as string * 200) as long
     '' XOR of bytes after STX and before the checksum bytes
     dim i as long, n as long, H as long, L as long, CS as long, S as long
-    select case ascii(telegram(1,1,1))
+    select case telegram(1,1,1)
     case STX,STAR : i = 2
     case else     : i = 1
     endselect
     n = len(telegram)
     select case telegram(1,1,n)
-    case ETX,LF : n -= 4
-    case CR     : n -= 3
-    case else   : n -= 2
+    case ETX,LF    : n -= 4
+    case CR,SPACE  : n -= 3
     endselect
     H = ascii(telegram(1,1,n+1)) : L = ascii(telegram(1,1,n+2))
     if H>=48 AND H<=57 then H-=48 else if H>=65 AND H<=70 then H-=55
