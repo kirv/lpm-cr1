@@ -1,7 +1,6 @@
-'' Geonor heater control 
-public gnr_htr_state as float
-public gnr_htr_pb
-public gnr_htr_itm
+public gnr_heater
 public gnr_htr_bias
-public gnr_htr_ofs
-public gnr_htr_setpt
+public gnr_htr_upb  : units gnr_htr_upb = deg   ' unit proportional band
+public gnr_htr_itm  : units gnr_htr_itm = sec   ' integral time
+public gnr_htr_set  : units gnr_htr_set = deg   ' inlet temperature setpoint
+public gnr_htr_atOfs: units gnr_htr_atOfs = deg ' setpoint offset from ambient temp

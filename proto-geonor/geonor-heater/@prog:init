@@ -1,6 +1,6 @@
 beginProg
-    gnr_htr_pb = GEONOR_HTR_PB
-    gnr_htr_itm = GEONOR_HTR_ITM
+    gnr_htr_upb = {{UPB:10}}
+    gnr_htr_itm = {{ITM:300}}
+    gnr_htr_ofs = {{OFS:5}}
     gnr_htr_bias = 0
-    gnr_htr_ofs = GEONOR_HTR_OFS
 endProg

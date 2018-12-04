@@ -1,12 +1,17 @@
 beginProg
     scan(10,sec,0,0)
-        gnr_htr_setpt = air_temp + gnr_htr_ofs
-        if air_temp > 5 then gnr_htr_setpt = -40
-        gnr_htr_bias += (gnr_temp-gnr_htr_setpt)*10/gnr_htr_itm/gnr_htr_pb
-        gnr_htr_bias += (gnr_temp-gnr_htr_setpt)/gnr_htr_pb*10/gnr_htr_itm
-        if gnr_htr_bias < 0 then gnr_htr_bias = 0
-        if gnr_htr_bias > 1 then gnr_htr_bias = 1
-        gnr_htr_state = (gnr_temp-air_temp-gnr_htr_ofs)/gnr_htr_pb + gnr_htr_bias
-        pwm(gnr_htr_state, {{HTR_RELAY:1}}, 10, sec)
+        if {{AMBIENT:at}} > 5 then
+            gnr_htr_set = 0
+        else
+            gnr_htr_set = {{AMBIENT:at}} + gnr_htr_atOfs
+        endif
+
+        gnr_htr_bias += ({{INLET:inlet}}-gnr_htr_set)/gnr_htr_upb*{{SCAN:10}}/gnr_htr_itm
+        minmax(gnr_htr_bias,0,1)
+
+        gnr_heater = ({{INLET:inlet}}-gnr_htr_set)/gnr_htr_upb + gnr_htr_bias
+        minmax(gnr_heater,0,1)
+
+        pwm(gnr_heater, {{HTR__CP:1}}, {{PERIOD:10}}, sec)
     nextScan
 endProg
