@@ -1,0 +1,2 @@
+This component provides support for storing arbitrary 'tag=value' lines in a file
+created on the logger at startup.

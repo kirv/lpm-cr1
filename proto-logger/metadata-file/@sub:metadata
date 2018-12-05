@@ -1,0 +1,7 @@
+sub metadata( prefix as string, value as string * 100)
+
+    dim tag as string
+    dim subtag as string
+
+
+endsub
