@@ -1,7 +1,7 @@
 sub flowcapt_log_params(addr as long)
     dim fcid as string * 40
     sdi12recorder(fcid,{{SDI12__CP:1}},addr,"I!",1,0)
-    log("flowcapt_" + addr, "sdi12 id:", fcid)
+    metafile("flowcapt_" + addr & "-sdi12_id", fcid) 
     flowcapt_log_param(addr, "avg-a")        ' 1 sec (expected responses)
     flowcapt_log_param(addr, "avg-c")        ' 1 sec
     flowcapt_log_param(addr, "avg-m")        ' 10 sec

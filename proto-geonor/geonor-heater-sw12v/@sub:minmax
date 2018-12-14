@@ -1,0 +1,3 @@
+sub minmax(x,low,high)
+    if x < low then x = low else if x > high then x = high
+endsub

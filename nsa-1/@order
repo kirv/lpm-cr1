@@ -3,6 +3,7 @@ program-signature
 logmsg
 battery-to-SRS-table
 panel-temp-to-SRS-table
+metadata-file
     
 therm107-to-SRS-table
 
@@ -15,3 +16,5 @@ lpm-telegram
 lpm-flags
 lpm-state
 lpm-summary
+
+close-metadata-file

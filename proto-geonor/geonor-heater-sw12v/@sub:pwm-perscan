@@ -1,0 +1,17 @@
+sub pwm_perscan(ratio as float, htr_scan as long, htr_period as long) as long
+    dim elapsed as float
+    dim ontime as float
+    dim state as long
+    elapsed = timer(htr_scan,sec,4)                 '' read timer
+    if elapsed = 0 then timer(htr_scan,sec,0)       '' start timer if not running
+    ontime = ratio * htr_period
+    if ontime < htr_scan then ontime = 0
+    if elapsed > htr_period then timer(htr_scan,sec,2)  '' restart timer
+    if ontime < elapsed and ontime > 0 then state = 1 else state = 0
+    portSet(HTR_RELAY__CP,state)
+    return state
+endsub
+
+
+
+        pwm(gnr_heater, {{HTR__CP:1}}, {{PERIOD:10}}, sec)

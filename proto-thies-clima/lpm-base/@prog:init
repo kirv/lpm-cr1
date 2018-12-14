@@ -1,23 +1,30 @@
 beginProg
-    log("LPM make, name & model: Thies Clima", LPM_NAME, LPM_MODEL)
-    log("LPM_{{ID:0}} serial number (SN):", lpm_query({{ID:0}},"SN",-1))
-    log("LPM_{{ID:0}} software version (SV):", "V" + lpm_query({{ID:0}},"SV",-1)/100)
-    log("LPM_{{ID:0}} bootloader version (SB):", "V" + lpm_query({{ID:0}},"SB",-1)/100)
-    log("LPM_{{ID:0}} baud rate (BR):", lpm_query({{ID:0}},"BR",-1), "(5=9600,7=38400,9=115200)")
-    log("LPM_{{ID:0}} comm mode (BD):", lpm_query({{ID:0}},"BD",-1), "(0=full-,1=half-duplex)")
-    log("LPM_{{ID:0}} runtime (ZB):", lpm_query({{ID:0}},"ZB",-1), "hrs")
+    log("logging LPM settings")
+    metafile("LPM-make", "Thies Clima " & LPM_NAME)
+    metafile("LPM-model", LPM_MODEL)
+    metafile("LPM-nameplate_SN", LPM_NAMEPLATE_SN)
+    metafile("LPM-SN", LPM_SN)
+    metafile("LPM-shield", LPM_SHIELD)
+
+    metafile("LPM-SN", lpm_query({{ID:0}},"SN",-1))
+    metafile("LPM-software_version (SV)", "v" + lpm_query({{ID:0}},"SV",-1)/100)
+    metafile("LPM-bootloader_version", "v" + lpm_query({{ID:0}},"SB",-1)/100)
+    metafile("LPM-baudrate", lpm_query({{ID:0}},"BR",-1) + " (5=9600,7=38400,9=115200)")
+    metafile("LPM-comm_mode", lpm_query({{ID:0}},"BD",-1) + " (0=full-,1=half-duplex)")
+    metafile("LPM-ID", {{ID:0}})
+    metafile("LPM-runtime_hrs", lpm_query({{ID:0}},"ZB",-1))
     log_lpm_calibration({{ID:0}})
     if lpm_query({{ID:0}},"KY",1) <> 1 then
-        log("LPM_{{ID:0}} FAILED TO ENTER CONFIG MODE")
+        log("LPM FAILED TO ENTER CONFIG MODE")
     else
-        log("LPM_{{ID:0}} ENTERING CONFIG MODE")
+        log("LPM ENTERING CONFIG MODE")
         lpm_set_clock({{ID:0}})
-        log("LPM_{{ID:0}} auto telegram output (TM):", lpm_query({{ID:0}},"TM",0))
+        metafile("LPM-auto_telegram_output", lpm_query({{ID:0}},"TM",0) + " (0=disabled)")
         if lpm_query({{ID:0}},"KY",0) = 0 then
-            log("LPM_{{ID:0}} EXITED CONFIG MODE, IN QUERY MODE")
+            log("LPM EXITED CONFIG MODE, IN QUERY MODE")
         else
-            log("LPM_{{ID:0}} FAILED TO EXIT CONFIG MODE")
+            log("LPM FAILED TO EXIT CONFIG MODE")
         endif
     endif 
-    log("LPM_{{ID:0}} clock time (ZT):", lpm_query({{ID:0}},"ZT",-1))
+    metafile("LPM-time", lpm_query({{ID:0}},"ZT",-1))
 endProg

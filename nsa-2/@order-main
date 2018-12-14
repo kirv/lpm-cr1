@@ -3,6 +3,7 @@ program-signature
 logmsg
 battery
 panel-temp
+metadata-file
 
 flowcapt-X2
 
@@ -19,3 +20,5 @@ lpm-telegram
 lpm-flags
 lpm-state
 lpm-summary
+
+close-metadata-file

@@ -3,6 +3,7 @@ program-signature
 logmsg
 battery
 panel-temp
+metadata-file
 
 geonor-base
 geonor-RTD
@@ -21,3 +22,5 @@ lpm-reset-precip-total
 air-hmp45c
 
 call-datatables
+
+close-metadata-file

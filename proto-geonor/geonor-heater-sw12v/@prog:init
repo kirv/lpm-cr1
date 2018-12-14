@@ -1,0 +1,6 @@
+beginProg
+    gnr_htr_upb = {{UPB:10}}
+    gnr_htr_itm = {{ITM:300}}
+    gnr_htr_ofs = {{OFS:5}}
+    gnr_htr_bias = 0
+endProg

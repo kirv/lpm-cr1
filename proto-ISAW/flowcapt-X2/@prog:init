@@ -1,6 +1,7 @@
 beginProg
-    log("flowcapt_1 --", FLOWCAPT_1_INFO)
+    log("logging FlowCapt settings")
+    metafile("flowcapt_1", FLOWCAPT_1_INFO)
     flowcapt_log_params({{ADDR1:1}})
-    log("flowcapt_2 --", FLOWCAPT_2_INFO)
+    metafile("flowcapt_2", FLOWCAPT_2_INFO)
     flowcapt_log_params({{ADDR2:2}})
 endProg

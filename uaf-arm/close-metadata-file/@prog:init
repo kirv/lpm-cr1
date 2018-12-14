@@ -1,0 +1,4 @@
+beginProg
+    log("closing metadata file:", "USR:{{FILE:metadata.txt}},", fileSize(fh), "bytes") 
+    fileClose(fh)
+endProg

@@ -1,0 +1,9 @@
+sub init_metafile(name as string)
+    dim t(9)
+    dim time as string
+    fh = fileOpen(name, "w", 0)
+    metafile("progSig", status.ProgSignature)
+    realtime(t)
+    sprintf(time,"%4d_%02d_%02d_%02d%02d",t(1),t(2),t(3),t(4),t(5)) 
+    metafile("datetime", time)
+endsub

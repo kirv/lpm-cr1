@@ -1,0 +1,7 @@
+sample(1,{{AIR_TEMP:air_temp}},fp2)
+sample(1,gnr_htr_atOfs,fp2)         ' setpoint offset from ambient temperature
+sample(1,gnr_htr_set,fp2)           ' target setpoint for inlet temperature
+sample(1,gnr_htr_upb,fp2)           ' unit proportional band (1/gain)
+sample(1,gnr_htr_itm,fp2)           ' integral time 
+average(1,gnr_htr_bias,fp2,0)       ' zero-error output
+average(1,gnr_heater,fp2,0)         ' output to relay 

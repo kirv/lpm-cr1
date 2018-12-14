@@ -1,6 +1,10 @@
 beginProg
-    log("SRS1 --", SRS_1_INFO, get_sdi12_id(1))
-    log("SRS2 --", SRS_2_INFO, get_sdi12_id(2))
-    log("SRS3 --", SRS_3_INFO, get_sdi12_id(3))
-    log(SRS_123_INFO)
+    log("logging SRS settings")
+    metafile("SRS_123", SRS_123_INFO)
+    metafile("SRS1", SRS_1)
+    metafile("SRS2", SRS_2)
+    metafile("SRS3", SRS_3)
+    metafile("SRS1-SDI12_ID", get_sdi12_id(1))
+    metafile("SRS2-SDI12_ID", get_sdi12_id(2))
+    metafile("SRS3-SDI12_ID", get_sdi12_id(3))
 endProg

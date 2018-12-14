@@ -1,2 +1,5 @@
 const LPM_NAME  = "Laser Precipitation Monitor"
 const LPM_MODEL = "5.4110.11.100"
+const LPM_NAMEPLATE_SN = "06160017"
+const LPM_SN = "1833"
+const LPM_SHIELD = "Belfort double alter shield"

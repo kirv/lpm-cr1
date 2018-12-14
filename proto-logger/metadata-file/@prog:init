@@ -1,5 +1,4 @@
 beginProg
-    metadata_fh = open("USR:{{FILE:metadata.txt}}
-    lines = metadata("psig", status.ProgSignature)
-
+    log("open", "{{FILE:USR:metadata.txt}}")
+    init_metafile("USR:{{FILE:metadata.txt}}")
 endProg

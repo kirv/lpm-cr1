@@ -1,0 +1,33 @@
+function metafile(tag as string, value as string * 100) as long
+    dim words(20) as string * 100
+    dim tagval(2) as string * 100
+    dim tags(10) as string * 100
+    dim vals(10) as string * 100
+    dim i as long
+    dim j as long
+    i=1
+    j=0
+    splitStr(words(), value, SPACE & COMMA, 20, 3)
+    do while words(i) <> ""
+        if inStr(2, words(i), COLON, 2) > 0 then
+            splitStr(tagval, words(i), COLON, 2, 2)
+            j += 1
+            tags(j) = tag & "-" & tagval(1)
+            vals(j) = tagval(2)
+        else if j = 0
+            '' stop parsing if first word does not have a colon:
+            j=1
+            tags(j) = tag
+            vals(j) = value
+            exitDo
+        else
+            '' add space-separated words to current subtag value:
+            vals(j) &= SPACE & words(i)
+        endif 
+        i+=1
+    loop
+    for i=1 to j
+        fileWrite(fh, tags(i) & "=" & vals(i) & CR & LF, 0)
+    next i
+    return j
+endfunction

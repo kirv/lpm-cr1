@@ -1,4 +1,4 @@
-const SRS_1_INFO = "model:SR50A, sn:?, height:?"
-const SRS_2_INFO = "model:SR50A, sn:?, height:?"
-const SRS_3_INFO = "model:SR50A, sn:?, height:?"
 const SRS_123_INFO = "orientation of sensors?"
+const SRS_1 = "model:? sn:? height:? measured:?"
+const SRS_2 = "model:? sn:? height:? measured:?"
+const SRS_3 = "model:? sn:? height:? measured:?"

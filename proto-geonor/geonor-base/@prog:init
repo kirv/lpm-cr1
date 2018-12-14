@@ -1,8 +1,7 @@
 beginProg
-    log("Geonor_sn_1 --", GEONOR_SN_1)
-    log("Geonor_sn_2 --", GEONOR_SN_2)
-    log("Geonor_sn_3 --", GEONOR_SN_3)
-    log("Geonor_xdcr_1 --", GEONOR_XDCR_1)
-    log("Geonor_xdcr_2 --", GEONOR_XDCR_2)
-    log("Geonor_xdcr_3 --", GEONOR_XDCR_3)
+    log("logging Geonor settings")
+    metafile("Geonor-model", GEONOR_MODEL)
+    metafile("GNR1", GEONOR_WIRE_1)
+    metafile("GNR2", GEONOR_WIRE_2)
+    metafile("GNR3", GEONOR_WIRE_3)
 endProg

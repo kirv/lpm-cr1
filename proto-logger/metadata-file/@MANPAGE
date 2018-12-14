@@ -1,0 +1,16 @@
+NAME
+    proto-logger/metadata-file
+
+SYNOPSIS
+    metadata-file.metadata(tag as string, value as string) as long
+
+
+DESCRIPTION
+    This component provides support for storing arbitrary 'tag=value' lines in a file
+    created on the logger at startup.
+
+    Before the first scan in the program, open file USR:metata.txt, then use metadata() 
+    function to post TAG=VALUE pairs to it.  Close the file when done.
+
+AUTHOR
+    ken.irving@alaska.edu 2018
