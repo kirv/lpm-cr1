@@ -11,7 +11,3 @@ sub pwm_perscan(ratio as float, htr_scan as long, htr_period as long) as long
     portSet(HTR_RELAY__CP,state)
     return state
 endsub
-
-
-
-        pwm(gnr_heater, {{HTR__CP:1}}, {{PERIOD:10}}, sec)

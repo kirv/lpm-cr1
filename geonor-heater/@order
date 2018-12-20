@@ -1,9 +1,15 @@
 program-signature
 logmsg
+<<<<<<< HEAD
 panel-temp
 
 geonor-RTD
 geonor-heater
 geonor-heater-status
 
+=======
+therm109
+geonor-RTD
+geonor-heater
+>>>>>>> heater-pid-control
 

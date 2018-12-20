@@ -1,2 +1,6 @@
 sample(1,{{AIR_TEMP:air_temp}},fp2)
+<<<<<<< HEAD
 sample(1,gnr_htr_state,fp2)
+=======
+sample(1,gnr_heater,fp2)
+>>>>>>> heater-pid-control

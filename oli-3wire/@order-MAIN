@@ -5,14 +5,13 @@ battery-to-SRS-table
 panel-temp-to-SRS-table
 metadata-file
 
-therm109-to-SRS-table
-
 srs-sr50a-x3
 
 judd-3-and-3
 
 geonor-base
 geonor-RTD
+therm109-to-SRS-table
 geonor-heater
 geonor-heater-status
 
